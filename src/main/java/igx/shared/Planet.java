@@ -68,21 +68,21 @@ public class Planet
     if (!attackers.isEmpty())
     {
       Game.dirty[char2num(planetChar)] = true;
-      i = 0;
+      int totalShips = 0;
       for (int j = 0; j < attackers.size(); j++) {
-        i += attackers.elementAt(j)).ships;
+        totalShips += ((Fleet)(attackers.elementAt(j))).ships;
       }
-      j = ships;
-      for (int k = 0; k < j; k++) {
-        if ((Game.pseudo(0, 99) < 25) && (Game.pseudo(0, 99) < defenceRatio) && (i > 0))
+      for (int k = 0; k < totalShips; k++) {
+        if ((Game.pseudo(0, 99) < 25) && (Game.pseudo(0, 99) < defenceRatio) && (totalShips > 0))
         {
           int m = 0;
-          int n = Game.pseudo(0, i - 1);
-          while (n -= attackers.elementAt(m)).ships >= 0) {
+          int n = Game.pseudo(0, totalShips - 1);
+          //((Fleet)(attackers.elementAt(k))).ships -= shipsToSub;
+          while ((n -= ((Fleet)(attackers.elementAt(m))).ships) >= 0) {
             m++;
           }
           Fleet localFleet = (Fleet)attackers.elementAt(m);
-          i--;
+          totalShips--;
           attacker[owner.number] -= 1;
           if (--ships == 0)
           {

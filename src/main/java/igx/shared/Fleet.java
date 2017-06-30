@@ -15,13 +15,13 @@ public class Fleet
   
   public Fleet(Fleet paramFleet)
   {
-    Game = Game;
-    owner = owner;
-    ships = ships;
-    ratio = ratio;
-    destination = destination;
-    distance = distance;
-    next = next;
+      this.Game = paramFleet.Game;
+      this.owner = paramFleet.owner;
+      this.ships = paramFleet.ships;
+      this.ratio = paramFleet.ratio;
+      this.destination = paramFleet.destination;
+      this.distance = paramFleet.distance;
+      this.next = paramFleet.next;
   }
   
   public Fleet(GameInstance paramGameInstance, Planet paramPlanet1, Planet paramPlanet2, int paramInt)
@@ -31,10 +31,15 @@ public class Fleet
     owner = owner;
     ships = paramInt;
     ships -= paramInt;
-    dirty[Planet.char2num(planetChar)] = true;
+    paramGameInstance.dirty[ Planet.char2num( paramPlanet1.planetChar ) ] = true;
+    //dirty[Planet.char2num(planetChar)] = true;
     ratio = ratio;
     destination = paramPlanet2;
-    distance = new Double(Math.sqrt((x - x) * (x - x) + (y - y) * (y - y))).floatValue();
+    int x1 = paramPlanet1.x;
+    int x2 = paramPlanet2.x;
+    int y1 = paramPlanet1.y;
+    int y2 = paramPlanet2.y;
+    distance = new Double(Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2))).floatValue();
     next = null;
   }
   

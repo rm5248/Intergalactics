@@ -27,22 +27,22 @@ public class Monitor
     for (int i = 0; i < 6; i++)
     {
       int j = i;
-      arrayOfThread[i = new Thread(new Runnable()
+      arrayOfThread[i] = new Thread(new Runnable()
       {
-        private final Monitor val$m;
-        private final int val$n;
+        private final Monitor m = new Monitor();
+        private final int n = 0;
         
         public void run()
         {
-          val$m.lock();
+          m.lock();
           for (int i = 0; i < 20; i++) {
-            System.out.println("- " + val$n + ":" + i);
+            System.out.println("- " + n + ":" + i);
           }
-          val$m.unlock();
+          m.unlock();
         }
       });
     }
-    for (i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
       arrayOfThread[i].start();
     }
   }

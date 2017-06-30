@@ -28,7 +28,7 @@ public class Robot
   public Player toPlayer()
   {
     Player localPlayer = new Player(name);
-    isHuman = false;
+    //isHuman = false;
     return localPlayer;
   }
 }

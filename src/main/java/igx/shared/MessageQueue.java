@@ -40,10 +40,10 @@ public class MessageQueue
       }
       if (!shutDown)
       {
-        ??? = (Message)queue.elementAt(0);
+        Message msg = (Message)queue.elementAt(0);
         queue.removeElementAt(0);
         if (listener != null) {
-          listener.messageEvent((Message)???);
+          listener.messageEvent(msg);
         }
       }
     }

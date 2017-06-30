@@ -19,10 +19,10 @@ public class Forum
   protected boolean abandonGame(String paramString)
   {
     Player localPlayer = getPlayer(paramString);
-    Game localGame = game;
+    Game localGame = localPlayer.game;
     if ((localGame != null) && (localPlayer != null) && (localGame.getPlayer(paramString) != null))
     {
-      if (!inProgress) {
+      if (!localGame.inProgress) {
         localGame.removePlayer(localPlayer);
       }
       gamePool.removeElement(localPlayer);
@@ -37,9 +37,9 @@ public class Forum
     if (localGame != null)
     {
       Player localPlayer = paramRobot.toPlayer();
-      customRobot = true;
-      r = paramRobot;
-      if (localGame.getPlayer(name) == null) {
+      localPlayer.customRobot = true;
+      localPlayer.r = paramRobot;
+      if (localGame.getPlayer(localPlayer.name) == null) {
         return localGame.addPlayer(localPlayer);
       }
     }
@@ -83,7 +83,7 @@ public class Forum
     Player localPlayer = getPlayer(paramString1);
     if (localPlayer != null)
     {
-      Game localGame = game;
+      Game localGame = localPlayer.game;
       if (localGame == null)
       {
         games.addElement(new Game(paramString2, paramString1));
@@ -99,14 +99,14 @@ public class Forum
     if (localGame != null)
     {
       games.removeElement(localGame);
-      for (int i = 0; i < numPlayers; i++)
+      for (int i = 0; i < localGame.numPlayers; i++)
       {
-        Player localPlayer = player[i];
-        if ((isHuman) && (activePlayer[i] != 0))
+        Player localPlayer = localGame.player[i];
+        if ((localPlayer.isHuman) && (localGame.activePlayer[i] != false))
         {
           gamePool.removeElement(localPlayer);
-          inGame = false;
-          game = null;
+          localPlayer.inGame = false;
+          localPlayer.game = null;
         }
       }
     }
@@ -118,7 +118,7 @@ public class Forum
     for (int j = 0; j < i; j++)
     {
       Game localGame = (Game)games.elementAt(j);
-      if (name.equals(paramString)) {
+      if (localGame.name.equals(paramString)) {
         return localGame;
       }
     }
@@ -131,7 +131,7 @@ public class Forum
     for (int j = 0; j < i; j++)
     {
       Player localPlayer = (Player)players.elementAt(j);
-      if (name.equals(paramString)) {
+      if (localPlayer.name.equals(paramString)) {
         return localPlayer;
       }
     }
@@ -144,7 +144,7 @@ public class Forum
     for (int j = 0; j < i; j++)
     {
       Player localPlayer = (Player)gamePool.elementAt(j);
-      if (name.equals(paramString)) {
+      if (localPlayer.name.equals(paramString)) {
         return localPlayer;
       }
     }
@@ -166,7 +166,7 @@ public class Forum
   {
     Game localGame = getGame(paramString2);
     Player localPlayer = getPlayer(paramString1);
-    if ((localGame != null) && (!inProgress) && (localPlayer != null) && (numPlayers < 9) && (localGame.getPlayer(paramString1) == null))
+    if ((localGame != null) && (!localGame.inProgress) && (localPlayer != null) && (localGame.numPlayers < 9) && (localGame.getPlayer(paramString1) == null))
     {
       localGame.addPlayer(localPlayer);
       return true;
@@ -248,17 +248,17 @@ public class Forum
   protected void startGame(String paramString1, String paramString2)
   {
     Game localGame = getGame(paramString1);
-    int i = numPlayers;
+    int i = localGame.numPlayers;
     for (int j = 0; j < i; j++) {
-      if (player[j].isHuman)
+      if (localGame.player[j].isHuman)
       {
-        player[j].status = 2;
-        gamePool.addElement(player[j]);
-        localGame.setActivePlayer(player[j].name, true);
+        localGame.player[j].status = 2;
+        gamePool.addElement(localGame.player[j]);
+        localGame.setActivePlayer(localGame.player[j].name, true);
       }
     }
     if (localGame != null) {
-      inProgress = true;
+      localGame.inProgress = true;
     }
   }
   
@@ -266,7 +266,7 @@ public class Forum
   {
     Game localGame = getGame(paramString);
     if (localGame != null) {
-      randomMap = (!randomMap);
+      localGame.randomMap = (!localGame.randomMap);
     }
   }
   
@@ -275,7 +275,7 @@ public class Forum
     Player localPlayer = getPlayer(paramString1);
     Game localGame = getGame(paramString2);
     if ((localPlayer != null) && (localGame != null)) {
-      game = localGame;
+      localPlayer.game = localGame;
     }
   }
 }

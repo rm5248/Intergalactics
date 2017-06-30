@@ -170,21 +170,21 @@ public class ClientForum
   public boolean abandonGame(String paramString)
   {
     Player localPlayer = getPlayer(paramString);
-    Game localGame = game;
+    Game localGame = localPlayer.game;
     boolean bool = true;
     if (localGame == null) {
       bool = false;
-    } else if (!inProgress) {
+    } else if (!localGame.inProgress) {
       bool = super.abandonGame(paramString);
     } else {
-      game = null;
+      localPlayer.game = null;
     }
     if (bool)
     {
       int i = getRow(localGame);
       gameList.setRow(i, localGame);
       post(new CText(paramString, BOLD_COLOUR));
-      if (inProgress)
+      if (localGame.inProgress)
       {
         post(new CText(" quits game ", PLAIN_COLOUR));
         playerList.changeColour(paramString, IDLE_PLAYER_COLOUR);
@@ -193,26 +193,26 @@ public class ClientForum
       {
         post(new CText(" abandons game ", PLAIN_COLOUR));
       }
-      post(new CText(name, BOLD_COLOUR));
+      post(new CText(localPlayer.name, BOLD_COLOUR));
       post(new CText(".", PLAIN_COLOUR));
       newLine();
       if (isMe(paramString)) {
         setMode(1);
       }
-      if ((creator.equals(paramString)) && (!inProgress))
+      if ((localGame.creator.equals(paramString)) && (!localGame.inProgress))
       {
         post(new CText("Game ", PLAIN_COLOUR));
-        post(new CText(name, BOLD_COLOUR));
+        post(new CText(localGame.name, BOLD_COLOUR));
         post(new CText(" evaporates.", PLAIN_COLOUR));
         newLine();
         games.removeElement(localGame);
         gameList.removeGame(localGame);
-        for (int j = 0; j < numPlayers; j++)
+        for (int j = 0; j < localGame.numPlayers; j++)
         {
-          player[j].game = null;
-          if (player[j].name.equals(clientName))
+          localGame.player[j].game = null;
+          if (localGame.player[j].name.equals(clientName))
           {
-            selectGame(name);
+            selectGame(localGame.name);
             setMode(1);
           }
         }
@@ -223,7 +223,7 @@ public class ClientForum
         }
         else if (selectedGame == localGame)
         {
-          selectGame(name);
+          selectGame(localGame.name);
           setMode(mode);
         }
       }
@@ -334,13 +334,13 @@ public class ClientForum
   {
     Dimension localDimension = buttonBar.buttonDimensions(paramString);
     Point localPoint = new Point((buttonBar.width - width) / 2, paramInt * (14 * buttonBar.buttonHeight / 10 + 1));
-    buttonBar.addButton(x, y, paramString);
+    buttonBar.addButton(localPoint.x, localPoint.y, paramString);
     return localPoint;
   }
   
   public boolean addCustomRobot(Robot paramRobot, String paramString)
   {
-    String str = name;
+    String str = paramRobot.name;
     boolean bool = super.addCustomRobot(paramRobot, paramString);
     Game localGame = getGame(paramString);
     gameList.setRow(getRow(localGame), localGame);
@@ -350,7 +350,7 @@ public class ClientForum
     post(new CText(paramString, BOLD_COLOUR));
     post(new CText(".", PLAIN_COLOUR));
     newLine();
-    if ((isMe(creator)) && (mode == 4)) {
+    if ((isMe(localGame.creator)) && (mode == 4)) {
       setMode(5);
     }
     return bool;
@@ -367,18 +367,18 @@ public class ClientForum
       if (localGame != null)
       {
         localPlayer = server.dispatch.Game.getPlayer(paramString);
-        boolean bool = isActive;
+        boolean bool = localPlayer.isActive;
         super.addPlayer(localPlayer);
         if (bool)
         {
-          isPresent = true;
-          game = localGame;
+          localPlayer.isPresent = true;
+          localPlayer.game = localGame;
           i = 1;
         }
         else
         {
-          game = null;
-          inGame = false;
+          localPlayer.game = null;
+          localPlayer.inGame = false;
         }
       }
     }
@@ -412,7 +412,7 @@ public class ClientForum
     post(new CText(paramString2, BOLD_COLOUR));
     post(new CText(".", PLAIN_COLOUR));
     newLine();
-    if (isMe(creator)) {
+    if (isMe(localGame.creator)) {
       setMode(5);
     }
     return bool;
@@ -558,8 +558,8 @@ public class ClientForum
       if (!selectedGame.player[i].isHuman)
       {
         Robot localRobot = getRobot(selectedGame.player[i].name);
-        MenuItem localMenuItem = new MenuItem(name + "(" + ranking + ")");
-        localMenuItem.setActionCommand("-" + name);
+        MenuItem localMenuItem = new MenuItem(localRobot.name + "(" + localRobot.ranking + ")");
+        localMenuItem.setActionCommand("-" + localRobot.name);
         localMenuItem.addActionListener(this);
         dropMenu.add(localMenuItem);
       }
@@ -581,18 +581,18 @@ public class ClientForum
       post(new CText(paramString2, BOLD_COLOUR));
       post(new CText(".", PLAIN_COLOUR));
       newLine();
-      for (int i = 0; i < numPlayers; i++) {
-        playerList.changeMultiColour(player[i].name, IDLE_PLAYER_COLOUR);
+      for (int i = 0; i < localGame.numPlayers; i++) {
+        playerList.changeMultiColour(localGame.player[i].name, IDLE_PLAYER_COLOUR);
       }
       playerList.repaint();
       gameList.removeGame(localGame);
       if (selectedGame == localGame)
       {
-        selectGame(name);
+        selectGame(localGame.name);
         Player localPlayer = getPlayer(clientName);
-        isActive = false;
-        inGame = false;
-        game = null;
+        localPlayer.isActive = false;
+        localPlayer.inGame = false;
+        localPlayer.game = null;
         displayForum(true);
         setMode(1);
       }
@@ -640,9 +640,9 @@ public class ClientForum
     for (int j = 0; j < i; j++)
     {
       Game localGame = (Game)games.elementAt(j);
-      if (localGame.getPlayer(name) != null)
+      if (localGame.getPlayer(paramPlayer.name) != null)
       {
-        game = localGame;
+        paramPlayer.game = localGame;
         return localGame;
       }
     }
@@ -706,7 +706,7 @@ public class ClientForum
       if (isMe(paramString1))
       {
         selectGame(paramString2);
-        if (isMe(creator)) {
+        if (isMe(localGame.creator)) {
           setMode(4);
         } else {
           setMode(3);
@@ -801,11 +801,13 @@ public class ClientForum
     localFrame.show();
     localFrame.setSize(localDimension);
     Insets localInsets = localFrame.getInsets();
-    int i = width - left - right;
-    int j = height - top - bottom;
+    int i = localDimension.width - localInsets.left - localInsets.right;
+    int j = localDimension.height - localInsets.top - localInsets.bottom;
     Robot[] arrayOfRobot = new Robot[0];
-    Object localObject = null;
-    localFrame.add(mainContainer);
+    I iClass = new I( "Foo" );
+    Server s = new Server( null );
+    ClientForum localObject = new ClientForum( iClass, "param", localToolkit, s );
+    localFrame.add(localObject.mainContainer);
     localObject.setToPreferredSize();
     localFrame.validate();
   }
@@ -841,7 +843,7 @@ public class ClientForum
     if (gameUI != null)
     {
       Player localPlayer = getPlayer(server.name);
-      if ((localPlayer != null) && (isActive))
+      if ((localPlayer != null) && (localPlayer.isActive))
       {
         card.show(frontEnd.getContainer(), "game");
         gameUI.requestFocus();
@@ -863,25 +865,25 @@ public class ClientForum
   public void registerClient()
     throws IOException
   {
-    Object localObject1 = null;
+    Game localObject1 = null;
     server.name = clientName;
     for (String str1 = server.receive(); !str1.equals("~"); str1 = server.receive())
     {
-      localObject2 = new Player(str1);
+      Player localObject2 = new Player(str1);
       players.addElement(localObject2);
-      isActive = server.receiveBoolean();
+      localObject2.isActive = server.receiveBoolean();
     }
-    int i1;
-    for (str1 = server.receive(); !str1.equals("~"); str1 = server.receive())
+    boolean i1;
+    for (String str1 = server.receive(); !str1.equals("~"); str1 = server.receive())
     {
-      localObject2 = null;
+      Game localObject2 = null;
       boolean bool;
       if (server.receive().equals("[")) {
         bool = true;
       } else {
         bool = false;
       }
-      j = Integer.parseInt(server.receive());
+      int j = Integer.parseInt(server.receive());
       for (int k = 0; k < j; k++)
       {
         String str2 = server.receive();
@@ -896,46 +898,46 @@ public class ClientForum
           if (localRobot == null)
           {
             localPlayer2 = new Player(str2);
-            isPresent = false;
+            localPlayer2.isPresent = false;
           }
           else
           {
             localPlayer2 = localRobot.toPlayer();
           }
         }
-        game = ((Game)localObject2);
-        player[k] = localPlayer2;
+        localPlayer2.game = ((Game)localObject2);
+        localObject2.player[k] = localPlayer2;
       }
-      inProgress = bool;
-      numPlayers = j;
+      localObject2.inProgress = bool;
+      localObject2.numPlayers = j;
       games.addElement(localObject2);
       gameList.addGame((Game)localObject2);
     }
-    Object localObject2 = getPlayer(clientName);
+    Player localObject2 = getPlayer(clientName);
     if (server.receive().equals("["))
     {
       Game localGame1 = getGame(server.receive());
       if (localGame1 != null)
       {
         localObject1 = localGame1;
-        game = localObject1;
-        inGame = true;
+        localObject2.game = localObject1;
+        localObject2.inGame = true;
       }
     }
     else
     {
       localObject1 = null;
-      game = null;
-      inGame = false;
+      localObject2.game = null;
+      localObject2.inGame = false;
     }
     int i = players.size();
     for (int j = 0; j < i; j++)
     {
       Player localPlayer1 = (Player)players.elementAt(j);
-      if (isActive) {
-        playerList.addText(name, ACTIVE_PLAYER_COLOUR);
+      if (localPlayer1.isActive) {
+        playerList.addText(localPlayer1.name, ACTIVE_PLAYER_COLOUR);
       } else {
-        playerList.addText(name, IDLE_PLAYER_COLOUR);
+        playerList.addText(localPlayer1.name, IDLE_PLAYER_COLOUR);
       }
     }
     Vector localVector = new Vector();
@@ -945,16 +947,16 @@ public class ClientForum
     statusBar.repaint();
     if (localObject1 != null)
     {
-      selectGame(name);
-      if (inProgress)
+      selectGame(localObject1.name);
+      if (localObject1.inProgress)
       {
         setMode(2);
       }
-      else if (creator.equals(clientName))
+      else if (localObject1.creator.equals(clientName))
       {
         int n = 0;
-        for (i1 = 0; i1 < numPlayers; i1++) {
-          if (!player[i1].isHuman)
+        for (int p = 0; p < localObject1.numPlayers; p++) {
+          if (!localObject1.player[p].isHuman)
           {
             n = 1;
             break;
@@ -979,7 +981,7 @@ public class ClientForum
     {
       gameList.manualSelectRow(3);
       Game localGame2 = (Game)games.elementAt(games.size() - 1);
-      selectGame(name);
+      selectGame(localGame2.name);
       setMode(1);
     }
   }
@@ -993,18 +995,18 @@ public class ClientForum
     post(new CText("Robot ", PLAIN_COLOUR));
     post(new CText(paramString1, BOLD_COLOUR));
     post(new CText(" is unplugged from game ", PLAIN_COLOUR));
-    post(new CText(name, BOLD_COLOUR));
+    post(new CText(localGame.name, BOLD_COLOUR));
     post(new CText(".", PLAIN_COLOUR));
     newLine();
     int j = 0;
-    for (int k = 0; k < numPlayers; k++) {
-      if (!player[k].isHuman)
+    for (int k = 0; k < localGame.numPlayers; k++) {
+      if (!localGame.player[k].isHuman)
       {
         j = 1;
         break;
       }
     }
-    if (isMe(creator)) {
+    if (isMe(localGame.creator)) {
       if (j == 0) {
         setMode(4);
       } else {
@@ -1030,7 +1032,7 @@ public class ClientForum
     for (int j = 0; j < i; j++)
     {
       Game localGame = (Game)games.elementAt(j);
-      if (name.equals(paramString))
+      if (localGame.name.equals(paramString))
       {
         gameList.manualSelectRow((games.size() - j - 1) * 2 + 3);
         selectedGame = localGame;
@@ -1103,14 +1105,14 @@ public class ClientForum
     Menu localMenu = new Menu("");
     for (int i = 0; i < paramArrayOfRobot.length; i++)
     {
-      if (!botType.equals(str))
+      if (!paramArrayOfRobot[i].botType.equals(str))
       {
-        str = botType;
+        str = paramArrayOfRobot[i].botType;
         localMenu = new Menu(str);
         robotMenu.add(localMenu);
       }
-      MenuItem localMenuItem3 = new MenuItem(name + " (" + ranking + ")");
-      localMenuItem3.setActionCommand("+" + name);
+      MenuItem localMenuItem3 = new MenuItem(paramArrayOfRobot[i].name + " (" + paramArrayOfRobot[i].ranking + ")");
+      localMenuItem3.setActionCommand("+" + paramArrayOfRobot[i].name);
       localMenuItem3.addActionListener(this);
       localMenu.add(localMenuItem3);
     }
@@ -1158,7 +1160,7 @@ public class ClientForum
       break;
     case 2: 
       Player localPlayer = selectedGame.getPlayer(clientName);
-      if ((localPlayer != null) && (isActive))
+      if ((localPlayer != null) && (localPlayer.isActive))
       {
         addButton("Continue (P)lay", 0);
         addButton("(A)bdicate", 1);
@@ -1215,8 +1217,8 @@ public class ClientForum
     post(new CText(paramString1, BOLD_COLOUR));
     post(new CText(" begins.", PLAIN_COLOUR));
     newLine();
-    for (int i = 0; i < numPlayers; i++) {
-      playerList.changeMultiColour(player[i].name, ACTIVE_PLAYER_COLOUR);
+    for (int i = 0; i < localGame1.numPlayers; i++) {
+      playerList.changeMultiColour(localGame1.player[i].name, ACTIVE_PLAYER_COLOUR);
     }
     playerList.repaint();
     Game localGame2 = getClientGame(clientName, paramString1);

@@ -12,8 +12,8 @@ public class FleetQueue
   
   public void doScores()
   {
-    for (Fleet localFleet = first; localFleet != null; localFleet = next) {
-      owner.addScore(ships * 3);
+    for (Fleet localFleet = first; localFleet != null; localFleet = localFleet.next) {
+      localFleet.owner.addScore(localFleet.ships * 3);
     }
   }
   
@@ -24,29 +24,29 @@ public class FleetQueue
     if (first == null)
     {
       first = paramFleet;
-      next = null;
+      paramFleet.next = null;
     }
     else
     {
-      while ((localFleet1 != null) && (distance <= distance))
+      while ((localFleet1 != null) && (localFleet1.distance <= localFleet2.distance))
       {
         localFleet2 = localFleet1;
-        localFleet1 = next;
+        localFleet1 = localFleet2.next;
       }
       if (localFleet1 == null)
       {
-        next = null;
+        localFleet1.next = null;
         if (localFleet2 != null) {
-          next = paramFleet;
+          localFleet1.next = paramFleet;
         } else {
           first = paramFleet;
         }
       }
       else
       {
-        next = localFleet1;
+        localFleet1.next = localFleet1;
         if (localFleet2 != null) {
-          next = paramFleet;
+          localFleet1.next = paramFleet;
         } else {
           first = paramFleet;
         }
@@ -61,12 +61,12 @@ public class FleetQueue
     while (localFleet1 != paramFleet)
     {
       localFleet2 = localFleet1;
-      localFleet1 = next;
+      localFleet1 = localFleet2.next;
     }
     if (localFleet2 == null) {
-      first = next;
+      first = localFleet1.next;
     } else {
-      next = next;
+      localFleet1.next = localFleet2.next;
     }
   }
   
@@ -77,7 +77,7 @@ public class FleetQueue
     while (localFleet != null)
     {
       localStringBuffer.append(localFleet.toString());
-      localFleet = next;
+      localFleet = localFleet.next;
       localStringBuffer.append("\n");
     }
     return localStringBuffer.toString();
@@ -95,19 +95,19 @@ public class FleetQueue
       if (localFleet1.update())
       {
         if (localFleet2 == null) {
-          first = next;
+          first = localFleet1.next;
         } else {
-          next = next;
+          localFleet1.next = localFleet2.next;
         }
       }
       else
       {
         localFleet2 = localFleet1;
-        if (distance <= 0.0F) {
-          destination.attacker[owner.number] += ships;
+        if (localFleet1.distance <= 0.0F) {
+            localFleet1.destination.attacker[localFleet1.owner.number] += localFleet1.ships;
         }
       }
-      localFleet1 = next;
+      localFleet1 = localFleet1.next;
     }
   }
 }

@@ -22,7 +22,7 @@ public class Game
     if ((numPlayers < 9) && (!inProgress))
     {
       player[numPlayers] = paramPlayer;
-      game = this;
+      paramPlayer.game = this;
       numPlayers += 1;
       return true;
     }

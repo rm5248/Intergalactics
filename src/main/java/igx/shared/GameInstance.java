@@ -32,11 +32,11 @@ public class GameInstance
     generator = new Random(paramLong);
     planet = new Planet[36];
     for (int i = 0; i < 16; i++) {
-      for (j = 0; j < 16; j++) {
-        map[i][j] = 46;
+      for (int j = 0; j < 16; j++) {
+        map[i][j] = '.';
       }
     }
-    for (i = 0; i < 36; i++)
+    for (int i = 0; i < 36; i++)
     {
       planet[i] = new Planet(this, i);
       do
@@ -46,20 +46,17 @@ public class GameInstance
       } while ((map[planet[i].x][planet[i].y] != '.') || (!acceptableByBeej(i)));
       map[planet[i].x][planet[i].y] = Planet.num2char(i);
     }
-    for (i = 0; i < paramInt; i++)
+    for (int i = 0; i < paramInt; i++)
     {
       planet[i].owner = paramArrayOfPlayer[i];
       planet[i].ships = 10;
       planet[i].production = 10;
       planet[i].ratio = 40;
-      number = i;
     }
-    i = 100;
     for (int j = 0; j < players; j++)
     {
-      paramArrayOfPlayer[j].addScore(i);
-      isActive = true;
-      score = 100;
+      paramArrayOfPlayer[j].addScore(100);
+      paramArrayOfPlayer[j].isActive = true;
     }
   }
   
@@ -79,18 +76,20 @@ public class GameInstance
   public void setMap(Point[] paramArrayOfPoint)
   {
     for (int i = 0; i < paramArrayOfPoint.length; i++) {
+        int x = paramArrayOfPoint[ i ].x;
+        int y = paramArrayOfPoint[ i ].y;
       if (x != -1)
       {
         planet[i].x = x;
         planet[i].y = y;
       }
     }
-    for (i = 0; i < 16; i++) {
+    for (int i = 0; i < 16; i++) {
       for (int j = 0; j < 16; j++) {
-        map[i][j] = 46;
+        map[i][j] = '.';
       }
     }
-    for (i = 0; i < 36; i++) {
+    for (int i = 0; i < 36; i++) {
       map[planet[i].x][planet[i].y] = Planet.num2char(i);
     }
   }
@@ -131,11 +130,13 @@ public class GameInstance
     segment = paramInt3;
     for (int i = 0; i < 16; i++) {
       for (int j = 0; j < 16; j++) {
-        map[i][j] = 46;
+        map[i][j] = '.';
       }
     }
-    for (i = 0; i < 36; i++) {
-      map[x][y] = Planet.num2char(i);
+    for (int i = 0; i < 16; i++) {
+        for( int j = 0; j < 16; j++ ){
+        map[i][j] = Planet.num2char(i);
+        }
     }
   }
   
@@ -167,7 +168,7 @@ public class GameInstance
       segment = 0;
     }
     fleets.update();
-    for (i = 0; i < 36; i++)
+    for (int i = 0; i < 36; i++)
     {
       planet[i].update();
       planet[i].owner.addScore(planet[i].ratio * 1);
@@ -175,7 +176,7 @@ public class GameInstance
       planet[i].owner.addScore(planet[i].production * 10);
     }
     fleets.doScores();
-    for (i = 0; i < players; i++) {
+    for (int i = 0; i < players; i++) {
       player[i].score = (player[i].score * 10 / 17);
     }
     resolveAllConflicts = false;
