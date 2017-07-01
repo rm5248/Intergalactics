@@ -28,6 +28,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.Socket;
 import java.util.Vector;
 
 public class ClientForum
@@ -113,8 +114,8 @@ public class ClientForum
     mainContainer = new MainPanel(localDimension);
     card = new CardLayout();
     paramFrontEnd.getContainer().setLayout(card);
-    width = width;
-    height = height;
+    width = localDimension.width;
+    height = localDimension.height;
     mainContainer.setBackground(Color.black);
     int i = height / 49;
     i = FontFinder.getFont(paramToolkit, "SansSerif", 19, 50 * height / 100).getSize();
@@ -805,7 +806,8 @@ public class ClientForum
     int j = localDimension.height - localInsets.top - localInsets.bottom;
     Robot[] arrayOfRobot = new Robot[0];
     I iClass = new I( "Foo" );
-    Server s = new Server( null );
+    Socket sock = new Socket();
+    Server s = new Server( sock );
     ClientForum localObject = new ClientForum( iClass, "param", localToolkit, s );
     localFrame.add(localObject.mainContainer);
     localObject.setToPreferredSize();

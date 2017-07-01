@@ -120,7 +120,7 @@ public class I
     }
     catch (UnknownHostException localUnknownHostException)
     {
-      System.out.println("Unknown host.");
+      System.out.println("Unknown host: " + localUnknownHostException.getMessage() );
       System.exit(1);
     }
     try
@@ -129,7 +129,7 @@ public class I
     }
     catch (IOException localIOException)
     {
-      System.out.println("Unknown host.");
+      System.out.println("Unable to connect: " + localIOException.getMessage() );
       System.exit(1);
     }
     if (!server.isConnected()) {
