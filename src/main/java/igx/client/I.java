@@ -96,7 +96,7 @@ public class I
     localI.setLayout(new BorderLayout());
     localI.setBackground(Color.black);
     localI.preGame(str, true);
-    host = str;
+    localI.host = str;
   }
   
   public void play(String paramString)
@@ -142,10 +142,10 @@ public class I
     }
     setSize(localDimension);
     show();
-    size = new Dimension(width, height);
+    size = new Dimension(localDimension.width, localDimension.height);
     Insets localInsets = getInsets();
-    size.width = (size.width - left - right);
-    size.height = (size.height - top - bottom - 20);
+    size.width = (size.width - localInsets.left - localInsets.right);
+    size.height = (size.height - localInsets.top - localInsets.bottom - 20);
     ClientForum localClientForum = new ClientForum(this, "the HiVE", localToolkit, server);
     server.setForum(localClientForum);
     Image localImage = localToolkit.getImage("hive.gif");

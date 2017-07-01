@@ -53,18 +53,19 @@ public class StatusBar
     spaceWidth = fm.charWidth(' ');
     fontHeight = (fm.getAscent() + fm.getDescent() + 2);
     fontStart = fm.getAscent();
-    numPlayers = players;
+    numPlayers = paramGameInstance.players;
     height = ((numPlayers + 1 + 4) * fontHeight + 1 + 1);
   }
   
   public void addShips(int paramInt)
   {
+      String str;
     if (numShips == -1) {
       str = "";
     } else {
       str = new Integer(numShips).toString();
     }
-    String str = str + new Integer(paramInt).toString();
+    str = str + new Integer(paramInt).toString();
     setShips(Integer.parseInt(str));
   }
   
@@ -111,12 +112,12 @@ public class StatusBar
     int j = 1;
     for (int k = 0; k < paramArrayOfCText.length; k++)
     {
-      paramGraphics.setColor(color);
-      if ((text.length() > 0) && (text.charAt(0) == ' ')) {
+      paramGraphics.setColor(paramArrayOfCText[k].color);
+      if ((paramArrayOfCText[k].text.length() > 0) && (paramArrayOfCText[k].text.charAt(0) == ' ')) {
         j += spaceWidth;
       }
-      paramGraphics.drawString(text, j, i);
-      j += fm.stringWidth(text);
+      paramGraphics.drawString(paramArrayOfCText[k].text, j, i);
+      j += fm.stringWidth(paramArrayOfCText[k].text);
     }
   }
   
@@ -126,9 +127,9 @@ public class StatusBar
     arrayOfCText[0] = new CText("Message to", Color.lightGray);
     if (messageTo == -1) {
       arrayOfCText[1] = new CText(" ", Color.lightGray);
-    } else if (messageTo == NEUTRALnumber + 1) {
+    } else if (messageTo == Params.NEUTRAL + 1) {
       arrayOfCText[1] = new CText(" Forum", Color.white);
-    } else if (messageTo == NEUTRALnumber) {
+    } else if (messageTo == Params.NEUTRAL) {
       arrayOfCText[1] = new CText(" Game", Color.white);
     } else {
       arrayOfCText[1] = new CText(" " + game.player[messageTo].name, game.player[messageTo].getColor());
@@ -150,26 +151,26 @@ public class StatusBar
   public void drawPlanetInfo(Graphics paramGraphics, Planet paramPlanet, int paramInt)
   {
     CText[] arrayOfCText = new CText[6];
-    arrayOfCText[0] = new CText(new Character(planetChar).toString(), owner.getColor());
-    if (owner == Player.NEUTRAL)
+    arrayOfCText[0] = new CText(new Character(paramPlanet.planetChar).toString(), paramPlanet.owner.getColor());
+    if (paramPlanet.owner == Player.NEUTRAL)
     {
       arrayOfCText[1] = new CText(" (", Color.lightGray);
-      if (blackHole) {
+      if (paramPlanet.blackHole) {
         arrayOfCText[2] = new CText("Black Hole", Params.NEUTRALCOLOR);
       } else {
         arrayOfCText[2] = new CText("Neutral", Params.NEUTRALCOLOR);
       }
       arrayOfCText[3] = new CText(")", Color.lightGray);
-      void tmp141_138 = new CText("", Color.black);
+      CText tmp141_138 = new CText("", Color.black);
       arrayOfCText[5] = tmp141_138;
       arrayOfCText[4] = tmp141_138;
     }
     else
     {
       arrayOfCText[1] = new CText(" (", Color.lightGray);
-      arrayOfCText[2] = new CText(new Integer(ships).toString(), Color.white);
+      arrayOfCText[2] = new CText(new Integer(paramPlanet.ships).toString(), Color.white);
       arrayOfCText[3] = new CText(" ships,", Color.lightGray);
-      arrayOfCText[4] = new CText(" " + new Integer(ratio).toString(), Color.white);
+      arrayOfCText[4] = new CText(" " + new Integer(paramPlanet.ratio).toString(), Color.white);
       arrayOfCText[5] = new CText("% ratio)", Color.lightGray);
     }
     drawLine(paramGraphics, arrayOfCText, paramInt);
@@ -205,23 +206,23 @@ public class StatusBar
       }
       arrayOfPlayer[j] = game.player[i];
     }
-    for (i = 0; i < numPlayers; i++)
+    for (int i = 0; i < numPlayers; i++)
     {
-      String str1 = "(" + (number + 1) + ") " + name;
+      String str1 = "(" + (arrayOfPlayer[i].number + 1) + ") " + arrayOfPlayer[i].name;
       paramGraphics.setColor(arrayOfPlayer[i].getColor());
-      if (!isHuman) {
+      if (!arrayOfPlayer[i].isHuman) {
         str1 = str1 + "(robot)";
-      } else if (!isActive) {
+      } else if (!arrayOfPlayer[i].isActive) {
         str1 = str1 + "(quit)";
-      } else if (!isPresent) {
+      } else if (!arrayOfPlayer[i].isPresent) {
         str1 = str1 + "(missing)";
-      } else if (status == 1) {
+      } else if (arrayOfPlayer[i].status == 1) {
         str1 = str1 + "(ready to quit)";
       }
       clearLine(paramGraphics, i);
       paramGraphics.drawString(str1, 1, fontHeight * i + 1 + fontStart);
-      String str2 = new Integer(score).toString();
-      if (isActive) {
+      String str2 = new Integer(arrayOfPlayer[i].score).toString();
+      if (arrayOfPlayer[i].isActive) {
         paramGraphics.drawString(str2, 3 * width / 4, fontHeight * i + 1 + fontStart);
       }
     }
@@ -342,9 +343,9 @@ public class StatusBar
   public void planetChanged(int paramInt)
   {
     Planet localPlanet = game.planet[paramInt];
-    if ((selectedPlanet != null) && (planetChar == selectedPlanet.planetChar)) {
+    if ((selectedPlanet != null) && (localPlanet.planetChar == selectedPlanet.planetChar)) {
       updateSelectedPlanet();
-    } else if ((targetedPlanet != null) && (planetChar == targetedPlanet.planetChar)) {
+    } else if ((targetedPlanet != null) && (localPlanet.planetChar == targetedPlanet.planetChar)) {
       updateTargetedPlanet();
     }
   }
@@ -365,7 +366,9 @@ public class StatusBar
   
   public void planetMoved(Planet paramPlanet)
   {
-    if ((targetedPlanet != null) && ((planetChar == selectedPlanet.planetChar) || (planetChar == targetedPlanet.planetChar)))
+    if ((targetedPlanet != null) && 
+            ((paramPlanet.planetChar == selectedPlanet.planetChar) || 
+            (paramPlanet.planetChar == targetedPlanet.planetChar)))
     {
       planetDistance();
       Graphics localGraphics = getDefaultGraphics();

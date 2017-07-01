@@ -131,7 +131,8 @@ public class Galaxy
   public void addMessageChar(char paramChar)
   {
     Graphics localGraphics = getDefaultGraphics();
-    for (int i = 0; (i < 3) && (messageRow[i].length() > 0); i++) {}
+    int i;
+    for (i = 0; (i < 3) && (messageRow[i].length() > 0); i++) {}
     if (i != 0) {
       i--;
     }
@@ -195,8 +196,8 @@ public class Galaxy
     paramGraphics.setXORMode(Color.black);
     Planet localPlanet1 = game.planet[paramInt1];
     Planet localPlanet2 = game.planet[paramInt2];
-    int i = x - x;
-    int j = y - y;
+    int i = localPlanet1.x - localPlanet2.x;
+    int j = localPlanet1.y - localPlanet2.y;
     float f1 = i;
     float f2 = j;
     int i3 = planetSize - 1;
@@ -209,35 +210,35 @@ public class Galaxy
     {
       if (j < 0)
       {
-        m = planetSize * y - 1;
-        i1 = planetSize * y + planetSize;
+        m = planetSize * localPlanet1.y - 1;
+        i1 = planetSize * localPlanet1.y + planetSize;
         j = -j;
       }
       else
       {
-        m = planetSize * y + planetSize;
-        i1 = planetSize * y - 1;
+        m = planetSize * localPlanet1.y + planetSize;
+        i1 = planetSize * localPlanet1.y - 1;
       }
       i2 = i3 * (planetSize + planetSize * i / j) / 2 / planetSize;
-      k = planetSize * x + i2;
-      n = planetSize * x + planetSize - 1 - i2;
+      k = planetSize * localPlanet1.x + i2;
+      n = planetSize * localPlanet1.x + planetSize - 1 - i2;
     }
     else
     {
       if (i < 0)
       {
-        k = planetSize * x - 1;
-        n = planetSize * x + planetSize;
+        k = planetSize * localPlanet1.x - 1;
+        n = planetSize * localPlanet1.x + planetSize;
         i = -i;
       }
       else
       {
-        k = planetSize * x + planetSize;
-        n = planetSize * x - 1;
+        k = planetSize * localPlanet1.x + planetSize;
+        n = planetSize * localPlanet1.x - 1;
       }
       i2 = i3 * (planetSize + planetSize * j / i) / 2 / planetSize;
-      m = planetSize * y + i2;
-      i1 = planetSize * y + planetSize - 1 - i2;
+      m = planetSize * localPlanet1.y + i2;
+      i1 = planetSize * localPlanet1.y + planetSize - 1 - i2;
     }
     paramGraphics.setColor(CONNECTION_COLOUR);
     paramGraphics.drawLine(n, i1, k, m);
@@ -336,7 +337,7 @@ public class Galaxy
     int j = planetSize * paramInt2;
     localGraphics.setColor(Color.black);
     localGraphics.fillRect(i, j, planetSize, planetSize);
-    repaintPlanet(localGraphics, Planet.char2num(planetChar));
+    repaintPlanet(localGraphics, Planet.char2num(paramPlanet.planetChar));
   }
   
   public void paint(Graphics paramGraphics)
@@ -393,7 +394,8 @@ public class Galaxy
   void repaintMessageRow()
   {
     Graphics localGraphics = getDefaultGraphics();
-    for (int i = 0; (i < 3) && (messageRow[i].length() > 0); i++) {}
+    int i;
+    for (i = 0; (i < 3) && (messageRow[i].length() > 0); i++) {}
     i--;
     if (i == -1) {
       return;
@@ -417,41 +419,41 @@ public class Galaxy
   public void repaintPlanet(Graphics paramGraphics, int paramInt)
   {
     Planet localPlanet = game.planet[paramInt];
-    int i = planetSize * x;
-    int j = planetSize * y;
+    int i = planetSize * localPlanet.x;
+    int j = planetSize * localPlanet.y;
     int k = i + planetSize - 1;
     int m = j + planetSize - 1;
     int n = planetSize * planetSize / 100;
     paramGraphics.setColor(Color.black);
     paramGraphics.fillRect(i, j, planetSize, planetSize);
-    paramGraphics.setColor(new Color(planetShade, planetShade, planetShade));
+    paramGraphics.setColor(new Color(localPlanet.planetShade, localPlanet.planetShade, localPlanet.planetShade));
     paramGraphics.fillOval(i + planetSize / 2 - n / 2, j + planetSize / 2 - n / 2, n, n);
-    paramGraphics.setColor(igx.shared.Params.PLAYERCOLOR[owner.number]);
-    if (owner.number == 9)
+    paramGraphics.setColor(igx.shared.Params.PLAYERCOLOR[localPlanet.owner.number]);
+    if (localPlanet.owner.number == 9)
     {
-      paramGraphics.drawString(new Character(planetChar).toString(), i + 2, j + fontHeight - 1);
+      paramGraphics.drawString(new Character(localPlanet.planetChar).toString(), i + 2, j + fontHeight - 1);
     }
     else
     {
-      paramGraphics.drawString(planetChar + "  " + production, i + 2, j + fontHeight - 1);
-      paramGraphics.drawString(new Integer(ships).toString(), i + 2, j + 2 * fontHeight - 1);
+      paramGraphics.drawString(localPlanet.planetChar + "  " + localPlanet.production, i + 2, j + fontHeight - 1);
+      paramGraphics.drawString(new Integer(localPlanet.ships).toString(), i + 2, j + 2 * fontHeight - 1);
     }
     int i2;
     int i3;
-    if (attackingPlayer != -1) {
-      if (attackingPlayer == -2)
+    if (localPlanet.attackingPlayer != -1) {
+      if (localPlanet.attackingPlayer == -2)
       {
-        String str = new Integer(totalAttackingShips).toString();
+        String str = new Integer(localPlanet.totalAttackingShips).toString();
         i2 = fontMetric.stringWidth(str);
         i3 = 0;
         paramGraphics.setXORMode(Color.white);
         Color localColor;
         int i5;
         for (int i4 = 0; i4 < game.players; i4++) {
-          if (attacker[i4] != 0)
+          if (localPlanet.attacker[i4] != 0)
           {
             localColor = igx.shared.Params.PLAYERCOLOR[i4];
-            i5 = attacker[i4] * i2 / totalAttackingShips;
+            i5 = localPlanet.attacker[i4] * i2 / localPlanet.totalAttackingShips;
             paramGraphics.setColor(localColor);
             paramGraphics.fillRect(i + 2 + i3, j + 2 * fontHeight - 1, i5, fontHeight);
             i3 += i5;
@@ -462,11 +464,12 @@ public class Galaxy
         paramGraphics.drawString(str, i + 2, j + 3 * fontHeight - 1);
         paramGraphics.setXORMode(Color.white);
         i3 = 0;
+        int i4;
         for (i4 = 0; i4 < game.players; i4++) {
-          if (attacker[i4] != 0)
+          if (localPlanet.attacker[i4] != 0)
           {
             localColor = igx.shared.Params.PLAYERCOLOR[i4];
-            i5 = attacker[i4] * i2 / totalAttackingShips;
+            i5 = localPlanet.attacker[i4] * i2 / localPlanet.totalAttackingShips;
             paramGraphics.setColor(localColor);
             paramGraphics.fillRect(i + 2 + i3, j + 2 * fontHeight - 1, i5, fontHeight);
             i3 += i5;
@@ -476,14 +479,14 @@ public class Galaxy
       }
       else
       {
-        paramGraphics.setColor(igx.shared.Params.PLAYERCOLOR[attackingPlayer]);
-        paramGraphics.drawString(new Integer(totalAttackingShips).toString(), i + 2, j + 3 * fontHeight - 1);
+        paramGraphics.setColor(igx.shared.Params.PLAYERCOLOR[localPlanet.attackingPlayer]);
+        paramGraphics.drawString(new Integer(localPlanet.totalAttackingShips).toString(), i + 2, j + 3 * fontHeight - 1);
       }
     }
-    if (owner.number != 9)
+    if (localPlanet.owner.number != 9)
     {
-      int i1 = ratio;
-      i2 = (60 - ratio) * (zeroRatioY - highRatioY) / 60;
+      int i1 = localPlanet.ratio;
+      i2 = (60 - localPlanet.ratio) * (zeroRatioY - highRatioY) / 60;
       i3 = k - 2 - ratioWidth;
       paramGraphics.setColor(LOWCOLOUR);
       paramGraphics.fillRect(i3, lowRatioY + j, ratioWidth, lowRatioHeight);
@@ -519,7 +522,7 @@ public class Galaxy
     for (int j = 0; j < i; j++)
     {
       Point localPoint = (Point)oldFleets.elementAt(j);
-      drawFleet(paramGraphics, x, y, me.number);
+      drawFleet(paramGraphics, localPoint.x, localPoint.y, me.number);
     }
     paramGraphics.setPaintMode();
   }
@@ -531,20 +534,21 @@ public class Galaxy
     localGraphics.setXORMode(Color.black);
     oldFleets = new Vector();
     localGraphics.setColor(Color.white);
-    for (Fleet localFleet = game.fleets.first; localFleet != null; localFleet = next) {
-      if ((owner == me) && (distance > 0.0F))
+    for (Fleet localFleet = game.fleets.first; localFleet != null; localFleet = localFleet.next) {
+      if ((localFleet.owner == me) && (localFleet.distance > 0.0F))
       {
-        int i = source.x * planetSize + planetSize / 2;
-        int j = source.y * planetSize + planetSize / 2;
-        int k = destination.x * planetSize + planetSize / 2;
-        int m = destination.y * planetSize + planetSize / 2;
-        float f1 = (float)Math.sqrt((destination.x - source.x) * (destination.x - source.x) + (destination.y - source.y) * (destination.y - source.y));
-        float f2 = distance / f1;
+        int i = localFleet.source.x * planetSize + planetSize / 2;
+        int j = localFleet.source.y * planetSize + planetSize / 2;
+        int k = localFleet.destination.x * planetSize + planetSize / 2;
+        int m = localFleet.destination.y * planetSize + planetSize / 2;
+        float f1 = (float)Math.sqrt((localFleet.destination.x - localFleet.source.x) * (localFleet.destination.x - localFleet.source.x) + 
+                (localFleet.destination.y - localFleet.source.y) * (localFleet.destination.y - localFleet.source.y));
+        float f2 = localFleet.distance / f1;
         int n = k + (int)((i - k) * f2);
         int i1 = m + (int)((j - m) * f2);
         Point localPoint = new Point(n, i1);
         oldFleets.addElement(localPoint);
-        drawFleet(localGraphics, x, y, me.number);
+        drawFleet(localGraphics, localPoint.x, localPoint.y, me.number);
       }
     }
     localGraphics.setPaintMode();
@@ -568,11 +572,11 @@ public class Galaxy
   {
     paramGraphics.setXORMode(Color.black);
     Planet localPlanet = game.planet[paramInt];
-    int i = planetSize * x;
-    int j = planetSize * y;
+    int i = planetSize * localPlanet.x;
+    int j = planetSize * localPlanet.y;
     int k = i + planetSize - 1;
     int m = j + planetSize - 1;
-    paramGraphics.setColor(igx.shared.Params.PLAYERCOLOR[owner.number]);
+    paramGraphics.setColor(igx.shared.Params.PLAYERCOLOR[localPlanet.owner.number]);
     paramGraphics.drawLine(i, j, k, j);
     paramGraphics.drawLine(k, j, k, m);
     paramGraphics.drawLine(k, m, i, m);

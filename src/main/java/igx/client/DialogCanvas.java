@@ -215,7 +215,7 @@ public class DialogCanvas
     localFrame.add(localDialogCanvas);
     localFrame.pack();
     localFrame.show();
-    localFrame.setSize(400, height + 20);
+    localFrame.setSize(400, localDialogCanvas.height + 20);
     localFrame.validate();
   }
   
@@ -236,8 +236,8 @@ public class DialogCanvas
     {
       paramGraphics.setFont(font);
       paramGraphics.setColor(ERROR_COLOUR);
-      i = fm.stringWidth(dialogText);
-      j = (width - i) / 2;
+      int i = fm.stringWidth(dialogText);
+      int j = (width - i) / 2;
       int k = 4 * fontHeight;
       paramGraphics.drawString(dialogText, j, k);
     }

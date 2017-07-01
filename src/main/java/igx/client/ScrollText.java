@@ -43,7 +43,7 @@ public class ScrollText
   
   public void addText(CText paramCText)
   {
-    if (text == null)
+    if (paramCText.text == null)
     {
       lineWidth = 0;
       currentLine += 1;
@@ -51,31 +51,32 @@ public class ScrollText
     }
     else
     {
-      Vector localVector2 = getWords(text);
-      CText localCText = new CText("", color);
+      Vector localVector2 = getWords(paramCText.text);
+      CText localCText = new CText("", paramCText.color);
       for (int j = 0; j < localVector2.size(); j++)
       {
         String str = (String)localVector2.elementAt(j);
         int i = fm.stringWidth(str) + spaceWidth;
         if (i + lineWidth < width)
         {
-          text += str;
+          paramCText.text += str;
           lineWidth += i;
         }
         else
         {
+            Vector localVector1 = new Vector();
           localVector1 = (Vector)lines.elementAt(currentLine);
-          localCText.setWidth(fm.stringWidth(text));
+          localCText.setWidth(fm.stringWidth(paramCText.text));
           localVector1.addElement(localCText);
           currentLine += 1;
           lineWidth = (i + spaceWidth);
           localVector1 = new Vector();
           lines.addElement(localVector1);
-          localCText = new CText(" " + str, color);
+          localCText = new CText(" " + str, paramCText.color);
         }
       }
       Vector localVector1 = (Vector)lines.elementAt(currentLine);
-      localCText.setWidth(fm.stringWidth(text));
+      localCText.setWidth(fm.stringWidth(paramCText.text));
       localVector1.addElement(localCText);
     }
     while (currentLine >= numLines)
@@ -100,7 +101,8 @@ public class ScrollText
   {
     Vector localVector = new Vector();
     int j;
-    for (int i = 0; (j = paramString.indexOf(' ', i)) != -1; i = j + 1) {
+    int i;
+    for (i = 0; (j = paramString.indexOf(' ', i)) != -1; i = j + 1) {
       localVector.addElement(paramString.substring(i, j + 1));
     }
     localVector.addElement(paramString.substring(i, paramString.length()));
@@ -124,8 +126,8 @@ public class ScrollText
       for (int n = 0; n < k; n++)
       {
         CText localCText = (CText)localVector.elementAt(n);
-        paramGraphics.setColor(color);
-        paramGraphics.drawString(text, i, j);
+        paramGraphics.setColor(localCText.color);
+        paramGraphics.drawString(localCText.text, i, j);
         i += width;
       }
       j += fontHeight;

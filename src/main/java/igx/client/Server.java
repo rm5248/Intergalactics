@@ -105,16 +105,17 @@ public class Server
           {
             Object localObject3 = localObject1;
             localObject4 = receive();
-            i1 = Integer.parseInt(receive());
-            localVector.addElement(new Robot(localObject3, (String)localObject4, i1));
+            int i1 = Integer.parseInt(receive());
+            localVector.addElement(new Robot(localObject3.toString(), (String)localObject4, i1));
             localObject1 = receive();
           }
           m = localVector.size();
-          localObject4 = new Robot[m];
+          Robot[] robotArray = new Robot[m];
           for (int i1 = 0; i1 < m; i1++) {
-            localObject4[i1] = ((Robot)localVector.elementAt(i1));
+              Robot r = (Robot)localVector.elementAt(i1);
+            robotArray[i1] = r;
           }
-          forum.setBotList((Robot[])localObject4);
+          forum.setBotList(robotArray);
           forum.registerClient();
           i = 1;
         }
@@ -162,7 +163,11 @@ public class Server
                 long l2 = Long.parseLong(receive());
                 localObject4 = receive();
                 Point[] arrayOfPoint = new Point[36];
-                for (int i3 = 0; !((String)localObject4).equals("<"); i3++)
+                int i3;
+                //ROBERT unsure where numPlayers and player array come from
+                int numPlayers = 0;
+                Player[] player = new Player[ 0 ];
+                for (i3 = 0; !((String)localObject4).equals("<"); i3++)
                 {
                   int i4 = Integer.parseInt((String)localObject4);
                   localObject4 = receive();
@@ -264,42 +269,42 @@ public class Server
                 for (int i5 = 0; i5 < m; i5++)
                 {
                   arrayOfPlayer[i5] = new Player(receive());
-                  isActive = receiveBoolean();
-                  isHuman = receiveBoolean();
-                  status = receiveInt();
-                  number = i5;
-                  if ((isHuman) && (forum.getPlayer(name) == null)) {
-                    isPresent = false;
+                  arrayOfPlayer[i5].isActive = receiveBoolean();
+                  arrayOfPlayer[i5].isHuman = receiveBoolean();
+                  arrayOfPlayer[i5].status = receiveInt();
+                  arrayOfPlayer[i5].number = i5;
+                  if ((arrayOfPlayer[i5].isHuman) && (forum.getPlayer(name) == null)) {
+                    arrayOfPlayer[i5].isPresent = false;
                   }
                 }
                 Planet[] arrayOfPlanet = new Planet[36];
                 for (i6 = 0; i6 < 36; i6++)
                 {
                   arrayOfPlanet[i6] = new Planet(i6, (GameInstance)localObject1);
-                  x = receiveInt();
-                  y = receiveInt();
+                  arrayOfPlanet[i6].x = receiveInt();
+                  arrayOfPlanet[i6].y = receiveInt();
                   int i7 = receiveInt();
                   if (i7 == 9) {
-                    owner = Player.NEUTRAL;
+                    arrayOfPlanet[i6].owner = Player.NEUTRAL;
                   } else {
-                    owner = arrayOfPlayer[i7];
+                    arrayOfPlanet[i6].owner = arrayOfPlayer[i7];
                   }
-                  production = receiveInt();
-                  ratio = receiveInt();
-                  ships = receiveInt();
-                  defenceRatio = receiveInt();
-                  prodTurns = receiveInt();
-                  blackHole = receiveBoolean();
-                  for (localObject5 = receive(); !((String)localObject5).equals("~"); localObject5 = receive())
+                  arrayOfPlanet[i6].production = receiveInt();
+                  arrayOfPlanet[i6].ratio = receiveInt();
+                  arrayOfPlanet[i6].ships = receiveInt();
+                  arrayOfPlanet[i6].defenceRatio = receiveInt();
+                  arrayOfPlanet[i6].prodTurns = receiveInt();
+                  arrayOfPlanet[i6].blackHole = receiveBoolean();
+                  for (String localObject5 = receive(); !((String)localObject5).equals("~"); localObject5 = receive())
                   {
                     int i8 = Integer.parseInt((String)localObject5);
-                    attacker[i8] = receiveInt();
+                    arrayOfPlanet[i6].attacker[i8] = receiveInt();
                   }
                 }
                 FleetQueue localFleetQueue = new FleetQueue((GameInstance)localObject1);
                 for (String str4 = receive(); !str4.equals("~"); str4 = receive())
                 {
-                  localObject5 = arrayOfPlanet[Integer.parseInt(str4)];
+                  Planet localObject5 = arrayOfPlanet[Integer.parseInt(str4)];
                   Planet localPlanet = arrayOfPlanet[receiveInt()];
                   int i9 = receiveInt();
                   int i10 = receiveInt();
@@ -312,10 +317,10 @@ public class Server
                 forum.selectGame((String)localObject2);
                 dispatch = new Dispatcher((GameInstance)localObject1, this, (String)localObject2);
                 forum.watchGame(name, (String)localObject2);
-                Object localObject5 = ((GameInstance)localObject1).getPlayer(name);
+                Player localObject5 = ((GameInstance)localObject1).getPlayer(name);
                 if (localObject5 != null)
                 {
-                  isPresent = true;
+                  localObject5.isPresent = true;
                   forum.displayGame(dispatch, false);
                 }
                 else
@@ -352,9 +357,9 @@ public class Server
                 if (j == -1)
                 {
                   Player localPlayer2 = forum.getPlayer(name);
-                  isActive = false;
-                  inGame = false;
-                  game = null;
+                  localPlayer2.isActive = false;
+                  localPlayer2.inGame = false;
+                  localPlayer2.game = null;
                   forum.displayForum(true);
                 }
                 else

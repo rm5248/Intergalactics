@@ -75,8 +75,8 @@ public class GameListCanvas
   {
     for (int i = 3; i < games * 2 + 3; i += 2)
     {
-      String str = row[i].elements.elementAt(1)).text;
-      if (str.equals(name)) {
+      String str = ((TextElement)(row[i].elements.elementAt(1))).text;
+      if (str.equals(paramGame.name)) {
         return i;
       }
     }
@@ -130,17 +130,17 @@ public class GameListCanvas
     }
     Vector localVector1 = new Vector();
     Vector localVector2 = new Vector();
-    if (inProgress)
+    if (paramGame.inProgress)
     {
       localVector1.addElement(new TextElement("In Progress", IN_PROGRESS_GAME_COLOUR, statusColumn));
-      localVector1.addElement(new TextElement(name, IN_PROGRESS_GAME_COLOUR, gameColumn));
+      localVector1.addElement(new TextElement(paramGame.name, IN_PROGRESS_GAME_COLOUR, gameColumn));
     }
     else
     {
       localVector1.addElement(new TextElement("New", NEW_GAME_COLOUR, statusColumn));
-      localVector1.addElement(new TextElement(name, NEW_GAME_COLOUR, gameColumn));
+      localVector1.addElement(new TextElement(paramGame.name, NEW_GAME_COLOUR, gameColumn));
     }
-    for (int j = 0; j < numPlayers; j++)
+    for (int j = 0; j < paramGame.numPlayers; j++)
     {
       Vector localVector3 = null;
       if (j < 4) {
@@ -149,11 +149,11 @@ public class GameListCanvas
         localVector3 = localVector2;
       }
       if ((j == 0) || (j == 4)) {
-        localVector3.addElement(new TextElement(player[j].name, igx.shared.Params.PLAYERCOLOR[j], playerColumn));
+        localVector3.addElement(new TextElement(paramGame.player[j].name, igx.shared.Params.PLAYERCOLOR[j], playerColumn));
       } else {
-        localVector3.addElement(new TextElement(player[j].name, igx.shared.Params.PLAYERCOLOR[j], -1));
+        localVector3.addElement(new TextElement(paramGame.player[j].name, igx.shared.Params.PLAYERCOLOR[j], -1));
       }
-      if (j < numPlayers - 1) {
+      if (j < paramGame.numPlayers - 1) {
         localVector3.addElement(new TextElement(", ", COMMA_COLOUR, -1));
       }
     }

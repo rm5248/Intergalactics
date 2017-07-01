@@ -73,13 +73,13 @@ public class ClientUI
     super(new BorderLayout());
     frontEnd = paramFrontEnd;
     dispatcher = paramDispatcher;
-    game = Game;
+    game = paramDispatcher.Game;
     forum = paramClientForum;
     watcher = paramBoolean;
     enableEvents(8L);
     Dimension localDimension1 = paramFrontEnd.getDimensions();
-    width = width;
-    height = height;
+    width = localDimension1.width;
+    height = localDimension1.height;
     fontSize = (height / 60);
     Toolkit localToolkit = Toolkit.getDefaultToolkit();
     galaxySize = (height / 16 * 16);
@@ -91,9 +91,9 @@ public class ClientUI
     add(galaxy, "West");
     int i = FontFinder.getFont(localToolkit, "SansSerif", 5, 13 * height / 100).getSize();
     if (paramBoolean) {
-      statusBar = new StatusBar(game, i, localToolkit, width - height - height / 48, -1, clientName);
+      statusBar = new StatusBar(game, i, localToolkit, width - height - height / 48, -1, paramClientForum.clientName);
     } else {
-      statusBar = new StatusBar(game, height / 42, localToolkit, width - height - height / 48, getMenumber, clientName);
+      statusBar = new StatusBar(game, height / 42, localToolkit, width - height - height / 48, -1, paramClientForum.clientName);
     }
     buttonBar = new ButtonCanvas(height / 54, localToolkit, width - height - height / 48, 0);
     buttonBar.height = ((14 * buttonBar.buttonHeight / 10 + 1) * 2);
@@ -102,12 +102,12 @@ public class ClientUI
     String str = "(M)essage (F1)";
     Dimension localDimension2 = buttonBar.buttonDimensions(str);
     Point localPoint = new Point((j - width) / 2, 0 * (14 * buttonBar.buttonHeight / 10 + 1));
-    buttonBar.addButton(x, y, str);
+    buttonBar.addButton(localPoint.x, localPoint.y, str);
     messagePoint = localPoint;
     str = "(S)ound On/Off";
     localDimension2 = buttonBar.buttonDimensions(str);
     localPoint = new Point((j - width) / 2 + j, 0 * (14 * buttonBar.buttonHeight / 10 + 1));
-    buttonBar.addButton(x, y, str);
+    buttonBar.addButton(localPoint.x, localPoint.y, str);
     str = "(F)orum";
     localDimension2 = buttonBar.buttonDimensions(str);
     if (paramBoolean) {
@@ -115,15 +115,15 @@ public class ClientUI
     } else {
       localPoint = new Point((j - width) / 2, 1 * (14 * buttonBar.buttonHeight / 10 + 1));
     }
-    buttonBar.addButton(x, y, str);
+    buttonBar.addButton(localPoint.x, localPoint.y, str);
     if (!paramBoolean)
     {
       str = "(Q)uit Game";
       localDimension2 = buttonBar.buttonDimensions(str);
       localPoint = new Point((j - width) / 2 + j, 1 * (14 * buttonBar.buttonHeight / 10 + 1));
-      buttonBar.addButton(x, y, str);
+      buttonBar.addButton(localPoint.x, localPoint.y, str);
     }
-    quitPoint = new Point(x + width, y);
+    quitPoint = new Point(localPoint.x + width, localPoint.y);
     buttonBar.prepareButtons();
     messageBoard = new ScrollText(fontSize, localToolkit, width - height - height / 48, height - statusBar.height - buttonBar.height);
     sidebar.add(statusBar, "North");
@@ -198,14 +198,14 @@ public class ClientUI
       i = Integer.parseInt(str);
       if (i == -1)
       {
-        messageReceiver = (NEUTRALnumber + 1);
+        messageReceiver = (Params.NEUTRAL + 1);
         statusBar.messageMode(messageReceiver);
         mode = 4;
         setFocus();
       }
       else if (i == 0)
       {
-        messageReceiver = NEUTRALnumber;
+        messageReceiver = Params.NEUTRAL;
         statusBar.messageMode(messageReceiver);
         mode = 4;
         setFocus();
@@ -325,13 +325,13 @@ public class ClientUI
       }
       else if ((i == 10) || (i == 48))
       {
-        messageReceiver = NEUTRALnumber;
+        messageReceiver = Params.NEUTRAL;
         statusBar.messageMode(messageReceiver);
         mode = 4;
       }
       else if (c == '-')
       {
-        messageReceiver = (NEUTRALnumber + 1);
+        messageReceiver = (Params.NEUTRAL + 1);
         statusBar.messageMode(messageReceiver);
         mode = 4;
       }
@@ -347,7 +347,7 @@ public class ClientUI
       }
       else if (isMessageChar(c))
       {
-        messageReceiver = (NEUTRALnumber + 1);
+        messageReceiver = (Params.NEUTRAL + 1);
         statusBar.messageMode(messageReceiver);
         mode = 4;
         galaxy.addMessageChar(c);
@@ -561,19 +561,19 @@ public class ClientUI
   
   boolean ours(Fleet paramFleet)
   {
-    return owner == dispatcher.getMe();
+    return paramFleet.owner == dispatcher.getMe();
   }
   
   boolean ours(Planet paramPlanet)
   {
-    return owner == dispatcher.getMe();
+    return paramPlanet.owner == dispatcher.getMe();
   }
   
   public void postArrival(String paramString)
   {
     frontEnd.play("arrive.au");
     Player localPlayer = game.getPlayer(paramString);
-    if ((localPlayer == null) || (!isActive))
+    if ((localPlayer == null) || (!localPlayer.isActive))
     {
       messageBoard.addText(new CText(paramString + " just arrived at the forum!", Color.orange));
     }
@@ -593,11 +593,11 @@ public class ClientUI
     } else if (ours(paramPlanet)) {
       frontEnd.play("attack.au");
     }
-    CText localCText1 = new CText(owner.name + " ", owner.getColor());
+    CText localCText1 = new CText(paramFleet.owner.name + " ", paramFleet.owner.getColor());
     CText localCText2 = new CText("attacks ", Color.lightGray);
-    CText localCText3 = new CText(new Character(planetChar).toString() + " ", owner.getColor());
+    CText localCText3 = new CText(new Character(paramPlanet.planetChar).toString() + " ", paramPlanet.owner.getColor());
     CText localCText4 = new CText("with ", Color.lightGray);
-    CText localCText5 = new CText(new Integer(ships).toString() + " ", Color.white);
+    CText localCText5 = new CText(new Integer(paramFleet.ships).toString() + " ", Color.white);
     CText localCText6 = new CText("ships.", Color.lightGray);
     messageBoard.addText(localCText1);
     messageBoard.addText(localCText2);
@@ -613,9 +613,9 @@ public class ClientUI
     if (ours(paramFleet)) {
       frontEnd.play("nothing.au");
     }
-    CText localCText1 = new CText("" + ships, owner.getColor());
+    CText localCText1 = new CText("" + paramFleet.ships, paramFleet.owner.getColor());
     CText localCText2 = new CText(" ships fly in to the black hole at ", Color.lightGray);
-    CText localCText3 = new CText("" + destination.planetChar, destination.owner.getColor());
+    CText localCText3 = new CText("" + paramFleet.destination.planetChar, paramFleet.destination.owner.getColor());
     CText localCText4 = new CText(".", Color.lightGray);
     messageBoard.addText(localCText1);
     messageBoard.addText(localCText2);
@@ -639,7 +639,7 @@ public class ClientUI
     CText localCText2 = new CText("->", Color.lightGray);
     CText localCText3;
     if (paramPlayer != Player.NEUTRAL) {
-      localCText3 = new CText(name, paramPlayer.getColor());
+      localCText3 = new CText(paramPlayer.name, paramPlayer.getColor());
     } else {
       localCText3 = new CText("GAME", Color.white);
     }
@@ -676,9 +676,9 @@ public class ClientUI
     } else if (ours(paramPlanet)) {
       frontEnd.play("invaded.au");
     }
-    CText localCText1 = new CText(owner.name + " ", owner.getColor());
+    CText localCText1 = new CText(paramFleet.owner.name + " ", paramFleet.owner.getColor());
     CText localCText2 = new CText("invades ", Color.lightGray);
-    CText localCText3 = new CText(new Character(planetChar).toString(), owner.getColor());
+    CText localCText3 = new CText(new Character(paramPlanet.planetChar).toString(), paramPlanet.owner.getColor());
     CText localCText4 = new CText(".", Color.lightGray);
     messageBoard.addText(localCText1);
     messageBoard.addText(localCText2);
@@ -696,10 +696,10 @@ public class ClientUI
     CText localCText3;
     if (i == 0)
     {
-      localCText1 = new CText(name, paramPlayer1.getColor());
+      localCText1 = new CText(paramPlayer1.name, paramPlayer1.getColor());
       localCText2 = new CText("->", Color.lightGray);
       if (paramPlayer2 != Player.NEUTRAL) {
-        localCText3 = new CText(name, paramPlayer2.getColor());
+        localCText3 = new CText(paramPlayer2.name, paramPlayer2.getColor());
       } else {
         localCText3 = new CText("GAME", Color.white);
       }
@@ -726,7 +726,7 @@ public class ClientUI
     drawMonitor.lock();
     galaxy.repaintXORs();
     for (int i = 0; i < 36; i++) {
-      if (game.dirty[i] != 0)
+      if (game.dirty[i] != false)
       {
         redrawPlanet(i);
         statusBar.planetChanged(i);
@@ -766,7 +766,7 @@ public class ClientUI
   public void postPlayerQuit(Player paramPlayer)
   {
     frontEnd.play("quit.au");
-    CText localCText1 = new CText(name + " ", paramPlayer.getColor());
+    CText localCText1 = new CText(paramPlayer.name + " ", paramPlayer.getColor());
     CText localCText2 = new CText("abdicates!", Color.lightGray);
     messageBoard.addText(localCText1);
     messageBoard.addText(localCText2);
@@ -781,7 +781,7 @@ public class ClientUI
     if (paramInt == 0)
     {
       frontEnd.play("quit.au");
-      localCText1 = new CText(name + " ", paramPlayer.getColor());
+      localCText1 = new CText(paramPlayer.name + " ", paramPlayer.getColor());
       localCText2 = new CText("abdicates!", Color.lightGray);
       messageBoard.addText(localCText1);
       messageBoard.addText(localCText2);
@@ -789,7 +789,7 @@ public class ClientUI
     }
     else if (paramInt == 1)
     {
-      localCText1 = new CText(name + " ", paramPlayer.getColor());
+      localCText1 = new CText(paramPlayer.name + " ", paramPlayer.getColor());
       localCText2 = new CText("is ready to quit.", Color.lightGray);
       messageBoard.addText(localCText1);
       messageBoard.addText(localCText2);
@@ -810,7 +810,7 @@ public class ClientUI
     }
     CText localCText1 = new CText(new Integer(paramInt).toString() + " ", Color.white);
     CText localCText2 = new CText("reinforcements arrive at ", Color.lightGray);
-    CText localCText3 = new CText(new Character(planetChar).toString(), owner.getColor());
+    CText localCText3 = new CText(new Character(paramPlanet.planetChar).toString(), paramPlanet.owner.getColor());
     CText localCText4 = new CText(".", Color.lightGray);
     messageBoard.addText(localCText1);
     messageBoard.addText(localCText2);
@@ -826,9 +826,9 @@ public class ClientUI
     } else if (ours(paramPlanet)) {
       frontEnd.play("repelled.au");
     }
-    CText localCText1 = new CText(name + " ", paramPlayer.getColor());
+    CText localCText1 = new CText(paramPlayer.name + " ", paramPlayer.getColor());
     CText localCText2 = new CText("was repelled from ", Color.lightGray);
-    CText localCText3 = new CText(new Character(planetChar).toString(), owner.getColor());
+    CText localCText3 = new CText(new Character(paramPlanet.planetChar).toString(), paramPlanet.owner.getColor());
     CText localCText4 = new CText(".", Color.lightGray);
     messageBoard.addText(localCText1);
     messageBoard.addText(localCText2);
@@ -856,7 +856,7 @@ public class ClientUI
   {
     Planet localPlanet = game.planet[paramInt];
     galaxy.redrawPlanet(paramInt);
-    if (y == 0) {
+    if (localPlanet.y == 0) {
       galaxy.paintMessage();
     }
   }

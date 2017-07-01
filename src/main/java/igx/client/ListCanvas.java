@@ -38,7 +38,7 @@ public class ListCanvas
   public void addText(CText paramCText)
   {
     strings.addElement(paramCText);
-    paramCText.setWidth(fm.stringWidth(text));
+    paramCText.setWidth(fm.stringWidth(paramCText.text));
     if (width > maxWidth) {
       maxWidth = width;
     }
@@ -61,8 +61,8 @@ public class ListCanvas
     for (int i = 0; i < strings.size(); i++)
     {
       CText localCText = (CText)strings.elementAt(i);
-      if (text.equals(paramString)) {
-        color = paramColor;
+      if (localCText.text.equals(paramString)) {
+        localCText.color = paramColor;
       }
     }
   }
@@ -95,7 +95,7 @@ public class ListCanvas
     localFrame.add(localListCanvas);
     localFrame.pack();
     localFrame.show();
-    localFrame.setSize(400, height + 20);
+    localFrame.setSize(400, localListCanvas.height + 20);
     localFrame.validate();
   }
   
@@ -109,8 +109,8 @@ public class ListCanvas
       int m = (maxWidth + fontHeight * 1) * k + fontHeight * 1;
       int n = (j % rows + 1) * fontHeight - fontDescent;
       CText localCText = (CText)strings.elementAt(j);
-      paramGraphics.setColor(color);
-      paramGraphics.drawString(text, m, n);
+      paramGraphics.setColor(localCText.color);
+      paramGraphics.drawString(localCText.text, m, n);
     }
   }
   
@@ -120,7 +120,7 @@ public class ListCanvas
     for (int i = 0; i < strings.size(); i++)
     {
       CText localCText = (CText)strings.elementAt(i);
-      if (text.equals(paramString)) {
+      if (localCText.text.equals(paramString)) {
         strings.removeElementAt(i);
       } else if (width > maxWidth) {
         maxWidth = width;

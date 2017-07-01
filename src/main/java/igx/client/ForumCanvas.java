@@ -62,7 +62,7 @@ public class ForumCanvas
     Frame localFrame = new Frame("Rooty Poo");
     Toolkit localToolkit = Toolkit.getDefaultToolkit();
     ForumCanvas localForumCanvas = new ForumCanvas(400, 400, 14, localToolkit);
-    int i = rows;
+    int i = localForumCanvas.rows;
     Vector localVector = new Vector();
     TextElement localTextElement = new TextElement("The ", Color.gray, -1);
     localVector.addElement(localTextElement);
@@ -73,7 +73,7 @@ public class ForumCanvas
     TextRow localTextRow = new TextRow(localVector);
     localTextRow.center();
     localTextRow.underline(Color.blue);
-    row[0] = localTextRow;
+    localForumCanvas.row[0] = localTextRow;
     for (int j = 1; j < i; j++)
     {
       localVector = new Vector();
@@ -85,9 +85,9 @@ public class ForumCanvas
       if (j == 10) {
         localTextRow.setSelect(true);
       }
-      row[j] = localTextRow;
+      localForumCanvas.row[j] = localTextRow;
     }
-    selectedRow = 10;
+    localForumCanvas.selectedRow = 10;
     localForumCanvas.setRowListener(localForumCanvas);
     localFrame.add(localForumCanvas);
     localFrame.pack();
@@ -107,7 +107,7 @@ public class ForumCanvas
     if (listener != null)
     {
       Point localPoint = paramMouseEvent.getPoint();
-      int i = y / fontHeight;
+      int i = localPoint.y / fontHeight;
       if (i < rows) {
         listener.rowSelected(i);
       }
@@ -131,36 +131,37 @@ public class ForumCanvas
     TextRow localTextRow = row[paramInt];
     int i = 1 + fontHeight;
     int j = fontHeight * (paramInt + 1);
-    TextElement localTextElement;
-    if (centered)
+    TextElement localTextElement = null;
+    if (localTextRow.centered)
     {
-      k = 0;
-      for (int m = 0; m < numberOfElements; m++)
+      int k = 0;
+      for (int m = 0; m < localTextRow.numberOfElements; m++)
       {
-        localTextElement = (TextElement)elements.elementAt(m);
+        localTextElement = (TextElement)localTextRow.elements.elementAt(m);
         k += localTextElement.getWidth(fm);
       }
       i = (width - k) / 2;
     }
-    for (int k = 0; k < numberOfElements; k++)
+    for (int k = 0; k < localTextRow.numberOfElements; k++)
     {
-      localTextElement = (TextElement)elements.elementAt(k);
+        int column = 0;
+      localTextElement = (TextElement)localTextRow.elements.elementAt(k);
       if (column != -1)
       {
         i = column;
         paramGraphics.setColor(Color.black);
         paramGraphics.fillRect(i, j - fontHeight + 1, width - 1 - i, fontHeight);
       }
-      paramGraphics.setColor(colour);
-      paramGraphics.drawString(text, i, j - 1 - fontDescent);
+      paramGraphics.setColor(localTextElement.colour);
+      paramGraphics.drawString(localTextElement.text, i, j - 1 - fontDescent);
       i += localTextElement.getWidth(fm);
     }
-    if (underlined)
+    if (localTextRow.underlined)
     {
-      paramGraphics.setColor(underlineColour);
+      paramGraphics.setColor(localTextRow.underlineColour);
       paramGraphics.drawLine(0, j, width, j);
     }
-    if (selected)
+    if (localTextRow.selected)
     {
       paramGraphics.setColor(SELECT_COLOUR);
       int[] arrayOfInt1 = { 1, fontHeight / 2, 1 };

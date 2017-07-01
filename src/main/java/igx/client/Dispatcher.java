@@ -35,7 +35,7 @@ class Dispatcher
   public void dispatch(char paramChar1, char paramChar2, int paramInt)
   {
     Player localPlayer = getMe();
-    if ((localPlayer != null) && (isActive))
+    if ((localPlayer != null) && (localPlayer.isActive))
     {
       server.send(new Character(paramChar1).toString());
       server.send(new Character(paramChar2).toString());
