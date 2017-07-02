@@ -103,6 +103,7 @@ public class Server
           for (localObject1 = receive(); !((String)localObject1).equals("~"); localObject1 = receive()) {
             forum.post((String)localObject1, ClientForum.BULLETIN_COLOUR);
           }
+          logger.debug( "after forum post" );
           localObject1 = receive();
           Vector localVector = new Vector();
           while (!((String)localObject1).equals("~"))

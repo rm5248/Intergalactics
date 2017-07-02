@@ -37,7 +37,6 @@ public class IGXServer {
     
     void run() throws IOException {
         Selector selector = Selector.open();
-        ByteBuffer readBuffer = ByteBuffer.allocate( 128 );
         
         m_serverSocket = ServerSocketChannel.open();
         m_serverSocket.socket().bind( new InetSocketAddress( Params.PORTNUM ) );
@@ -62,13 +61,19 @@ public class IGXServer {
                 if( key == serverSelectionKey ){
                     //create our new client and add to our internal 
                     //list of clients
-                    ClientConnection client = new ClientConnection();
                     SocketChannel socket = m_serverSocket.accept();
                     socket.configureBlocking( false );
-                    m_clients.add( client );
-                    m_socketToClient.put( socket, client );
-                    
                     logger.debug( "New connection from {}", socket.getRemoteAddress() );
+                    ClientConnection client = null;
+                    
+                    try{
+                        client = new ClientConnection( socket, socket );
+                    }catch( IOException ex ){
+                        logger.error( "Unable to create new client: ", ex );
+                        continue;
+                    }
+                    m_clients.add( client );
+                    m_socketToClient.put( socket, client ); 
                     
                     //create a new selection key for this client, so that when
                     //there is data to read we will add it to the appropriate
@@ -86,16 +91,26 @@ public class IGXServer {
                         continue;
                     }
                     
-                    int len = socket.read( readBuffer );
-                    if( len == -1 ){
+//                    if( socket.isOpen() ){
+//                        logger.debug( "isopen" );
+//                    }else{
+//                        logger.debug( "not open" );
+//                    }
+//                    
+//                    if( socket.isConnected() ){
+//                        logger.debug( "connected" );
+//                    }else{
+//                        logger.debug( "not connected" );
+//                    }
+                    
+                    client.parseData();
+                    if( client.isClosed() ){
+                        socket.close();
                         logger.debug( "Client has exited" );
                         m_socketToClient.remove( socket );
                         m_clients.remove( client );
                         key.cancel();
-                    }else{
-                        client.incomingData( readBuffer.array() );
                     }
-                    readBuffer.clear();
                 }
             }
         }

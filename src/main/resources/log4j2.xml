@@ -17,5 +17,6 @@
     <logger name="igx.example" level="trace"/>
     
     <logger name="igx.server" level="trace"/>
+    <logger name="igx.client" level="trace"/>
   </loggers>
 </configuration>
