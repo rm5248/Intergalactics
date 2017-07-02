@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration status="OFF">
+  <appenders>
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss}] %-5level %logger{36} - %msg%n"/>
+    </Console>
+<!--    <File name="File" fileName="/tmp/foo">
+      <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss}] %-5level %logger{36} - %msg%n"/>
+    </File>-->
+  </appenders>
+  <loggers>
+    <root level="info">
+      <appender-ref ref="Console" />
+      <appender-ref ref="File" />
+    </root>
+    <!-- Here's an example of a logger that has a trace level -->
+    <logger name="igx.example" level="trace"/>
+    
+    <logger name="igx.server" level="trace"/>
+  </loggers>
+</configuration>

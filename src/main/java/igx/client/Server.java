@@ -13,6 +13,8 @@ import java.awt.Point;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Vector;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class Server
   extends SocketAction
@@ -20,6 +22,8 @@ public class Server
   public ClientForum forum;
   public Dispatcher dispatch;
   public String name;
+  
+  private static final Logger logger = LogManager.getLogger();
   
   public Server(Socket paramSocket)
   {
@@ -51,7 +55,7 @@ public class Server
   {
     try
     {
-      Debug.d("Starting to read from server...");
+      logger.debug( "Starting to read from server" );
       String str1 = receive();
       if (!str1.substring(0, 3).equals("3.8".substring(0, 3)))
       {
