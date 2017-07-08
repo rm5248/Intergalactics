@@ -101,11 +101,13 @@ public class Server
         else if (str1.equals("["))
         {
           for (localObject1 = receive(); !((String)localObject1).equals("~"); localObject1 = receive()) {
+              logger.debug( "Adding the following text to the forum: {}", localObject1 );
             forum.post((String)localObject1, ClientForum.BULLETIN_COLOUR);
           }
           logger.debug( "after forum post" );
           localObject1 = receive();
           Vector localVector = new Vector();
+          logger.debug( "About to rx bots" );
           while (!((String)localObject1).equals("~"))
           {
             Object localObject3 = localObject1;
@@ -114,6 +116,7 @@ public class Server
             localVector.addElement(new Robot(localObject3.toString(), (String)localObject4, i1));
             localObject1 = receive();
           }
+          logger.debug( "After ~ for bots" );
           m = localVector.size();
           Robot[] robotArray = new Robot[m];
           for (int i1 = 0; i1 < m; i1++) {
@@ -121,10 +124,15 @@ public class Server
             robotArray[i1] = r;
           }
           forum.setBotList(robotArray);
+          logger.debug( "Have set bot list" );
           forum.registerClient();
+          logger.debug( "Have registered client" );
           i = 1;
+          
         }
       }
+      
+      logger.debug( "About to infinite loop" );
       for (;;)
       {
         str1 = receive();

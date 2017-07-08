@@ -12,14 +12,17 @@ import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
 
 public class ButtonCanvas
-  extends Canvas
+  extends JPanel
   implements MouseListener
 {
-  protected Vector buttons = new Vector();
-  protected SoftButton[] button;
+  protected List<SoftButton> buttons = new ArrayList<SoftButton>();
   protected int numButtons;
   protected Font buttonFont;
   protected FontMetrics fm;
@@ -30,14 +33,14 @@ public class ButtonCanvas
   public int height;
   public int buttonHeight;
   ButtonListener listener = null;
-  int currentButton = -1;
+  private SoftButton currentButton;
   
-  public ButtonCanvas(int paramInt1, Toolkit paramToolkit, int paramInt2, int paramInt3)
+  public ButtonCanvas(int fontSize, Toolkit paramToolkit, int wid, int heigt)
   {
-    width = paramInt2;
-    height = paramInt3;
+    width = wid;
+    height = heigt;
     setBackground(Color.gray);
-    buttonFont = new Font("SansSerif", 0, paramInt1);
+    buttonFont = new Font("SansSerif", 0, fontSize);
     fm = paramToolkit.getFontMetrics(buttonFont);
     buttonFontDescent = fm.getDescent();
     buttonFontHeight = (fm.getAscent() + buttonFontDescent + 1);
@@ -46,11 +49,13 @@ public class ButtonCanvas
     buttonHeight = (buttonFontHeight + 4);
   }
   
-  public void addButton(int paramInt1, int paramInt2, String paramString)
+  public void addButton(int xLocation, int yLocation, String buttonText)
   {
-    Dimension localDimension = buttonDimensions(paramString);
-    Rectangle localRectangle = new Rectangle(paramInt1, paramInt2, width, height);
-    buttons.addElement(new SoftButton(localRectangle, paramString, buttonFontDescent));
+    Dimension localDimension = buttonDimensions(buttonText);
+    Rectangle localRectangle = new Rectangle(xLocation, yLocation, 
+            localDimension.width, 
+            localDimension.height);
+    buttons.add(new SoftButton(localRectangle, buttonText, buttonFontDescent));
   }
   
   public Dimension buttonDimensions(String paramString)
@@ -58,36 +63,44 @@ public class ButtonCanvas
     return new Dimension(4 + fm.stringWidth(paramString), buttonFontHeight + 4);
   }
   
-  public void buttonPressed(int paramInt)
+  private void currentButtonPressed()
   {
     if (listener != null) {
-      listener.buttonPressed(button[paramInt].getText());
+      listener.buttonPressed(currentButton.getText());
     }
   }
   
-  public int getButton(Point paramPoint)
-  {
-    for (int i = 0; i < numButtons; i++) {
-      if (button[i].contains(paramPoint)) {
-        return i;
-      }
+  /**
+   * Get the button that is contained in the point, 
+   * or null if not found.
+   * 
+   * @param paramPoint
+   * @return 
+   */
+  private SoftButton getButton(Point paramPoint)
+  { 
+    for( SoftButton sf : buttons ){
+        if( sf.contains( paramPoint ) ){
+            return sf;
+        }
     }
-    return -1;
+    
+    return null;
   }
   
   public static void main(String[] paramArrayOfString)
   {
-    Frame localFrame = new Frame("Beej's Buttons");
+    JFrame localFrame = new JFrame("Beej's Buttons");
     Toolkit localToolkit = Toolkit.getDefaultToolkit();
     ButtonCanvas localButtonCanvas = new ButtonCanvas(14, localToolkit, 400, 400);
     localButtonCanvas.addButton(10, 10, "(S)tart Game");
     localButtonCanvas.addButton(50, 50, "Add (C)omputer Player");
     localButtonCanvas.addButton(100, 100, "Sound On/Off (F2)");
     localButtonCanvas.addButton(200, 200, "(Q)uit");
-    localButtonCanvas.prepareButtons();
     localFrame.add(localButtonCanvas);
-    localFrame.pack();
-    localFrame.show();
+    //localFrame.pack();
+    //localFrame.show();
+    localFrame.setVisible( true );
     localFrame.setSize(400, 400);
     localFrame.validate();
   }
@@ -98,35 +111,37 @@ public class ButtonCanvas
   
   public void mouseExited(MouseEvent paramMouseEvent)
   {
-    if ((currentButton != -1) && (button[currentButton] != null))
+    if ((currentButton != null))
     {
-      button[currentButton].setHighlight(false);
+        currentButton.setHighlight( false );
       redrawButton(currentButton);
     }
-    currentButton = -1;
+    currentButton = null;
   }
   
   public void mousePressed(MouseEvent paramMouseEvent)
   {
-    int i = getButton(paramMouseEvent.getPoint());
-    if (i != -1)
+    SoftButton sf = getButton( paramMouseEvent.getPoint() );
+    if( sf != null )
     {
-      currentButton = i;
-      button[i].setHighlight(true);
+        sf.setHighlight( true );
+        redrawButton( sf );
+      currentButton = sf;
       redrawButton(currentButton);
     }
   }
   
   public void mouseReleased(MouseEvent paramMouseEvent)
   {
-    if (currentButton != -1)
+    if (currentButton != null)
     {
-      if (button[currentButton].contains(paramMouseEvent.getPoint())) {
-        buttonPressed(currentButton);
+        if( currentButton.contains( paramMouseEvent.getPoint() ) ){
+            
+        currentButtonPressed();
       }
-      button[currentButton].setHighlight(false);
+        currentButton.setHighlight( false );
       redrawButton(currentButton);
-      currentButton = -1;
+      currentButton = null;
     }
   }
   
@@ -136,22 +151,12 @@ public class ButtonCanvas
     paramGraphics.setColor(Color.black);
     paramGraphics.fillRect(0, 0, width, height);
     paramGraphics.setFont(buttonFont);
-    for (int i = 0; i < numButtons; i++) {
-      button[i].paint(paramGraphics);
+    for( SoftButton sf : buttons ){
+        sf.paint( paramGraphics );
     }
   }
   
-  public void prepareButtons()
-  {
-    numButtons = buttons.size();
-    button = new SoftButton[numButtons];
-    for (int i = 0; i < numButtons; i++) {
-      button[i] = ((SoftButton)buttons.elementAt(i));
-    }
-    buttons = new Vector();
-  }
-  
-  public void redrawButton(int paramInt)
+  private void redrawButton(SoftButton sf)
   {
     Graphics localGraphics = getGraphics();
     localGraphics.setFont(buttonFont);
@@ -160,7 +165,7 @@ public class ButtonCanvas
       repaint();
       return;
     }
-    button[paramInt].paint(localGraphics);
+    sf.paint(localGraphics);
   }
   
   public void setButtonListener(ButtonListener paramButtonListener)

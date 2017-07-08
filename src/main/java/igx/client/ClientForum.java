@@ -30,6 +30,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.Socket;
 import java.util.Vector;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ClientForum
   extends Forum
@@ -104,6 +106,8 @@ public class ClientForum
   ClientUI gameUI = null;
   String clientName;
   String firstPassword = null;
+  
+  private static final Logger logger = LogManager.getLogger();
   
   public ClientForum(FrontEnd paramFrontEnd, String paramString, Toolkit paramToolkit, Server paramServer)
   {
@@ -198,7 +202,7 @@ public class ClientForum
       post(new CText(".", PLAIN_COLOUR));
       newLine();
       if (isMe(paramString)) {
-        setMode(1);
+        setMode(MODE_NOT_IN_GAME);
       }
       if ((localGame.creator.equals(paramString)) && (!localGame.inProgress))
       {
@@ -214,12 +218,12 @@ public class ClientForum
           if (localGame.player[j].name.equals(clientName))
           {
             selectGame(localGame.name);
-            setMode(1);
+            setMode(MODE_NOT_IN_GAME);
           }
         }
         if (games.size() == 0)
         {
-          setMode(0);
+          setMode(MODE_NO_GAMES);
           selectedGame = null;
         }
         else if (selectedGame == localGame)
@@ -351,8 +355,8 @@ public class ClientForum
     post(new CText(paramString, BOLD_COLOUR));
     post(new CText(".", PLAIN_COLOUR));
     newLine();
-    if ((isMe(localGame.creator)) && (mode == 4)) {
-      setMode(5);
+    if ((isMe(localGame.creator)) && (mode == MODE_CREATED)) {
+      setMode(MODE_CREATED_WITH_ROBOTS);
     }
     return bool;
   }
@@ -414,7 +418,7 @@ public class ClientForum
     post(new CText(".", PLAIN_COLOUR));
     newLine();
     if (isMe(localGame.creator)) {
-      setMode(5);
+      setMode(MODE_CREATED_WITH_ROBOTS);
     }
     return bool;
   }
@@ -488,7 +492,7 @@ public class ClientForum
       else if (mode == 0)
       {
         selectGame(paramString2);
-        setMode(1);
+        setMode(MODE_NOT_IN_GAME);
       }
       return true;
     }
@@ -502,11 +506,11 @@ public class ClientForum
     }
     if (!paramBoolean)
     {
-      setMode(2);
+      setMode(MODE_IN_PROGRESS);
     }
     else
     {
-      setMode(1);
+      setMode(MODE_NOT_IN_GAME);
       server.dispatch = null;
     }
     card.show(frontEnd.getContainer(), "forum");
@@ -595,11 +599,11 @@ public class ClientForum
         localPlayer.inGame = false;
         localPlayer.game = null;
         displayForum(true);
-        setMode(1);
+        setMode(MODE_NOT_IN_GAME);
       }
       if (games.size() == 0)
       {
-        setMode(0);
+        setMode(MODE_NO_GAMES);
         selectedGame = null;
       }
     }
@@ -708,9 +712,9 @@ public class ClientForum
       {
         selectGame(paramString2);
         if (isMe(localGame.creator)) {
-          setMode(4);
+          setMode(MODE_CREATED);
         } else {
-          setMode(3);
+          setMode(MODE_IN_NEW);
         }
       }
       else
@@ -869,37 +873,43 @@ public class ClientForum
   {
     Game localObject1 = null;
     server.name = clientName;
+    logger.debug( "Registering client" );
     for (String str1 = server.receive(); !str1.equals("~"); str1 = server.receive())
     {
+        logger.debug( "Creating new player with name {}", str1 );
       Player localObject2 = new Player(str1);
       players.addElement(localObject2);
       localObject2.isActive = server.receiveBoolean();
+      logger.debug( "is active? {}", localObject2.isActive );
     }
+    
+    logger.debug( "About to rx games" );
     boolean i1;
-    for (String str1 = server.receive(); !str1.equals("~"); str1 = server.receive())
+    for (String gameName = server.receive(); !gameName.equals("~"); gameName = server.receive())
     {
-      Game localObject2 = null;
-      boolean bool;
+      Game gameInformationFor = null;
+      boolean gameInProgress;
       if (server.receive().equals("[")) {
-        bool = true;
+        gameInProgress = true;
       } else {
-        bool = false;
+        gameInProgress = false;
       }
-      int j = Integer.parseInt(server.receive());
-      for (int k = 0; k < j; k++)
+      int numberOfPlayers = Integer.parseInt(server.receive());
+      for (int k = 0; k < numberOfPlayers; k++)
       {
-        String str2 = server.receive();
+        String creator = server.receive();
         i1 = server.receiveBoolean();
         if (k == 0) {
-          localObject2 = new Game(str1, str2);
+            logger.debug( "Creating new game named {} and created by {}", gameName, creator );
+          gameInformationFor = new Game(gameName, creator);
         }
-        Player localPlayer2 = getPlayer(str2);
+        Player localPlayer2 = getPlayer(creator);
         if (localPlayer2 == null)
         {
-          Robot localRobot = getRobot(str2);
+          Robot localRobot = getRobot(creator);
           if (localRobot == null)
           {
-            localPlayer2 = new Player(str2);
+            localPlayer2 = new Player(creator);
             localPlayer2.isPresent = false;
           }
           else
@@ -907,14 +917,16 @@ public class ClientForum
             localPlayer2 = localRobot.toPlayer();
           }
         }
-        localPlayer2.game = ((Game)localObject2);
-        localObject2.player[k] = localPlayer2;
+        localPlayer2.game = ((Game)gameInformationFor);
+        gameInformationFor.player[k] = localPlayer2;
       }
-      localObject2.inProgress = bool;
-      localObject2.numPlayers = j;
-      games.addElement(localObject2);
-      gameList.addGame((Game)localObject2);
+      gameInformationFor.inProgress = gameInProgress;
+      gameInformationFor.numPlayers = numberOfPlayers;
+      games.addElement(gameInformationFor);
+      gameList.addGame((Game)gameInformationFor);
     }
+    
+    logger.debug( "Got all game info.  Client name {}", clientName );
     Player localObject2 = getPlayer(clientName);
     if (server.receive().equals("["))
     {
@@ -952,7 +964,7 @@ public class ClientForum
       selectGame(localObject1.name);
       if (localObject1.inProgress)
       {
-        setMode(2);
+        setMode(MODE_IN_PROGRESS);
       }
       else if (localObject1.creator.equals(clientName))
       {
@@ -965,26 +977,26 @@ public class ClientForum
           }
         }
         if (n != 0) {
-          setMode(5);
+          setMode(MODE_CREATED_WITH_ROBOTS);
         } else {
-          setMode(4);
+          setMode(MODE_CREATED);
         }
       }
       else
       {
-        setMode(3);
+        setMode(MODE_IN_NEW);
       }
     }
     else if (games.size() == 0)
     {
-      setMode(0);
+      setMode(MODE_NO_GAMES);
     }
     else
     {
       gameList.manualSelectRow(3);
       Game localGame2 = (Game)games.elementAt(games.size() - 1);
       selectGame(localGame2.name);
-      setMode(1);
+      setMode(MODE_NOT_IN_GAME);
     }
   }
   
@@ -1010,9 +1022,9 @@ public class ClientForum
     }
     if (isMe(localGame.creator)) {
       if (j == 0) {
-        setMode(4);
+        setMode(MODE_CREATED);
       } else {
-        setMode(5);
+        setMode(MODE_CREATED_WITH_ROBOTS);
       }
     }
     return bool;
@@ -1147,7 +1159,7 @@ public class ClientForum
     addButton("(Q)uit", 6);
     switch (paramInt)
     {
-    case 0: 
+    case MODE_NO_GAMES: 
       addButton("(C)reate Game", 0);
       break;
     case 1: 
@@ -1193,7 +1205,6 @@ public class ClientForum
       dropRobotPoint = addButton("(D)rop Robot", 2);
       addButton("(A)bandon Game", 3);
     }
-    buttonBar.prepareButtons();
     buttonBar.repaint();
   }
   
@@ -1226,7 +1237,7 @@ public class ClientForum
     Game localGame2 = getClientGame(clientName, paramString1);
     if (localGame2 != null)
     {
-      setMode(2);
+      setMode(MODE_IN_PROGRESS);
       return localGame2;
     }
     setMode(mode);

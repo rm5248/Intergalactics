@@ -24,6 +24,27 @@ CHECK: On Windows, will the newline be \r\n?
  value, ending with a '~' character on a new line.
 8. Server sents robot information to the client.  This is a multiple line 
  value, ending with a '~' character on a new line.
+9. Server sends player information to the client.  Each line is a player name, 
+ ending with a '~' character on a new line.  This must contain all users, 
+ including the client who is currently connected
+10. Server sends game information to the client.  Game information consists of 
+ game name, game in progress, number of players, bool, list of players
+11. Server sends information on if we are in game or not(?)
+
+At this point, the server and client wait for information from each other.
+
+Commands and events that can be sent:
+* Incoming Player
+* Create Game
+* Join Game
+* Start New Game
+* Quit
+* Abandon Game
+* Message players
+* Add Robot
+* Remove Robot
+* Game Over
+
 
 ## Protocol Version Control Characters
 |Character|Meaning|
@@ -44,3 +65,8 @@ CHECK: On Windows, will the newline be \r\n?
 |---------|-------|
 |]|Incorrect password entered|
 |[|Correct password entered|
+
+## Game Information
+
+The game information has several fields, each one terminated by a newline.  
+

@@ -124,7 +124,6 @@ public class ClientUI
       buttonBar.addButton(localPoint.x, localPoint.y, str);
     }
     quitPoint = new Point(localPoint.x + width, localPoint.y);
-    buttonBar.prepareButtons();
     messageBoard = new ScrollText(fontSize, localToolkit, width - height - height / 48, height - statusBar.height - buttonBar.height);
     sidebar.add(statusBar, "North");
     sidebar.add(buttonBar, "Center");

@@ -14,6 +14,7 @@ import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URL;
 import java.net.UnknownHostException;
+import javax.swing.JApplet;
 
 public class iCONApplet
   extends Applet

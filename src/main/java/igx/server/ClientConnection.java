@@ -123,6 +123,24 @@ class ClientConnection {
             
             //tell the client any robot information
             writeStringWithNewline( "~" );
+            
+            //tell the client any player information
+            writeStringWithNewline( m_alias );
+            writeStringWithNewline( "1" );
+            writeStringWithNewline( "User2" );
+            writeStringWithNewline( "1" );
+            writeStringWithNewline( "~" );
+            
+            //tell the client any game information
+            writeStringWithNewline( "GameName" ); //name of game
+            writeStringWithNewline( "[" ); //in progress = [, not in progress = ]
+            writeStringWithNewline( 1 + "" ); //number of users
+            writeStringWithNewline( "User2" ); //creator
+            writeStringWithNewline( "1" );
+            writeStringWithNewline( "~" );
+            
+            writeStringWithNewline( "]" ); //we're not in-game?
+            writeBuffer();
         }
     }
     

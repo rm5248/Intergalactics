@@ -15,6 +15,7 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
+import javax.swing.JFrame;
 
 public class DialogCanvas
   extends ButtonCanvas
@@ -72,7 +73,6 @@ public class DialogCanvas
     buttonRight = ((paramInt1 + i) / 2 - width);
     addButton(buttonLeft, height - height - fontDescent, "Okay");
     addButton(buttonRight, height - height - fontDescent, "Cancel");
-    prepareButtons();
   }
   
   public void addChar(char paramChar)
@@ -183,7 +183,8 @@ public class DialogCanvas
           }
         }
       }
-      catch (IOException localIOException) {}catch (UnsupportedFlavorException localUnsupportedFlavorException) {}
+      catch (IOException localIOException) {}
+      catch (UnsupportedFlavorException localUnsupportedFlavorException) {}
     }
   }
   
@@ -207,14 +208,13 @@ public class DialogCanvas
   
   public static void main(String[] paramArrayOfString)
   {
-    Frame localFrame = new Frame("Know Your Role");
+    JFrame localFrame = new JFrame("Know Your Role");
     Toolkit localToolkit = Toolkit.getDefaultToolkit();
     DialogCanvas localDialogCanvas = new DialogCanvas(400, 16, localToolkit);
     localDialogCanvas.setDialogText("Enter you alias");
     localDialogCanvas.addKeyListener(localDialogCanvas);
     localFrame.add(localDialogCanvas);
-    localFrame.pack();
-    localFrame.show();
+    localFrame.setVisible( true );
     localFrame.setSize(400, localDialogCanvas.height + 20);
     localFrame.validate();
   }
