@@ -46,8 +46,8 @@ public class GameListCanvas
     logger.debug( "game column start at {}", gameColumn );
     playerColumn = (gameColumn + 10 * fontHeight);
     Vector localVector = new Vector();
-    String str = "intergalactics - " + serverName;
-    int i = fm.stringWidth(str);
+    String titleText = "intergalactics - " + serverName;
+    int i = fm.stringWidth(titleText);
     localVector.addElement(new TextElement("intergalactics", TITLE_COLOUR, (paramWidth - i) / 2));
     localVector.addElement(new TextElement(" - ", COMMA_COLOUR, -1));
     localVector.addElement(new TextElement(serverName, SERVER_COLOUR, -1));

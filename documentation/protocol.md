@@ -7,6 +7,8 @@ newline.
 Most lines start with a control character.  This control character need not 
 be unique across the entire protocol.
 
+NOTE: Find the code documentation in Params.java
+
 CHECK: On Windows, will the newline be \r\n?
  
 1. Server sends protocol version to the connected client("3.8")
@@ -69,4 +71,26 @@ Commands and events that can be sent:
 ## Game Information
 
 The game information has several fields, each one terminated by a newline.  
+
+## Send message
+
+To send a chat message to the server:
+1. Write "+\r\n" to send the message to the forum
+2. Write "@\r\n<message>\r\n"
+
+## Recieve message
+
+Server sends 
+
+## Create a new game
+
+1. Send server "+\r\n"
+2. Send server "#\r\n"
+3. Send name of game
+
+## Send custom computer(?)
+
+1. Send server "+\r\n"
+2. Send server "?\r\n"
+3. Send server name of robot(?)
 

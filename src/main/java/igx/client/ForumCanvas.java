@@ -23,12 +23,12 @@ public class ForumCanvas
   implements MouseListener, RowListener
 {
   public static final Color SELECT_COLOUR = Color.red;
-  RowListener listener = null;
-  int fontSize;
-  int rows;
-  Font font;
-  FontMetrics fm;
-  int fontHeight;
+  private RowListener listener = null;
+  private int fontSize;
+  private int rows;
+  private Font font;
+  protected FontMetrics fm;
+  protected int fontHeight;
   int fontDescent;
   int spaceWidth;
   public TextRow[] row;
@@ -133,6 +133,7 @@ public class ForumCanvas
         paintRow(paramGraphics, i);
       }
     }
+    logger.debug( "size is {}", size );
   }
   
   protected void paintRow(Graphics paramGraphics, int paramInt)

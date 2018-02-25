@@ -36,7 +36,7 @@ public class ScrollText
   public ScrollText(int textSize, Toolkit paramToolkit, int width, int height)
   {
       logger.debug( "Scroll text size {}", textSize );
-    setSize( width - 1, height );
+    setSize( new Dimension( width - 1, height ) );
     font = new Font("SansSerif", 0, textSize);
     fm = paramToolkit.getFontMetrics(font);
     fontHeight = (fm.getAscent() + 1);

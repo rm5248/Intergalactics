@@ -15,6 +15,7 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Frame;
 import java.awt.Graphics;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.Menu;
 import java.awt.MenuItem;
@@ -160,7 +161,9 @@ public class ClientForum
     eastContainer.add(buttonBar, BorderLayout.CENTER);
     eastContainer.add(eventList, BorderLayout.SOUTH);
     
-    mainContainer.add(westContainer, BorderLayout.WEST );
+    JPanel gridWest = new JPanel(new GridLayout());
+    gridWest.add( westContainer );
+    mainContainer.add(gridWest, BorderLayout.WEST );
     mainContainer.add(eastContainer, BorderLayout.EAST );  
     
     paramFrontEnd.getContainer().add(mainContainer, "forum");
@@ -176,16 +179,16 @@ public class ClientForum
     mainContainer.addKeyListener(this);
     mainContainer.requestFocus();
     
-    Dimension prefSize = new Dimension( 880, 400 );
-    westContainer.setPreferredSize( prefSize );
-    eastContainer.setPreferredSize( prefSize );
-    playerList.setPreferredSize( new Dimension( 600, 100 ) );
-    mainContainer.setSize( 1440, 700 );
-    westContainer.setBorder( BorderFactory.createBevelBorder( BevelBorder.RAISED, Color.RED, Color.RED ) );
-    eastContainer.setBorder( BorderFactory.createBevelBorder( BevelBorder.RAISED, Color.BLUE, Color.BLUE ) );
-    gameList.setBorder( BorderFactory.createBevelBorder( BevelBorder.RAISED, Color.GREEN, Color.GREEN ) );
-    //mainContainer.setBorder( BorderFactory.createBevelBorder( BevelBorder.RAISED, Color.RED, Color.BLUE ) );
-    mainContainer.validate();
+//    Dimension prefSize = new Dimension( 880, 400 );
+//    westContainer.setPreferredSize( prefSize );
+//    eastContainer.setPreferredSize( prefSize );
+//    playerList.setPreferredSize( new Dimension( 600, 100 ) );
+//    mainContainer.setSize( 1440, 700 );
+//    westContainer.setBorder( BorderFactory.createBevelBorder( BevelBorder.RAISED, Color.RED, Color.RED ) );
+//    eastContainer.setBorder( BorderFactory.createBevelBorder( BevelBorder.RAISED, Color.BLUE, Color.BLUE ) );
+//    gameList.setBorder( BorderFactory.createBevelBorder( BevelBorder.RAISED, Color.GREEN, Color.GREEN ) );
+//    //mainContainer.setBorder( BorderFactory.createBevelBorder( BevelBorder.RAISED, Color.RED, Color.BLUE ) );
+//    mainContainer.validate();
   }
   
   public boolean abandonGame(String paramString)
@@ -259,7 +262,7 @@ public class ClientForum
     String str = dialog.getText().trim();
     switch (dialogMode)
     {
-    case 0: 
+    case DIALOG_ALIAS: 
       if (str.length() > 8)
       {
         setDialog(0, "Enter your alias", "Must not exceed 8 characters.");
@@ -279,11 +282,11 @@ public class ClientForum
         server.send(str);
       }
       break;
-    case 1: 
+    case DIALOG_NEW_PASSWORD: 
       firstPassword = str;
       setDialog(2, "Confirm your new password", null);
       break;
-    case 2: 
+    case DIALOG_PASSWORD: 
       if ((firstPassword != null) && (!firstPassword.equals(str)))
       {
         setDialog(1, "If you are a new user, enter you password. Otherwise, hit <CANCEL> to re-enter your alias.", "Passwords did not match.");
@@ -294,19 +297,19 @@ public class ClientForum
         server.send(str);
       }
       break;
-    case 3: 
+    case DIALOG_MESSAGE: 
       clearDialog();
       server.send("+");
       server.send("@");
       server.send(str);
       break;
-    case 4: 
+    case DIALOG_NEW_GAME: 
       clearDialog();
       server.send("+");
       server.send("#");
       server.send(str);
       break;
-    case 5: 
+    case DIALOG_CUSTOM_COMPUTER: 
       clearDialog();
       server.send("+");
       server.send("?");
@@ -351,11 +354,11 @@ public class ClientForum
     }
   }
   
-  public Point addButton(String paramString, int paramInt)
+  private Point addButton(String paramString, int buttonRow)
   {
     Dimension localDimension = buttonBar.buttonDimensions(paramString);
-    Point localPoint = new Point((buttonBar.getSize().width - mainContainer.getSize().width) / 2, 
-            paramInt * (14 * buttonBar.buttonHeight / 10 + 1));
+    Point localPoint = new Point((buttonBar.getSize().width - buttonBar.getSize().width) / 2, 
+            buttonRow * (14 * buttonBar.buttonHeight / 10 + 1));
     buttonBar.addButton(localPoint.x, localPoint.y, paramString);
     return localPoint;
   }
@@ -378,17 +381,17 @@ public class ClientForum
     return bool;
   }
   
-  public Player addPlayer(String paramString)
+  public Player addPlayer(String playerName)
   {
     Player localPlayer = null;
     int i = 0;
     Game localGame;
     if (server.dispatch != null)
     {
-      localGame = getClientGame(paramString, server.dispatch.name);
+      localGame = getClientGame(playerName, server.dispatch.name);
       if (localGame != null)
       {
-        localPlayer = server.dispatch.Game.getPlayer(paramString);
+        localPlayer = server.dispatch.Game.getPlayer(playerName);
         boolean bool = localPlayer.isActive;
         super.addPlayer(localPlayer);
         if (bool)
@@ -406,18 +409,18 @@ public class ClientForum
     }
     if (localPlayer == null)
     {
-      localPlayer = super.addPlayer(paramString);
+      localPlayer = super.addPlayer(playerName);
       localGame = getPlayerGame(localPlayer);
       if (localGame != null) {
         i = 1;
       }
     }
-    post(new CText(paramString, BOLD_COLOUR));
+    post(new CText(playerName, BOLD_COLOUR));
     post(new CText(" just showed up!", PLAIN_COLOUR));
     if (i != 0) {
-      playerList.addText(paramString, ACTIVE_PLAYER_COLOUR);
+      playerList.addText(playerName, ACTIVE_PLAYER_COLOUR);
     } else {
-      playerList.addText(paramString, IDLE_PLAYER_COLOUR);
+      playerList.addText(playerName, IDLE_PLAYER_COLOUR);
     }
     newLine();
     return localPlayer;
@@ -972,8 +975,8 @@ public class ClientForum
       }
     }
     Vector localVector = new Vector();
-    int m = (statusBar.getSize().width - statusBar.fm.stringWidth(clientName)) / 2;
-    localVector.addElement(new TextElement(clientName, STATUS_COLOUR, m));
+    int column = (statusBar.getSize().width - statusBar.fm.stringWidth(clientName)) / 2;
+    localVector.addElement(new TextElement(clientName, STATUS_COLOUR, column));
     statusBar.row[1] = new TextRow(localVector);
     statusBar.repaint();
     if (localObject1 != null)

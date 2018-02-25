@@ -1,6 +1,9 @@
 package igx.server;
 
+import igx.shared.Forum;
+import igx.shared.Game;
 import igx.shared.Params;
+import igx.shared.Robot;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -24,6 +27,7 @@ public class IGXServer {
     private ServerSocketChannel m_serverSocket;
     private List<ClientConnection> m_clients;
     private Map<SocketChannel,ClientConnection> m_socketToClient;
+    private ServerForum m_mainForum;
     
     private static final Logger logger = LogManager.getLogger();
     
@@ -31,6 +35,7 @@ public class IGXServer {
         m_portNum = portnum;
         m_clients = new ArrayList<ClientConnection>();
         m_socketToClient = new HashMap<SocketChannel,ClientConnection>();
+        m_mainForum = new ServerForum( new Robot[0] );
         
         logger.debug( "Creating new server on port {}", m_portNum );
     }
@@ -67,7 +72,7 @@ public class IGXServer {
                     ClientConnection client = null;
                     
                     try{
-                        client = new ClientConnection( socket, socket );
+                        client = new ClientConnection( socket, socket, m_mainForum );
                     }catch( IOException ex ){
                         logger.error( "Unable to create new client: ", ex );
                         continue;

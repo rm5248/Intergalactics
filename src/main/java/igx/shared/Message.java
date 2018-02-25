@@ -18,81 +18,84 @@ public class Message
   public static final int SEND_FLEET = 11;
   public static final int PLAYER_QUIT = 12;
   private int type;
-  private String s1;
-  private String s2;
+  
+  //Note: the strings are dependent on the message,
+  //so they get stupid and generic names for now
+  private String string1;
+  private String string2;
   private int status;
-  private int i2;
-  private int i3;
+  private int destination;
+  private int numShips;
   
   public Message() {}
   
   public static Message abandonGame(String paramString)
   {
     Message localMessage = new Message();
-    localMessage.type = 5;
-    localMessage.s1 = paramString;
+    localMessage.type = Message.ABANDON_GAME;
+    localMessage.string1 = paramString;
     return localMessage;
   }
   
   public static Message addRobot(String paramString1, String paramString2)
   {
     Message localMessage = new Message();
-    localMessage.type = 7;
-    localMessage.s1 = paramString1;
-    localMessage.s2 = paramString2;
+    localMessage.type = ADD_ROBOT;
+    localMessage.string1 = paramString1;
+    localMessage.string2 = paramString2;
     return localMessage;
   }
   
   public static Message createGame(String paramString1, String paramString2)
   {
     Message localMessage = new Message();
-    localMessage.type = 3;
-    localMessage.s1 = paramString1;
-    localMessage.s2 = paramString2;
+    localMessage.type = CREATE_GAME;
+    localMessage.string1 = paramString1;
+    localMessage.string2 = paramString2;
     return localMessage;
   }
   
   public static Message gameOver(String paramString)
   {
     Message localMessage = new Message();
-    localMessage.type = 10;
-    localMessage.s2 = paramString;
+    localMessage.type = GAME_OVER;
+    localMessage.string2 = paramString;
     return localMessage;
   }
   
   public int getDestination()
   {
-    return i2;
+    return destination;
   }
   
   public String getGameName()
   {
-    return s2;
+    return string2;
   }
   
   public String getMessageText()
   {
-    return s2;
+    return string2;
   }
   
   public String getPlayerName()
   {
-    return s1;
+    return string1;
   }
   
   public String getCustomMap()
   {
-    return s1;
+    return string1;
   }
   
   public String getRobotName()
   {
-    return s1;
+    return string1;
   }
   
   public int getShips()
   {
-    return i3;
+    return numShips;
   }
   
   public int getSource()
@@ -113,51 +116,59 @@ public class Message
   public static Message joinGame(String paramString1, String paramString2)
   {
     Message localMessage = new Message();
-    localMessage.type = 4;
-    localMessage.s1 = paramString1;
-    localMessage.s2 = paramString2;
+    localMessage.type = JOIN_GAME;
+    localMessage.string1 = paramString1;
+    localMessage.string2 = paramString2;
     return localMessage;
   }
   
-  public static Message message(String paramString1, String paramString2, int paramInt)
+  /**
+   * 
+   * @param paramString1
+   * @param paramString2
+   * @param playerId The ID of the player to send this message to.  Since there is a 
+   * maximum of 8 people, 9 sends to everybody
+   * @return 
+   */
+  public static Message message(String paramString1, String paramString2, int playerId)
   {
     Message localMessage = new Message();
-    localMessage.type = 0;
-    localMessage.s1 = paramString1;
-    localMessage.s2 = paramString2;
-    localMessage.i2 = paramInt;
+    localMessage.type = MESSAGE;
+    localMessage.string1 = paramString1;
+    localMessage.string2 = paramString2;
+    localMessage.destination = playerId;
     return localMessage;
   }
   
   public static Message playerArrived(String paramString)
   {
     Message localMessage = new Message();
-    localMessage.type = 1;
-    localMessage.s1 = paramString;
+    localMessage.type = PLAYER_ARRIVED;
+    localMessage.string1 = paramString;
     return localMessage;
   }
   
   public static Message playerLeft(String paramString)
   {
     Message localMessage = new Message();
-    localMessage.type = 2;
-    localMessage.s1 = paramString;
+    localMessage.type = PLAYER_LEFT;
+    localMessage.string1 = paramString;
     return localMessage;
   }
   
   public static Message playerQuit(String paramString)
   {
     Message localMessage = new Message();
-    localMessage.type = 12;
-    localMessage.s1 = paramString;
+    localMessage.type = PLAYER_QUIT;
+    localMessage.string1 = paramString;
     return localMessage;
   }
   
   public static Message playerQuitGame(String paramString, int paramInt)
   {
     Message localMessage = new Message();
-    localMessage.type = 12;
-    localMessage.s1 = paramString;
+    localMessage.type = PLAYER_QUIT;
+    localMessage.string1 = paramString;
     localMessage.status = paramInt;
     return localMessage;
   }
@@ -165,46 +176,46 @@ public class Message
   public static Message removeRobot(String paramString1, String paramString2)
   {
     Message localMessage = new Message();
-    localMessage.type = 8;
-    localMessage.s1 = paramString1;
-    localMessage.s2 = paramString2;
+    localMessage.type = REMOVE_ROBOT;
+    localMessage.string1 = paramString1;
+    localMessage.string2 = paramString2;
     return localMessage;
   }
   
   public static Message sendFleet(String paramString, int paramInt1, int paramInt2, int paramInt3)
   {
     Message localMessage = new Message();
-    localMessage.type = 11;
-    localMessage.s1 = paramString;
+    localMessage.type = SEND_FLEET;
+    localMessage.string1 = paramString;
     localMessage.status = paramInt1;
-    localMessage.i2 = paramInt2;
-    localMessage.i3 = paramInt3;
+    localMessage.destination = paramInt2;
+    localMessage.numShips = paramInt3;
     return localMessage;
   }
   
   public static Message startGame(String paramString1, String paramString2)
   {
     Message localMessage = new Message();
-    localMessage.type = 9;
-    localMessage.s1 = paramString2;
-    localMessage.s2 = paramString1;
+    localMessage.type = START_GAME;
+    localMessage.string1 = paramString2;
+    localMessage.string2 = paramString1;
     return localMessage;
   }
   
   public static Message customMap(String paramString)
   {
     Message localMessage = new Message();
-    localMessage.type = 13;
-    localMessage.s2 = paramString;
+    localMessage.type = CUSTOM_MAP;
+    localMessage.string2 = paramString;
     return localMessage;
   }
   
   public static Message watchGame(String paramString1, String paramString2)
   {
     Message localMessage = new Message();
-    localMessage.type = 6;
-    localMessage.s1 = paramString1;
-    localMessage.s2 = paramString2;
+    localMessage.type = WATCH_GAME;
+    localMessage.string1 = paramString1;
+    localMessage.string2 = paramString2;
     return localMessage;
   }
 }
