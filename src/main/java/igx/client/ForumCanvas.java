@@ -2,6 +2,7 @@ package igx.client;
 
 import java.awt.Canvas;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Frame;
@@ -11,17 +12,20 @@ import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Vector;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.UIManager;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ForumCanvas
-  extends Canvas
+  extends JPanel
   implements MouseListener, RowListener
 {
   public static final Color SELECT_COLOUR = Color.red;
   RowListener listener = null;
   int fontSize;
   int rows;
-  int width;
-  int height;
   Font font;
   FontMetrics fm;
   int fontHeight;
@@ -30,12 +34,13 @@ public class ForumCanvas
   public TextRow[] row;
   int selectedRow = -1;
   
-  public ForumCanvas(int paramInt1, int paramInt2, int paramInt3, Toolkit paramToolkit)
+  private static final Logger logger = LogManager.getLogger();
+  
+  public ForumCanvas(int paramWidth, int paramHeight, int paramFontSize, Toolkit paramToolkit)
   {
-    width = paramInt1;
-    height = paramInt2;
-    fontSize = paramInt3;
-    font = new Font("Helvetica", 0, paramInt3);
+      setPreferredSize( new Dimension( paramWidth, paramHeight ) );
+    fontSize = paramFontSize;
+    font = new Font("Helvetica", 0, paramFontSize);
     fm = paramToolkit.getFontMetrics(font);
     fontDescent = fm.getDescent();
     fontHeight = (fm.getAscent() + fontDescent);
@@ -43,7 +48,7 @@ public class ForumCanvas
       fontHeight += 1;
     }
     spaceWidth = fm.charWidth(' ');
-    rows = (paramInt2 / fontHeight);
+    rows = (paramHeight / fontHeight);
     row = new TextRow[rows];
     setBackground(Color.black);
     addMouseListener(this);
@@ -59,7 +64,8 @@ public class ForumCanvas
   
   public static void main(String[] paramArrayOfString)
   {
-    Frame localFrame = new Frame("Rooty Poo");
+    JFrame localFrame = new JFrame("Rooty Poo");
+    localFrame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
     Toolkit localToolkit = Toolkit.getDefaultToolkit();
     ForumCanvas localForumCanvas = new ForumCanvas(400, 400, 14, localToolkit);
     int i = localForumCanvas.rows;
@@ -91,9 +97,9 @@ public class ForumCanvas
     localForumCanvas.setRowListener(localForumCanvas);
     localFrame.add(localForumCanvas);
     localFrame.pack();
-    localFrame.show();
     localFrame.setSize(400, 400);
     localFrame.validate();
+    localFrame.setVisible( true );
   }
   
   public void mouseClicked(MouseEvent paramMouseEvent) {}
@@ -118,6 +124,10 @@ public class ForumCanvas
   
   public void paint(Graphics paramGraphics)
   {
+      super.paint( paramGraphics );
+    paramGraphics.setColor(Color.black);
+    Dimension size = getSize();
+    paramGraphics.fillRect(0, 0, size.width, size.height );
     for (int i = 0; i < rows; i++) {
       if (row[i] != null) {
         paintRow(paramGraphics, i);
@@ -132,35 +142,37 @@ public class ForumCanvas
     int i = 1 + fontHeight;
     int j = fontHeight * (paramInt + 1);
     TextElement localTextElement = null;
+    int width = this.getSize().width;
+    
     if (localTextRow.centered)
     {
-      int k = 0;
-      for (int m = 0; m < localTextRow.numberOfElements; m++)
+      int textWidth = 0;
+      for (int elementNumber = 0; elementNumber < localTextRow.numberOfElements; elementNumber++)
       {
-        localTextElement = (TextElement)localTextRow.elements.elementAt(m);
-        k += localTextElement.getWidth(fm);
+        localTextElement = (TextElement)localTextRow.elements.elementAt(elementNumber);
+        textWidth += localTextElement.getWidth(fm);
       }
-      i = (width - k) / 2;
+      i = (width - textWidth) / 2;
     }
-    for (int k = 0; k < localTextRow.numberOfElements; k++)
+    
+    for (int elementNumber = 0; elementNumber < localTextRow.numberOfElements; elementNumber++)
     {
-        int column = 0;
-      localTextElement = (TextElement)localTextRow.elements.elementAt(k);
-      if (column != -1)
-      {
-        i = column;
-        paramGraphics.setColor(Color.black);
-        paramGraphics.fillRect(i, j - fontHeight + 1, width - 1 - i, fontHeight);
+      localTextElement = (TextElement)localTextRow.elements.elementAt(elementNumber);
+      int column = localTextElement.column;
+      if( column != -1 ){
+          i = column;
       }
       paramGraphics.setColor(localTextElement.colour);
       paramGraphics.drawString(localTextElement.text, i, j - 1 - fontDescent);
       i += localTextElement.getWidth(fm);
     }
+    
     if (localTextRow.underlined)
     {
       paramGraphics.setColor(localTextRow.underlineColour);
       paramGraphics.drawLine(0, j, width, j);
     }
+    
     if (localTextRow.selected)
     {
       paramGraphics.setColor(SELECT_COLOUR);
@@ -176,18 +188,7 @@ public class ForumCanvas
   
   public void redrawRow(int paramInt)
   {
-    Graphics localGraphics = getGraphics();
-    if (localGraphics == null)
-    {
       repaint();
-      return;
-    }
-    int i = fontHeight * (paramInt + 1);
-    localGraphics.setColor(Color.black);
-    localGraphics.fillRect(1, i - fontHeight + 1, width - 2, fontHeight);
-    if (row[paramInt] != null) {
-      paintRow(localGraphics, paramInt);
-    }
   }
   
   public void rowSelected(int paramInt)

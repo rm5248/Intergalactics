@@ -3,10 +3,13 @@ package igx.client;
 import igx.shared.Game;
 import igx.shared.Player;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Toolkit;
 import java.util.Vector;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class GameListCanvas
   extends ForumCanvas
@@ -31,20 +34,23 @@ public class GameListCanvas
   String serverName;
   ClientForum forum;
   
-  public GameListCanvas(ClientForum paramClientForum, String paramString, int paramInt1, int paramInt2, int paramInt3, Toolkit paramToolkit)
+  private static final Logger logger = LogManager.getLogger();
+  
+  public GameListCanvas(ClientForum paramClientForum, String serverName, int paramWidth, int paramInt2, int fontSize, Toolkit paramToolkit)
   {
-    super(paramInt1, computeHeight(paramInt3, paramInt2 * 2 + 3, paramToolkit), paramInt3, paramToolkit);
-    serverName = paramString;
+    super(paramWidth, computeHeight(fontSize, paramInt2 * 2 + 3, paramToolkit), fontSize, paramToolkit);
+    this.serverName = serverName;
     forum = paramClientForum;
     statusColumn = fontHeight;
     gameColumn = (statusColumn + fm.stringWidth("In Progress  "));
+    logger.debug( "game column start at {}", gameColumn );
     playerColumn = (gameColumn + 10 * fontHeight);
     Vector localVector = new Vector();
-    String str = "intergalactics - " + paramString;
+    String str = "intergalactics - " + serverName;
     int i = fm.stringWidth(str);
-    localVector.addElement(new TextElement("intergalactics", TITLE_COLOUR, (paramInt1 - i) / 2));
+    localVector.addElement(new TextElement("intergalactics", TITLE_COLOUR, (paramWidth - i) / 2));
     localVector.addElement(new TextElement(" - ", COMMA_COLOUR, -1));
-    localVector.addElement(new TextElement(paramString, SERVER_COLOUR, -1));
+    localVector.addElement(new TextElement(serverName, SERVER_COLOUR, -1));
     heading0 = new TextRow(localVector);
     row[0] = heading0;
     localVector = new Vector();
@@ -96,7 +102,8 @@ public class GameListCanvas
   {
     super.paint(paramGraphics);
     paramGraphics.setColor(BORDER_COLOUR);
-    paramGraphics.drawRect(0, 0, width - 1, height);
+    Dimension size = getSize();
+    paramGraphics.drawRect(0, 0, size.width - 1, size.height);
   }
   
   public void removeGame(Game paramGame)

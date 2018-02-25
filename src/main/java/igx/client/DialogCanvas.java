@@ -16,6 +16,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
 import javax.swing.JFrame;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class DialogCanvas
   extends ButtonCanvas
@@ -48,19 +50,23 @@ public class DialogCanvas
   boolean messageMode = false;
   int count = 0;
   
-  public DialogCanvas(int paramInt1, int paramInt2, Toolkit paramToolkit)
+  private static final Logger logger = LogManager.getLogger();
+  
+  public DialogCanvas(int width, int fontSize, Toolkit paramToolkit)
   {
-    super(paramInt2, paramToolkit, paramInt1, 0);
+    super(fontSize, paramToolkit, width, 0);
     if (buttonFontHeight % 2 == 1) {
       buttonFontHeight += 1;
     }
     fontDescent = fm.getDescent();
     fontHeight = (buttonFontHeight + fontDescent);
-    height = (fontHeight * 7);
-    fontSize = paramInt2;
+    Dimension size = getSize();
+    setSize( size.width, fontHeight * 7 );
+    size = getSize();
+    fontSize = fontSize;
     cursorWidth = fm.charWidth('_');
     borderLeft = (10 * buttonSpaceWidth);
-    borderRight = (paramInt1 - 10 * buttonSpaceWidth - 1);
+    borderRight = (width - 10 * buttonSpaceWidth - 1);
     font = buttonFont;
     dialogText = "";
     errorText = "";
@@ -68,11 +74,10 @@ public class DialogCanvas
     userTextTwo = "";
     Dimension localDimension1 = buttonDimensions("Okay");
     Dimension localDimension2 = buttonDimensions("Cancel");
-    int i = width * 2 + width;
-    buttonLeft = ((paramInt1 - i) / 2);
-    buttonRight = ((paramInt1 + i) / 2 - width);
-    addButton(buttonLeft, height - height - fontDescent, "Okay");
-    addButton(buttonRight, height - height - fontDescent, "Cancel");
+    buttonLeft = width / 2 - localDimension1.width;
+    buttonRight = width / 2 + localDimension2.width;
+    addButton(buttonLeft, size.height - localDimension1.height - fontDescent, "Okay");
+    addButton(buttonRight, size.height - localDimension2.height - fontDescent, "Cancel");
   }
   
   public void addChar(char paramChar)
@@ -215,7 +220,7 @@ public class DialogCanvas
     localDialogCanvas.addKeyListener(localDialogCanvas);
     localFrame.add(localDialogCanvas);
     localFrame.setVisible( true );
-    localFrame.setSize(400, localDialogCanvas.height + 20);
+    localFrame.setSize(400, localDialogCanvas.getSize().height + 20);
     localFrame.validate();
   }
   
@@ -231,13 +236,14 @@ public class DialogCanvas
   public void paint(Graphics paramGraphics)
   {
     paramGraphics.setColor(Color.black);
-    paramGraphics.fillRect(0, 0, width, height);
+    Dimension size = getSize();
+    paramGraphics.fillRect(0, 0, size.width, size.height);
     if (messageMode)
     {
       paramGraphics.setFont(font);
       paramGraphics.setColor(ERROR_COLOUR);
       int i = fm.stringWidth(dialogText);
-      int j = (width - i) / 2;
+      int j = (size.width - i) / 2;
       int k = 4 * fontHeight;
       paramGraphics.drawString(dialogText, j, k);
     }
@@ -247,14 +253,14 @@ public class DialogCanvas
     }
     paramGraphics.setFont(font);
     paramGraphics.setColor(BORDER_COLOUR);
-    paramGraphics.drawRect(0, 0, width - 1, height - 1);
+    paramGraphics.drawRect(0, 0, size.width - 1, size.height - 1);
     int i = fontHeight / 2;
     for (int j = 0; j < 7; j++)
     {
       paramGraphics.drawLine(0, fontHeight * j, borderLeft - 1, fontHeight * j);
       paramGraphics.drawLine(0, fontHeight * j + i, borderLeft - 1, fontHeight * j + i);
-      paramGraphics.drawLine(borderRight + 1, fontHeight * j, width, fontHeight * j);
-      paramGraphics.drawLine(borderRight + 1, fontHeight * j + i, width, fontHeight * j + i);
+      paramGraphics.drawLine(borderRight + 1, fontHeight * j, size.width, fontHeight * j);
+      paramGraphics.drawLine(borderRight + 1, fontHeight * j + i, size.width, fontHeight * j + i);
     }
     if (dialogOn)
     {

@@ -10,11 +10,12 @@ import java.awt.Toolkit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
+import javax.swing.JPanel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class ScrollText
-  extends Canvas
+  extends JPanel
 {
   public static final int MARGIN = 1;
   int fontSize;
@@ -23,27 +24,24 @@ public class ScrollText
   FontMetrics fm;
   private List<List<CText>> lines;
   int numLines;
-  int width;
   int currentLine;
   int lineWidth;
   int spaceWidth;
   int numElements;
   int lineID;
-  int height;
   int topMargin;
   
   private static final Logger logger = LogManager.getLogger();
   
-  public ScrollText(int paramInt1, Toolkit paramToolkit, int paramInt2, int paramInt3)
+  public ScrollText(int textSize, Toolkit paramToolkit, int width, int height)
   {
-      logger.debug( "Scroll text size {}", paramInt1 );
-    width = (paramInt2 - 1);
-    height = paramInt3;
-    font = new Font("SansSerif", 0, paramInt1);
+      logger.debug( "Scroll text size {}", textSize );
+    setSize( width - 1, height );
+    font = new Font("SansSerif", 0, textSize);
     fm = paramToolkit.getFontMetrics(font);
     fontHeight = (fm.getAscent() + 1);
     spaceWidth = fm.charWidth(' ');
-    numLines = ((paramInt3 - 1) / fontHeight);
+    numLines = ((height - 1) / fontHeight);
     logger.debug( "Number of lines is {}", numLines );
     lines = new Vector(numLines + 1);
     lines.add( new ArrayList<CText>() );
@@ -68,7 +66,7 @@ public class ScrollText
       {
         String str = wordsList[ j ];
         int i = fm.stringWidth(str) + spaceWidth;
-        if (i + lineWidth < width)
+        if (i + lineWidth < getSize().width)
         {
           paramCText.text += str;
           lineWidth += i;
@@ -101,16 +99,6 @@ public class ScrollText
     repaint();
   }
   
-  public Dimension getMinimumSize()
-  {
-    return new Dimension(width, height);
-  }
-  
-  public Dimension getPreferredSize()
-  {
-    return new Dimension(width, height);
-  }
-  
 //  private String[] getWords(String paramString)
 //  {
 ////    Vector localVector = new Vector();
@@ -140,7 +128,7 @@ public class ScrollText
       {
         paramGraphics.setColor(text.color);
         paramGraphics.drawString(text.text, xLocation, yLocation);
-        xLocation += width;
+        xLocation += getSize().width;
       }
       
       yLocation += fontHeight;

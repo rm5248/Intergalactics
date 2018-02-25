@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Frame;
+import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Toolkit;
@@ -13,32 +14,38 @@ import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-public class I
-  extends Frame
-  implements FrontEnd
+public class I extends JFrame implements FrontEnd
 {
-  Dimension size = null;
-  static Dimension customSize = null;
   boolean soundOnOff = false;
   Server server;
   SoundManager player = new SoundManager(this);
   String host;
   AuPlayer au = new AuPlayer();
+  private JPanel mainPanel;
   
-  public I(String paramString)
+  private static final Logger logger = LogManager.getLogger();
+  
+  public I(String windowTitle)
   {
-    super(paramString);
+    super(windowTitle);
+    setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+    mainPanel = new JPanel();
+      setLayout( new BorderLayout() );
+    add( mainPanel );
+    
+    mainPanel.setSize( 1440, 880 );
+    setBackground( Color.BLACK );
+    
   }
   
   public Container getContainer()
   {
-    return this;
-  }
-  
-  public Dimension getDimensions()
-  {
-    return size;
+    return mainPanel;
   }
   
   public boolean getSoundMode()
@@ -85,7 +92,7 @@ public class I
         System.exit(1);
       }
       if (i != -1) {
-        customSize = new Dimension(i, j);
+        //customSize = new Dimension(i, j);
       }
     }
     else
@@ -93,10 +100,11 @@ public class I
       str = paramArrayOfString[0];
     }
     I localI = new I("intergalactics - " + str);
-    localI.setLayout(new BorderLayout());
-    localI.setBackground(Color.black);
     localI.preGame(str, true);
     localI.host = str;
+    logger.debug( "Local I size is {}", localI.getSize() );
+    localI.setExtendedState( localI.getExtendedState()|JFrame.MAXIMIZED_BOTH );
+    localI.setVisible( true );
   }
   
   public void play(String paramString)
@@ -137,22 +145,22 @@ public class I
     }
     Toolkit localToolkit = Toolkit.getDefaultToolkit();
     Dimension localDimension = localToolkit.getScreenSize();
-    if (customSize != null) {
-      localDimension = customSize;
-    }
+//    if (customSize != null) {
+//      localDimension = customSize;
+//    }
     setSize(localDimension);
-    show();
-    size = new Dimension(localDimension.width, localDimension.height);
+    //size = new Dimension(localDimension.width, localDimension.height);
     Insets localInsets = getInsets();
-    size.width = (size.width - localInsets.left - localInsets.right);
-    size.height = (size.height - localInsets.top - localInsets.bottom - 20);
+    //size.width = (size.width - localInsets.left - localInsets.right);
+    //size.height = (size.height - localInsets.top - localInsets.bottom - 20);
     ClientForum localClientForum = new ClientForum(this, "the HiVE", localToolkit, server);
     server.setForum(localClientForum);
     Image localImage = localToolkit.getImage("hive.gif");
     setIconImage(localImage);
-    pack();
+    //pack();
     localClientForum.setToPreferredSize();
     validate();
+    repaint();
     server.start();
   }
   

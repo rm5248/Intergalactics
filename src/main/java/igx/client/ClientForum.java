@@ -30,6 +30,9 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.Socket;
 import java.util.Vector;
+import javax.swing.BorderFactory;
+import javax.swing.JPanel;
+import javax.swing.border.BevelBorder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -42,7 +45,7 @@ public class ClientForum
   public static final int STATUS_ROWS = 3;
   public static final int MAX_BUTTONS = 7;
   public static final int BUTTON_SPACING = 4;
-  public static final Color BORDER_COLOUR = Color.gray;
+  public static final Color BORDER_COLOUR = Color.GRAY;
   public static final Color BULLETIN_COLOUR = Color.orange;
   public static final Color STATUS_COLOUR = Color.white;
   public static final Color ACTIVE_PLAYER_COLOUR = Color.lightGray;
@@ -80,17 +83,15 @@ public class ClientForum
   public static final String BUTTON_QUIT = "(Q)uit";
   public static final String CARD_FORUM = "forum";
   public static final String CARD_GAME = "game";
-  GameListCanvas gameList;
+  private GameListCanvas gameList;
   DialogCanvas dialog;
-  ListCanvas playerList;
+  private ListCanvas playerList;
   ForumCanvas statusBar;
-  ButtonCanvas buttonBar;
+  private ButtonCanvas buttonBar;
   ScrollText eventList;
-  Panel westContainer;
-  Panel eastContainer;
-  MainPanel mainContainer;
-  int width;
-  int height;
+  private JPanel westContainer;
+  private JPanel eastContainer;
+  private MainPanel mainContainer;
   int dialogMode = -1;
   int mode = 0;
   Point addRobotPoint;
@@ -109,55 +110,59 @@ public class ClientForum
   
   private static final Logger logger = LogManager.getLogger();
   
-  public ClientForum(FrontEnd paramFrontEnd, String paramString, Toolkit paramToolkit, Server paramServer)
+  public ClientForum(FrontEnd paramFrontEnd, String serverName, Toolkit paramToolkit, Server paramServer)
   {
     super(null);
     frontEnd = paramFrontEnd;
     server = paramServer;
-    Dimension localDimension = paramFrontEnd.getDimensions();
+    Dimension localDimension = paramFrontEnd.getSize();
     mainContainer = new MainPanel(localDimension);
     card = new CardLayout();
     paramFrontEnd.getContainer().setLayout(card);
-    width = localDimension.width;
-    height = localDimension.height;
-    mainContainer.setBackground(Color.black);
-    int i = height / 49;
-    i = FontFinder.getFont(paramToolkit, "SansSerif", 19, 50 * height / 100).getSize();
+    mainContainer.setBackground(Color.BLACK);
+    mainContainer.setLayout( new BorderLayout() );
+    int i = localDimension.height / 49;
+    i = FontFinder.getFont(paramToolkit, "SansSerif", 19, 50 * localDimension.height / 100).getSize();
     int j = 11;
-    gameList = new GameListCanvas(this, paramString, height, j, i, paramToolkit);
-    int k = gameList.height;
-    dialog = new DialogCanvas(height, i, paramToolkit);
-    int m = dialog.height;
+    logger.debug( "height is {}", localDimension.height );
+    gameList = new GameListCanvas(this, serverName, localDimension.height, j, i, paramToolkit);
+    logger.debug( "game list size {}", gameList.getSize() );
+    int k = gameList.getSize().height;
+    dialog = new DialogCanvas(localDimension.height, i, paramToolkit);
+    int m = dialog.getSize().height;
     dialog.setButtonListener(this);
-    int n = height - m - k;
-    playerList = new ListCanvas(height, n, i, paramToolkit)
-    {
-      public void paint(Graphics paramAnonymousGraphics)
-      {
-        super.paint(paramAnonymousGraphics);
-        paramAnonymousGraphics.setColor(ClientForum.BORDER_COLOUR);
-        paramAnonymousGraphics.drawRect(0, -1, width - 1, height);
-      }
-    };
+    int n = localDimension.height - m - k;
+    playerList = new ListCanvas(localDimension.width, n, i, paramToolkit);
+//    {
+//      public void paint(Graphics paramAnonymousGraphics)
+//      {
+//        super.paint(paramAnonymousGraphics);
+//        paramAnonymousGraphics.setColor(ClientForum.BORDER_COLOUR);
+//        paramAnonymousGraphics.drawRect(0, -1, localDimension.width - 1, localDimension.height);
+//      }
+//    };
     playerList.addText("Players: ", Color.orange);
-    int i1 = width - height;
+    int i1 = localDimension.width - localDimension.height;
     int i2 = ForumCanvas.computeHeight(i, 3, paramToolkit);
     statusBar = new ForumCanvas(i1, i2, i, paramToolkit);
     buttonBar = new ButtonCanvas(i, paramToolkit, i1, 0);
-    buttonBar.height = ((14 * buttonBar.buttonHeight / 10 + 1) * 7);
+    Dimension buttonBarDim = buttonBar.getSize();
+    buttonBar.setSize( buttonBarDim.width,((14 * buttonBar.buttonHeight / 10 + 1) * 7) );
     buttonBar.setButtonListener(this);
-    int i3 = height - buttonBar.height - i2;
+    int i3 = localDimension.height - buttonBar.getSize().height - i2;
     eventList = new ScrollText(i, paramToolkit, i1, i3);
-    westContainer = new Panel(new BorderLayout());
-    eastContainer = new Panel(new BorderLayout());
-    westContainer.add(gameList, "North");
-    westContainer.add(dialog, "Center");
-    westContainer.add(playerList, "South");
-    eastContainer.add(statusBar, "North");
-    eastContainer.add(buttonBar, "Center");
-    eastContainer.add(eventList, "South");
-    mainContainer.add(westContainer, "West");
-    mainContainer.add(eastContainer, "East");
+    westContainer = new JPanel(new BorderLayout());
+    eastContainer = new JPanel(new BorderLayout());
+    westContainer.add(gameList, BorderLayout.NORTH);
+    westContainer.add(dialog, BorderLayout.CENTER);
+    westContainer.add(playerList, BorderLayout.SOUTH);
+    eastContainer.add(statusBar, BorderLayout.NORTH);
+    eastContainer.add(buttonBar, BorderLayout.CENTER);
+    eastContainer.add(eventList, BorderLayout.SOUTH);
+    
+    mainContainer.add(westContainer, BorderLayout.WEST );
+    mainContainer.add(eastContainer, BorderLayout.EAST );  
+    
     paramFrontEnd.getContainer().add(mainContainer, "forum");
     card.show(paramFrontEnd.getContainer(), "forum");
     gameList.addKeyListener(this);
@@ -170,6 +175,17 @@ public class ClientForum
     westContainer.addKeyListener(this);
     mainContainer.addKeyListener(this);
     mainContainer.requestFocus();
+    
+    Dimension prefSize = new Dimension( 880, 400 );
+    westContainer.setPreferredSize( prefSize );
+    eastContainer.setPreferredSize( prefSize );
+    playerList.setPreferredSize( new Dimension( 600, 100 ) );
+    mainContainer.setSize( 1440, 700 );
+    westContainer.setBorder( BorderFactory.createBevelBorder( BevelBorder.RAISED, Color.RED, Color.RED ) );
+    eastContainer.setBorder( BorderFactory.createBevelBorder( BevelBorder.RAISED, Color.BLUE, Color.BLUE ) );
+    gameList.setBorder( BorderFactory.createBevelBorder( BevelBorder.RAISED, Color.GREEN, Color.GREEN ) );
+    //mainContainer.setBorder( BorderFactory.createBevelBorder( BevelBorder.RAISED, Color.RED, Color.BLUE ) );
+    mainContainer.validate();
   }
   
   public boolean abandonGame(String paramString)
@@ -338,7 +354,8 @@ public class ClientForum
   public Point addButton(String paramString, int paramInt)
   {
     Dimension localDimension = buttonBar.buttonDimensions(paramString);
-    Point localPoint = new Point((buttonBar.width - width) / 2, paramInt * (14 * buttonBar.buttonHeight / 10 + 1));
+    Point localPoint = new Point((buttonBar.getSize().width - mainContainer.getSize().width) / 2, 
+            paramInt * (14 * buttonBar.buttonHeight / 10 + 1));
     buttonBar.addButton(localPoint.x, localPoint.y, paramString);
     return localPoint;
   }
@@ -955,7 +972,7 @@ public class ClientForum
       }
     }
     Vector localVector = new Vector();
-    int m = (statusBar.width - statusBar.fm.stringWidth(clientName)) / 2;
+    int m = (statusBar.getSize().width - statusBar.fm.stringWidth(clientName)) / 2;
     localVector.addElement(new TextElement(clientName, STATUS_COLOUR, m));
     statusBar.row[1] = new TextRow(localVector);
     statusBar.repaint();
@@ -1210,15 +1227,17 @@ public class ClientForum
   
   public void setToPreferredSize()
   {
-    gameList.setSize(gameList.width, gameList.height);
-    dialog.setSize(dialog.width, dialog.height);
-    playerList.setSize(playerList.width, playerList.height);
-    statusBar.setSize(statusBar.width, statusBar.height);
-    buttonBar.setSize(buttonBar.width, buttonBar.height);
-    eventList.setSize(eventList.width, eventList.height);
-    westContainer.setSize(height, height);
-    eastContainer.setSize(width - height, height);
-    mainContainer.setSize(width, height);
+      //logger.debug( "Setting preferred size: {} {}", playerList.width, playerList.height );
+    //gameList.setSize(gameList.width, gameList.height);
+    //dialog.setSize(dialog.width, dialog.height);
+    //playerList.setSize(playerList.width, playerList.height);
+    //statusBar.setSize(statusBar.width, statusBar.height);
+    //buttonBar.setSize(buttonBar.width, buttonBar.height);
+    //eventList.setSize(eventList.width, eventList.height);
+    //westContainer.setSize(height, height);
+    //eastContainer.setSize(width - height, height);
+    //logger.debug( "main size {} {}", width, height );
+    //mainContainer.setSize(width, height);
   }
   
   public Game startNewGame(String paramString1, String paramString2)
@@ -1265,7 +1284,7 @@ public class ClientForum
   }
   
   static class MainPanel
-    extends Panel
+    extends JPanel
   {
     Dimension d;
     

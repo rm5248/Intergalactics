@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Vector;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ButtonCanvas
   extends JPanel
@@ -29,16 +31,15 @@ public class ButtonCanvas
   public int buttonFontHeight;
   public int buttonFontDescent;
   public int buttonSpaceWidth;
-  public int width;
-  public int height;
   public int buttonHeight;
   ButtonListener listener = null;
   private SoftButton currentButton;
   
+  private static final Logger logger = LogManager.getLogger();
+  
   public ButtonCanvas(int fontSize, Toolkit paramToolkit, int wid, int heigt)
   {
-    width = wid;
-    height = heigt;
+      setSize( wid, heigt );
     setBackground(Color.gray);
     buttonFont = new Font("SansSerif", 0, fontSize);
     fm = paramToolkit.getFontMetrics(buttonFont);
@@ -52,6 +53,7 @@ public class ButtonCanvas
   public void addButton(int xLocation, int yLocation, String buttonText)
   {
     Dimension localDimension = buttonDimensions(buttonText);
+    logger.debug("adding button {} at {},{}", buttonText, xLocation, yLocation );
     Rectangle localRectangle = new Rectangle(xLocation, yLocation, 
             localDimension.width, 
             localDimension.height);
@@ -149,7 +151,7 @@ public class ButtonCanvas
   {
     super.paint(paramGraphics);
     paramGraphics.setColor(Color.black);
-    paramGraphics.fillRect(0, 0, width, height);
+    paramGraphics.fillRect(0, 0, getSize().width, getSize().height);
     paramGraphics.setFont(buttonFont);
     for( SoftButton sf : buttons ){
         sf.paint( paramGraphics );

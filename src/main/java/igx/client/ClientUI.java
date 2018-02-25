@@ -24,9 +24,10 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import javax.swing.JPanel;
 
 public class ClientUI
-  extends Panel
+  extends JPanel
   implements UI, MouseListener, MouseMotionListener, KeyListener, ActionListener, ButtonListener
 {
   static final int GALAXY_FONT_RATIO = 60;
@@ -50,7 +51,7 @@ public class ClientUI
   int fontSize;
   int galaxySize;
   int sideWidth;
-  Panel sidebar;
+  JPanel sidebar;
   StatusBar statusBar;
   ButtonCanvas buttonBar;
   ScrollText messageBoard;
@@ -77,7 +78,7 @@ public class ClientUI
     forum = paramClientForum;
     watcher = paramBoolean;
     enableEvents(8L);
-    Dimension localDimension1 = paramFrontEnd.getDimensions();
+    Dimension localDimension1 = paramFrontEnd.getSize();
     width = localDimension1.width;
     height = localDimension1.height;
     fontSize = (height / 60);
@@ -86,7 +87,7 @@ public class ClientUI
     fontSize = (FontFinder.getFont(localToolkit, "SansSerif", 48, galaxySize).getSize() + 2);
     galaxy = new Galaxy(game, galaxySize, fontSize, localToolkit, drawMonitor);
     galaxy.setMe(paramDispatcher.getMe());
-    sidebar = new Panel(new BorderLayout());
+    sidebar = new JPanel(new BorderLayout());
     sidebar.setBackground(Color.black);
     add(galaxy, "West");
     int i = FontFinder.getFont(localToolkit, "SansSerif", 5, 13 * height / 100).getSize();
@@ -96,9 +97,10 @@ public class ClientUI
       statusBar = new StatusBar(game, height / 42, localToolkit, width - height - height / 48, -1, paramClientForum.clientName);
     }
     buttonBar = new ButtonCanvas(height / 54, localToolkit, width - height - height / 48, 0);
-    buttonBar.height = ((14 * buttonBar.buttonHeight / 10 + 1) * 2);
+    Dimension buttonBarSize = buttonBar.getSize();
+    buttonBar.setSize( buttonBarSize.width, ((14 * buttonBar.buttonHeight / 10 + 1) * 2) );
     buttonBar.setButtonListener(this);
-    int j = buttonBar.width / 2;
+    int j = buttonBar.getSize().width / 2;
     String str = "(M)essage (F1)";
     Dimension localDimension2 = buttonBar.buttonDimensions(str);
     Point localPoint = new Point((j - width) / 2, 0 * (14 * buttonBar.buttonHeight / 10 + 1));
@@ -111,7 +113,7 @@ public class ClientUI
     str = "(F)orum";
     localDimension2 = buttonBar.buttonDimensions(str);
     if (paramBoolean) {
-      localPoint = new Point((buttonBar.width - width) / 2, 1 * (14 * buttonBar.buttonHeight / 10 + 1));
+      localPoint = new Point((buttonBar.getSize().width - width) / 2, 1 * (14 * buttonBar.buttonHeight / 10 + 1));
     } else {
       localPoint = new Point((j - width) / 2, 1 * (14 * buttonBar.buttonHeight / 10 + 1));
     }
@@ -124,7 +126,11 @@ public class ClientUI
       buttonBar.addButton(localPoint.x, localPoint.y, str);
     }
     quitPoint = new Point(localPoint.x + width, localPoint.y);
-    messageBoard = new ScrollText(fontSize, localToolkit, width - height - height / 48, height - statusBar.height - buttonBar.height);
+    int width = getSize().width;
+    int height = getSize().height;
+    messageBoard = new ScrollText(fontSize, 
+            localToolkit, width - height - height / 48, 
+            height - statusBar.getSize().height - buttonBar.getSize().height);
     sidebar.add(statusBar, "North");
     sidebar.add(buttonBar, "Center");
     sidebar.add(messageBoard, "South");

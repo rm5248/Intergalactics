@@ -7,7 +7,7 @@ public abstract interface FrontEnd
 {
   public abstract Container getContainer();
   
-  public abstract Dimension getDimensions();
+  public abstract Dimension getSize();
   
   public abstract boolean getSoundMode();
   

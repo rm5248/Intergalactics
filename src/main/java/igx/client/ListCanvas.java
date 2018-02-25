@@ -8,13 +8,15 @@ import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Toolkit;
 import java.util.Vector;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ListCanvas
-  extends Canvas
+  extends JPanel
 {
   public static final int MARGIN_FACTOR = 1;
-  int width;
-  int height;
   int fontHeight;
   int fontDescent;
   int rows;
@@ -23,24 +25,26 @@ public class ListCanvas
   Font font;
   FontMetrics fm;
   
-  public ListCanvas(int paramInt1, int paramInt2, int paramInt3, Toolkit paramToolkit)
+  private static final Logger logger = LogManager.getLogger();
+  
+  public ListCanvas(int paramWidth, int paramHeight, int fontSize, Toolkit paramToolkit)
   {
-    width = paramInt1;
-    height = paramInt2;
-    font = new Font("Helvetica", 0, paramInt3);
+      setSize( paramWidth, paramHeight );
+    font = new Font("Helvetica", 0, fontSize);
     fm = paramToolkit.getFontMetrics(font);
     fontDescent = fm.getDescent();
     fontHeight = (fm.getAscent() + 1 + fontDescent);
-    rows = (paramInt2 / fontHeight);
+    rows = (paramHeight / fontHeight);
     setBackground(Color.black);
+      setOpaque(true);
   }
   
   public void addText(CText paramCText)
   {
     strings.addElement(paramCText);
     paramCText.setWidth(fm.stringWidth(paramCText.text));
-    if (width > maxWidth) {
-      maxWidth = width;
+    if (getSize().width > maxWidth) {
+      maxWidth = getSize().width;
     }
     repaint();
   }
@@ -69,7 +73,8 @@ public class ListCanvas
   
   public static void main(String[] paramArrayOfString)
   {
-    Frame localFrame = new Frame("Toothless Joe Ward");
+    JFrame localFrame = new JFrame("Toothless Joe Ward");
+    localFrame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
     Toolkit localToolkit = Toolkit.getDefaultToolkit();
     ListCanvas localListCanvas = new ListCanvas(400, 400, 20, localToolkit);
     localListCanvas.addText("A", Color.blue);
@@ -93,24 +98,25 @@ public class ListCanvas
     localListCanvas.addText("Q", Color.blue);
     localListCanvas.addText("R", Color.blue);
     localFrame.add(localListCanvas);
-    localFrame.pack();
-    localFrame.show();
-    localFrame.setSize(400, localListCanvas.height + 20);
+    //localFrame.pack();
+    localFrame.setSize(400, localListCanvas.getSize().height + 20);
     localFrame.validate();
+    localFrame.setVisible( true );
   }
   
   public void paint(Graphics paramGraphics)
   {
+      super.paintComponents(paramGraphics);
     paramGraphics.setFont(font);
-    int i = strings.size();
-    for (int j = 0; j < i; j++)
+    logger.debug( "font height is {} descent is {}", fontHeight, fontDescent );
+    for (int x = 0; x < strings.size(); x++)
     {
-      int k = j / rows;
-      int m = (maxWidth + fontHeight * 1) * k + fontHeight * 1;
-      int n = (j % rows + 1) * fontHeight - fontDescent;
-      CText localCText = (CText)strings.elementAt(j);
+      int rowNumber = x / rows;
+      int xLocation = (maxWidth + fontHeight * 1) * rowNumber + fontHeight * 1;
+      int yLocation = (x % rows + 1) * fontHeight - fontDescent;
+      CText localCText = (CText)strings.elementAt(x);
       paramGraphics.setColor(localCText.color);
-      paramGraphics.drawString(localCText.text, m, n);
+      paramGraphics.drawString(localCText.text, xLocation, yLocation);
     }
   }
   
@@ -122,8 +128,8 @@ public class ListCanvas
       CText localCText = (CText)strings.elementAt(i);
       if (localCText.text.equals(paramString)) {
         strings.removeElementAt(i);
-      } else if (width > maxWidth) {
-        maxWidth = width;
+      } else if (getSize().width > maxWidth) {
+        maxWidth = getSize().width;
       }
     }
     repaint();

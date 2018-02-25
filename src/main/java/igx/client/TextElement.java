@@ -10,11 +10,11 @@ public class TextElement
   public Color colour;
   public int column;
   
-  public TextElement(String paramString, Color paramColor, int paramInt)
+  public TextElement(String paramString, Color paramColor, int columnStart)
   {
     text = paramString;
     colour = paramColor;
-    column = paramInt;
+    column = columnStart;
   }
   
   public int getWidth(FontMetrics paramFontMetrics)
