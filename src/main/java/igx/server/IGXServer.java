@@ -35,7 +35,7 @@ public class IGXServer {
         m_portNum = portnum;
         m_clients = new ArrayList<ClientConnection>();
         m_socketToClient = new HashMap<SocketChannel,ClientConnection>();
-        m_mainForum = new ServerForum( new Robot[0] );
+        m_mainForum = new ServerForum( null, null );
         
         logger.debug( "Creating new server on port {}", m_portNum );
     }
