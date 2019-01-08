@@ -1,432 +1,338 @@
 package igx.client;
 
-import igx.shared.Fleet;
-import igx.shared.FleetQueue;
-import igx.shared.Game;
-import igx.shared.GameInstance;
-import igx.shared.Planet;
-import igx.shared.Player;
-import igx.shared.Robot;
-import igx.shared.SocketAction;
-import java.awt.Color;
-import java.awt.Point;
-import java.io.IOException;
-import java.net.Socket;
-import java.util.Vector;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+// Server.java
+// class Server - Client-side communications engine with server
 
-public class Server
-  extends SocketAction
+import igx.shared.*;
+import java.net.*;
+import java.awt.Point;
+import java.io.*;
+import java.util.*;
+import java.awt.Color;
+
+public class Server extends SocketAction
 {
   public ClientForum forum;
   public Dispatcher dispatch;
   public String name;
-  
-  private static final Logger logger = LogManager.getLogger();
-  
-  public Server(Socket paramSocket)
-  {
-    super(paramSocket);
+
+  public Server (Socket sock) {
+	super(sock);
   }
-  
-  public String receive()
-    throws IOException
-  {
-    String str = super.receive();
-    return str;
+  public String receive () throws IOException {
+	String s = super.receive();
+	return s;
   }
-  
-  public boolean receiveBoolean()
-    throws IOException
-  {
-    String str = receive();
-    return str.equals("1");
+  public boolean receiveBoolean () throws IOException {
+	String s = receive();
+	if (s.equals("1"))
+	  return true;
+	else
+	  return false;
   }
-  
-  public int receiveInt()
-    throws IOException
-  {
-    String str = receive();
-    return Integer.parseInt(str);
+  public int receiveInt () throws IOException {
+	String s = receive();
+	return Integer.parseInt(s);
   }
-  
-  public void run()
-  {
-    try
-    {
-      logger.debug( "Starting to read from server" );
-      String str1 = receive();
-      if (!str1.substring(0, 3).equals("3.8".substring(0, 3)))
-      {
-        send("]");
-        forum.frontEnd.versionProblem(str1);
+// Main server-reading loop
+  public void run() {
+    String from, to, ships;
+    try {
+      Debug.d("Starting to read from server...");
+      // Receive version info
+      from = receive();
+      if (!from.substring(0, Params.MAJOR_VERSION_LENGTH).equals(Params.VERSION.substring(0, Params.MAJOR_VERSION_LENGTH))) {
+	send(Params.NACK);
+	forum.frontEnd.versionProblem(from);
+      } else
+	send(Params.ACK);
+      forum.setDialog(ClientForum.DIALOG_ALIAS, "Enter your alias", null);
+      // Password loop
+      boolean authenticated = false;
+      while (!authenticated) {
+	from = receive();
+	if (from.equals(Params.ADDCOMPUTERPLAYER))
+	  forum.setDialog(ClientForum.DIALOG_ALIAS, "Enter your alias", "That alias already belongs to a robot");
+	else
+	if (from.equals(Params.UPDATE))
+	  forum.setDialog(ClientForum.DIALOG_ALIAS, "Enter your alias", "That alias contains illegal characters");
+	else
+	  if (from.equals(Params.NEW_ALIAS))
+	    forum.setDialog(ClientForum.DIALOG_NEW_PASSWORD, "If you are a new user, enter you password. Otherwise, hit <CANCEL> to re-enter your alias.", null);
+	  else
+	    if (from.equals(Params.OLD_ALIAS))
+	      forum.setDialog(ClientForum.DIALOG_PASSWORD, "Enter your password", null);
+	    else
+	      if (from.equals(Params.NACK)) {
+		if (forum.dialogMode == ClientForum.DIALOG_NEW_PASSWORD)
+		  forum.setDialog(ClientForum.DIALOG_ALIAS, "Enter your alias", null);
+		else
+		  forum.setDialog(ClientForum.DIALOG_ALIAS, "Enter your alias", "Incorrect Password");
+	      } else
+		if (from.equals(Params.ACK)) {
+		  // Receive forum info
+		  String info;
+		  info = receive();
+		  while (!info.equals(Params.ENDTRANSMISSION)) {
+		    forum.post(info, ClientForum.BULLETIN_COLOUR);
+		    info = receive();
+		  }
+		  info = receive();
+		  Vector robots = new Vector();
+		  while (!info.equals(Params.ENDTRANSMISSION)) {
+		    String botType = info;
+		    String botName = receive();
+		    int rank = Integer.parseInt(receive());
+		    robots.addElement(new Robot(botType, botName, rank));
+		    info = receive();
+		  }
+		  int n = robots.size();
+		  Robot[] robot = new Robot[n];
+		  for (int i = 0; i < n; i++)
+		    robot[i] = (Robot) (robots.elementAt(i));
+		  forum.setBotList(robot);
+		  // Begin registration
+		  forum.registerClient();
+		  authenticated = true;
+		}
       }
-      else
-      {
-        send("[");
+      // Main loop
+      while (true) {
+	from = receive();
+	if (from.compareTo(Params.FORUM) == 0) {
+	  from = receive();
+	  if (from.compareTo(Params.PLAYERARRIVED) == 0) {
+	    to = receive(); // Get the player's name
+	    forum.addPlayer(to);
+	    if (dispatch != null)
+	      dispatch.playerArrived(to);
+	    else
+	      forum.frontEnd.play(Params.AU_ARRIVED);
+	  } else
+	    if (from.compareTo(Params.NEWGAME) == 0) {
+	      to = receive(); // Game name
+	      from = receive(); // Player's name
+	      forum.createGame(from, to);
+	    } else
+	      if (from.compareTo(Params.JOINGAME) == 0) {
+		to = receive(); // Game name
+		ships = receive(); // Player's name
+		forum.joinGame(ships, to);
+	      } else
+		if (from.compareTo(Params.STARTGAME) == 0) {
+		  to = receive(); // Game name
+                  ships = receive(); // Game map
+		  Game g = forum.startNewGame(to, ships);
+		  if (g != null) { // True if player is in game
+		    long seed = Long.parseLong(receive());
+                    String mapLine = receive();
+                    Point[] map = new Point[Params.PLANETS];
+                    int points = 0;
+                    while (!mapLine.equals(Params.RANDOMMAP)) {
+                       int x = Integer.parseInt(mapLine);
+                       mapLine = receive();
+                       int y = Integer.parseInt(mapLine);
+                       mapLine = receive();
+                       map[points] = new Point(x,y);
+                       points++;
+                    }
+		    GameInstance gameInstance = new GameInstance(seed, g.numPlayers, g.player);
+                    if (points > 0) {
+                       gameInstance.setMap(map);
+                    }
+		    dispatch = new Dispatcher(gameInstance, this, g.name);
+		    forum.displayGame(dispatch, false);
+		  }
+		} else
+		  if (from.compareTo(Params.CUSTOMMAP) == 0) {
+                     Vector maps = new Vector();
+                     String map = receive();
+                     while (!map.equals(Params.CUSTOMMAP)) {
+                        maps.addElement(map);
+                        map = receive();
+                     }
+                     forum.doChooseMap(maps);
+                  } else
+		  if (from.compareTo(Params.ABANDONGAME) == 0) {
+		    ships = receive(); // Player's name
+		    forum.abandonGame(ships);
+		  } else
+		    if (from.compareTo(Params.PLAYERQUITTING) == 0) {
+		      to = receive(); // Player's name
+		      if (to.equals(name))
+			// We got booted!
+			forum.frontEnd.quitProgram();
+		      if (forum.playerQuit(to))
+			break;
+		      else
+			if (dispatch != null)
+			  dispatch.playerLeft(to);
+		    } else
+		      if (from.compareTo(Params.SENDMESSAGE) == 0) {
+			to = receive(); // Player's name
+			from = receive(); // Destination of message (unused here)
+			ships = receive(); // Message text
+			forum.message(to, ships);
+			if (dispatch != null)
+			  dispatch.forumMessage(to, ships);
+			else
+			  forum.frontEnd.play(Params.AU_MESSAGE);
+		      } else
+			if (from.compareTo(Params.ADDCOMPUTERPLAYER) == 0) {
+			  to = receive(); // Game name
+			  ships = receive(); // Player's name
+			  forum.addRobot(ships, to);
+			} else
+			  if (from.compareTo(Params.ADDCUSTOMCOMPUTERPLAYER) == 0) {
+			    to = receive(); // Game name
+			    String result = receive(); // Either ACK or NACK
+			    ships = receive(); // Either name, or reason of failure
+			    if (result.equals(Params.ACK)) {
+			      Robot r = new Robot("Custom", ships, 0);
+			      forum.addCustomRobot(r, to);
+			    } else
+			      forum.post("Couldn't add robot: " + ships, Color.red);
+			  } else
+			    if (from.compareTo(Params.REMOVECOMPUTERPLAYER) == 0) {
+			      to = receive(); // Game name
+			      ships = receive(); // Player's name
+			      forum.removeRobot(ships, to);
+			    } else
+			      if (from.compareTo(Params.GAMEENDED) == 0) {
+				to = receive(); // Game name
+				ships = receive(); // Game winner
+				forum.gameOver(to, ships);
+			      } else
+				if (from.compareTo(Params.WATCHGAME) == 0) {
+				  forum.dialog.setMessageText("Please wait while game is downloaded...");
+				  GameInstance gameInstance = new GameInstance();
+				  String gameName = receive();
+				  // Game info packet
+				  int numPlayers = receiveInt();
+				  int turn = receiveInt();
+				  int segment = receiveInt();
+				  Player[] player = new Player[numPlayers];
+				  for (int i = 0; i < numPlayers; i++) {
+				    player[i] = new Player(receive());
+				    player[i].isActive = receiveBoolean();
+				    player[i].isHuman = receiveBoolean();
+				    player[i].status = receiveInt();
+				    player[i].number = i;
+				    if (player[i].isHuman && (forum.getPlayer(player[i].name) == null))
+				      player[i].isPresent = false;
+				  }
+				  Planet[] planet = new Planet[Params.PLANETS];
+				  for (int i = 0; i < Params.PLANETS; i++) {
+				    planet[i] = new Planet(i, gameInstance);
+				    planet[i].x = receiveInt();
+				    planet[i].y = receiveInt();
+				    int playerNum = receiveInt();
+				    if (playerNum == Params.MAXPLAYERS)
+				      planet[i].owner = Player.NEUTRAL;
+				    else
+				      planet[i].owner = player[playerNum];
+				    planet[i].production = receiveInt();
+				    planet[i].ratio = receiveInt();
+				    planet[i].ships = receiveInt();
+				    planet[i].defenceRatio = receiveInt();
+				    planet[i].prodTurns = receiveInt();
+				    planet[i].blackHole = receiveBoolean();
+				    String info = receive();
+				    while (!info.equals(Params.ENDTRANSMISSION)) {
+				      int j = Integer.parseInt(info);
+				      planet[i].attacker[j] = receiveInt();
+				      info = receive();
+				    }
+				  }
+				  FleetQueue fleetQueue = new FleetQueue(gameInstance);
+				  String info = receive();
+				  while (!info.equals(Params.ENDTRANSMISSION)) {
+				    Planet dest = planet[Integer.parseInt(info)];
+                                    Planet source = planet[receiveInt()];
+				    int numShips = receiveInt();
+				    int ratio = receiveInt();
+				    Player owner = player[receiveInt()];
+				    float distance = new Float(receive()).floatValue();
+				    Fleet f = new Fleet(gameInstance, dest, source, owner, numShips, ratio, distance);
+				    fleetQueue.insert(f);
+				    info = receive();
+				  }
+				  gameInstance.setGameInstance(numPlayers, player, planet, fleetQueue, turn, segment);
+				  // Now, do something with the game Instance.
+				  forum.selectGame(gameName);
+				  dispatch = new Dispatcher(gameInstance, this, gameName);
+				  forum.watchGame(name, gameName);
+				  Player gamePlayer = gameInstance.getPlayer(name);
+				  if (gamePlayer != null) {
+				    gamePlayer.isPresent = true;
+				    forum.displayGame(dispatch, false);
+				  } else
+				    forum.displayGame(dispatch, true);
+				}
+	} else
+	  if (dispatch != null) {
+	    if (from.compareTo(Params.UPDATE) == 0) { // Update seed
+	      to = receive();
+	      long seed = Long.parseLong(to);
+	      dispatch.Game.setSeed(seed);
+	    } else
+	      if (from.compareTo(Params.ENDTRANSMISSION) == 0)
+		dispatch.advance();
+	      else
+		if (from.compareTo(Params.PLAYERQUITTING) == 0) {
+		  to = receive(); // Determine who is quitting
+		  int who = Integer.parseInt(to);
+		  ships = receive(); // What kind of quitting?
+		  int status = Integer.parseInt(ships);
+		  //
+		  if (status == Params.QUIT_SIGNAL) {
+		    if (who == -1) { // Game watcher - us!
+		      Player p = forum.getPlayer(name);
+		      p.isActive = false;
+		      p.inGame = false;
+		      p.game = null;
+		      forum.displayForum(true);
+		    } else {
+		      dispatch.playerQuit(who, status);
+		      if (name.equals(dispatch.Game.player[who].name)) {
+			forum.frontEnd.play(Params.AU_YOU_QUIT);
+			// It's us who's quitting
+			forum.displayForum(true);
+		      }
+		    }
+		  } else
+		    dispatch.playerQuit(who, status);
+		} else
+		  if (from.compareTo(Params.SENDMESSAGE) == 0) {
+		    to = receive(); // Determine who is sending
+		    ships = receive(); // Determine who is the recipient
+		    from = receive(); // Get actual message
+		    int receiver = Integer.parseInt(ships);
+		    Player sender = dispatch.Game.getPlayer(to);
+		    if (sender == null) {
+		      if (receiver == Params.MAXPLAYERS)
+			dispatch.watcherMessage(to, Player.NEUTRAL, from);
+		      else
+			dispatch.watcherMessage(to, dispatch.Game.player[receiver], from);
+		    } else {
+		      if (receiver == Params.MAXPLAYERS)
+			dispatch.message(sender, Player.NEUTRAL, from);
+		      else
+			dispatch.message(sender, dispatch.Game.player[receiver], from);
+		    }
+		  } else { // Fleet
+		    to = receive();
+		    ships = receive();
+		    dispatch.addFleet(new Fleet(dispatch.Game, dispatch.Game.planet[Integer.valueOf(from).intValue()], dispatch.Game.planet[Integer.valueOf(to).intValue()], Integer.valueOf(ships).intValue()));
+		  }
+	  }
       }
-      forum.setDialog(0, "Enter your alias", null);
-      int i = 0;
-      Object localObject1;
-      Object localObject4;
-      int m;
-      while (i == 0)
-      {
-        str1 = receive();
-        if (str1.equals("*"))
-        {
-          forum.setDialog(0, "Enter your alias", "That alias already belongs to a robot");
-        }
-        else if (str1.equals("|"))
-        {
-          forum.setDialog(0, "Enter your alias", "That alias contains illegal characters");
-        }
-        else if (str1.equals("{"))
-        {
-          forum.setDialog(1, "If you are a new user, enter you password. Otherwise, hit <CANCEL> to re-enter your alias.", null);
-        }
-        else if (str1.equals("}"))
-        {
-          forum.setDialog(2, "Enter your password", null);
-        }
-        else if (str1.equals("]"))
-        {
-          if (forum.dialogMode == 1) {
-            forum.setDialog(0, "Enter your alias", null);
-          } else {
-            forum.setDialog(0, "Enter your alias", "Incorrect Password");
-          }
-        }
-        else if (str1.equals("["))
-        {
-          for (localObject1 = receive(); !((String)localObject1).equals("~"); localObject1 = receive()) {
-              logger.debug( "Adding the following text to the forum: {}", localObject1 );
-            forum.post((String)localObject1, ClientForum.BULLETIN_COLOUR);
-          }
-          logger.debug( "after forum post" );
-          localObject1 = receive();
-          Vector localVector = new Vector();
-          logger.debug( "About to rx bots" );
-          while (!((String)localObject1).equals("~"))
-          {
-            Object localObject3 = localObject1;
-            localObject4 = receive();
-            int i1 = Integer.parseInt(receive());
-            localVector.addElement(new Robot(localObject3.toString(), (String)localObject4, i1));
-            localObject1 = receive();
-          }
-          logger.debug( "After ~ for bots" );
-          m = localVector.size();
-          Robot[] robotArray = new Robot[m];
-          for (int i1 = 0; i1 < m; i1++) {
-              Robot r = (Robot)localVector.elementAt(i1);
-            robotArray[i1] = r;
-          }
-          forum.setBotList(robotArray);
-          logger.debug( "Have set bot list" );
-          forum.registerClient();
-          logger.debug( "Have registered client" );
-          i = 1;
-          
-        }
-      }
-      
-      logger.debug( "About to infinite loop" );
-      for (;;)
-      {
-        str1 = receive();
-        String str2;
-        String str3;
-        if (str1.compareTo("+") == 0)
-        {
-          str1 = receive();
-          if (str1.compareTo("^") == 0)
-          {
-            str2 = receive();
-            forum.addPlayer(str2);
-            if (dispatch != null) {
-              dispatch.playerArrived(str2);
-            } else {
-              forum.frontEnd.play("arrive.au");
-            }
-          }
-          else if (str1.compareTo("#") == 0)
-          {
-            str2 = receive();
-            str1 = receive();
-            forum.createGame(str1, str2);
-          }
-          else if (str1.compareTo("$") == 0)
-          {
-            str2 = receive();
-            str3 = receive();
-            forum.joinGame(str3, str2);
-          }
-          else
-          {
-            int i6;
-            if (str1.compareTo("&") == 0)
-            {
-              str2 = receive();
-              str3 = receive();
-              localObject1 = forum.startNewGame(str2, str3);
-              if (localObject1 != null)
-              {
-                long l2 = Long.parseLong(receive());
-                localObject4 = receive();
-                Point[] arrayOfPoint = new Point[36];
-                int i3;
-                //ROBERT unsure where numPlayers and player array come from
-                int numPlayers = 0;
-                Player[] player = new Player[ 0 ];
-                for (i3 = 0; !((String)localObject4).equals("<"); i3++)
-                {
-                  int i4 = Integer.parseInt((String)localObject4);
-                  localObject4 = receive();
-                  i6 = Integer.parseInt((String)localObject4);
-                  localObject4 = receive();
-                  arrayOfPoint[i3] = new Point(i4, i6);
-                }
-                GameInstance localGameInstance = new GameInstance(l2, numPlayers, player);
-                if (i3 > 0) {
-                  localGameInstance.setMap(arrayOfPoint);
-                }
-                dispatch = new Dispatcher(localGameInstance, this, name);
-                forum.displayGame(dispatch, false);
-              }
-            }
-            else
-            {
-              Object localObject2;
-              if (str1.compareTo(">") == 0)
-              {
-                localObject1 = new Vector();
-                for (localObject2 = receive(); !((String)localObject2).equals(">"); localObject2 = receive()) {
-                  ((Vector)localObject1).addElement(localObject2);
-                }
-                forum.doChooseMap((Vector)localObject1);
-              }
-              else if (str1.compareTo("%") == 0)
-              {
-                str3 = receive();
-                forum.abandonGame(str3);
-              }
-              else if (str1.compareTo("!") == 0)
-              {
-                str2 = receive();
-                if (str2.equals(name)) {
-                  forum.frontEnd.quitProgram();
-                }
-                if (forum.playerQuit(str2)) {
-                  break;
-                }
-                if (dispatch != null) {
-                  dispatch.playerLeft(str2);
-                }
-              }
-              else if (str1.compareTo("@") == 0)
-              {
-                str2 = receive();
-                str1 = receive();
-                str3 = receive();
-                forum.message(str2, str3);
-                if (dispatch != null) {
-                  dispatch.forumMessage(str2, str3);
-                } else {
-                  forum.frontEnd.play("message.au");
-                }
-              }
-              else if (str1.compareTo("*") == 0)
-              {
-                str2 = receive();
-                str3 = receive();
-                forum.addRobot(str3, str2);
-              }
-              else if (str1.compareTo("?") == 0)
-              {
-                str2 = receive();
-                localObject1 = receive();
-                str3 = receive();
-                if (((String)localObject1).equals("["))
-                {
-                  localObject2 = new Robot("Custom", str3, 0);
-                  forum.addCustomRobot((Robot)localObject2, str2);
-                }
-                else
-                {
-                  forum.post("Couldn't add robot: " + str3, Color.red);
-                }
-              }
-              else if (str1.compareTo("\\") == 0)
-              {
-                str2 = receive();
-                str3 = receive();
-                forum.removeRobot(str3, str2);
-              }
-              else if (str1.compareTo("(") == 0)
-              {
-                str2 = receive();
-                str3 = receive();
-                forum.gameOver(str2, str3);
-              }
-              else if (str1.compareTo(")") == 0)
-              {
-                forum.dialog.setMessageText("Please wait while game is downloaded...");
-                localObject1 = new GameInstance();
-                localObject2 = receive();
-                m = receiveInt();
-                int n = receiveInt();
-                int i2 = receiveInt();
-                Player[] arrayOfPlayer = new Player[m];
-                for (int i5 = 0; i5 < m; i5++)
-                {
-                  arrayOfPlayer[i5] = new Player(receive());
-                  arrayOfPlayer[i5].isActive = receiveBoolean();
-                  arrayOfPlayer[i5].isHuman = receiveBoolean();
-                  arrayOfPlayer[i5].status = receiveInt();
-                  arrayOfPlayer[i5].number = i5;
-                  if ((arrayOfPlayer[i5].isHuman) && (forum.getPlayer(name) == null)) {
-                    arrayOfPlayer[i5].isPresent = false;
-                  }
-                }
-                Planet[] arrayOfPlanet = new Planet[36];
-                for (i6 = 0; i6 < 36; i6++)
-                {
-                  arrayOfPlanet[i6] = new Planet(i6, (GameInstance)localObject1);
-                  arrayOfPlanet[i6].x = receiveInt();
-                  arrayOfPlanet[i6].y = receiveInt();
-                  int i7 = receiveInt();
-                  if (i7 == 9) {
-                    arrayOfPlanet[i6].owner = Player.NEUTRAL;
-                  } else {
-                    arrayOfPlanet[i6].owner = arrayOfPlayer[i7];
-                  }
-                  arrayOfPlanet[i6].production = receiveInt();
-                  arrayOfPlanet[i6].ratio = receiveInt();
-                  arrayOfPlanet[i6].ships = receiveInt();
-                  arrayOfPlanet[i6].defenceRatio = receiveInt();
-                  arrayOfPlanet[i6].prodTurns = receiveInt();
-                  arrayOfPlanet[i6].blackHole = receiveBoolean();
-                  for (String localObject5 = receive(); !((String)localObject5).equals("~"); localObject5 = receive())
-                  {
-                    int i8 = Integer.parseInt((String)localObject5);
-                    arrayOfPlanet[i6].attacker[i8] = receiveInt();
-                  }
-                }
-                FleetQueue localFleetQueue = new FleetQueue((GameInstance)localObject1);
-                for (String str4 = receive(); !str4.equals("~"); str4 = receive())
-                {
-                  Planet localObject5 = arrayOfPlanet[Integer.parseInt(str4)];
-                  Planet localPlanet = arrayOfPlanet[receiveInt()];
-                  int i9 = receiveInt();
-                  int i10 = receiveInt();
-                  Player localPlayer3 = arrayOfPlayer[receiveInt()];
-                  float f = new Float(receive()).floatValue();
-                  Fleet localFleet = new Fleet((GameInstance)localObject1, (Planet)localObject5, localPlanet, localPlayer3, i9, i10, f);
-                  localFleetQueue.insert(localFleet);
-                }
-                ((GameInstance)localObject1).setGameInstance(m, arrayOfPlayer, arrayOfPlanet, localFleetQueue, n, i2);
-                forum.selectGame((String)localObject2);
-                dispatch = new Dispatcher((GameInstance)localObject1, this, (String)localObject2);
-                forum.watchGame(name, (String)localObject2);
-                Player localObject5 = ((GameInstance)localObject1).getPlayer(name);
-                if (localObject5 != null)
-                {
-                  localObject5.isPresent = true;
-                  forum.displayGame(dispatch, false);
-                }
-                else
-                {
-                  forum.displayGame(dispatch, true);
-                }
-              }
-            }
-          }
-        }
-        else if (dispatch != null)
-        {
-          if (str1.compareTo("|") == 0)
-          {
-            str2 = receive();
-            long l1 = Long.parseLong(str2);
-            dispatch.Game.setSeed(l1);
-          }
-          else if (str1.compareTo("~") == 0)
-          {
-            dispatch.advance();
-          }
-          else
-          {
-            int j;
-            if (str1.compareTo("!") == 0)
-            {
-              str2 = receive();
-              j = Integer.parseInt(str2);
-              str3 = receive();
-              int k = Integer.parseInt(str3);
-              if (k == 0)
-              {
-                if (j == -1)
-                {
-                  Player localPlayer2 = forum.getPlayer(name);
-                  localPlayer2.isActive = false;
-                  localPlayer2.inGame = false;
-                  localPlayer2.game = null;
-                  forum.displayForum(true);
-                }
-                else
-                {
-                  dispatch.playerQuit(j, k);
-                  if (name.equals(dispatch.Game.player[j].name))
-                  {
-                    forum.frontEnd.play("youquit.au");
-                    forum.displayForum(true);
-                  }
-                }
-              }
-              else {
-                dispatch.playerQuit(j, k);
-              }
-            }
-            else if (str1.compareTo("@") == 0)
-            {
-              str2 = receive();
-              str3 = receive();
-              str1 = receive();
-              j = Integer.parseInt(str3);
-              Player localPlayer1 = dispatch.Game.getPlayer(str2);
-              if (localPlayer1 == null)
-              {
-                if (j == 9) {
-                  dispatch.watcherMessage(str2, Player.NEUTRAL, str1);
-                } else {
-                  dispatch.watcherMessage(str2, dispatch.Game.player[j], str1);
-                }
-              }
-              else if (j == 9) {
-                dispatch.message(localPlayer1, Player.NEUTRAL, str1);
-              } else {
-                dispatch.message(localPlayer1, dispatch.Game.player[j], str1);
-              }
-            }
-            else
-            {
-              str2 = receive();
-              str3 = receive();
-              dispatch.addFleet(new Fleet(dispatch.Game, dispatch.Game.planet[Integer.valueOf(str1).intValue()], dispatch.Game.planet[Integer.valueOf(str2).intValue()], Integer.valueOf(str3).intValue()));
-            }
-          }
-        }
-      }
+    } catch (IOException e) {
     }
-    catch (IOException localIOException) {}
     closeConnections();
     forum.frontEnd.quitProgram();
   }
-  
-  public void setForum(ClientForum paramClientForum)
-  {
-    forum = paramClientForum;
+  public void setForum (ClientForum forum) {
+    this.forum = forum;
   }
 }

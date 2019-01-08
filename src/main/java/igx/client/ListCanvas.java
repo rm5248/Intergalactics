@@ -1,137 +1,102 @@
 package igx.client;
 
-import java.awt.Canvas;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Frame;
-import java.awt.Graphics;
-import java.awt.Toolkit;
-import java.util.Vector;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+// ListCanvas.java 
 
-public class ListCanvas
-  extends JPanel
+import igx.shared.*;
+import java.awt.*;
+import java.util.*;
+
+public class ListCanvas extends Canvas
 {
   public static final int MARGIN_FACTOR = 1;
-  int fontHeight;
-  int fontDescent;
-  int rows;
-  int maxWidth;
+
+  int width, height, fontHeight, fontDescent, rows, maxWidth;
   Vector strings = new Vector();
   Font font;
   FontMetrics fm;
-  
-  private static final Logger logger = LogManager.getLogger();
-  
-  public ListCanvas(int paramWidth, int paramHeight, int fontSize, Toolkit paramToolkit)
-  {
-      setSize( paramWidth, paramHeight );
-    font = new Font("Helvetica", 0, fontSize);
-    fm = paramToolkit.getFontMetrics(font);
-    fontDescent = fm.getDescent();
-    fontHeight = (fm.getAscent() + 1 + fontDescent);
-    rows = (paramHeight / fontHeight);
-    setBackground(Color.black);
-      setOpaque(true);
-  }
-  
-  public void addText(CText paramCText)
-  {
-    strings.addElement(paramCText);
-    paramCText.setWidth(fm.stringWidth(paramCText.text));
-    if (getSize().width > maxWidth) {
-      maxWidth = getSize().width;
-    }
-    repaint();
-  }
-  
-  public void addText(String paramString, Color paramColor)
-  {
-    addText(new CText(paramString, paramColor));
-  }
-  
-  public void changeColour(String paramString, Color paramColor)
-  {
-    changeMultiColour(paramString, paramColor);
-    repaint();
-  }
-  
-  public void changeMultiColour(String paramString, Color paramColor)
-  {
-    for (int i = 0; i < strings.size(); i++)
-    {
-      CText localCText = (CText)strings.elementAt(i);
-      if (localCText.text.equals(paramString)) {
-        localCText.color = paramColor;
-      }
-    }
-  }
-  
-  public static void main(String[] paramArrayOfString)
-  {
-    JFrame localFrame = new JFrame("Toothless Joe Ward");
-    localFrame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
-    Toolkit localToolkit = Toolkit.getDefaultToolkit();
-    ListCanvas localListCanvas = new ListCanvas(400, 400, 20, localToolkit);
-    localListCanvas.addText("A", Color.blue);
-    localListCanvas.addText("B", Color.blue);
-    localListCanvas.addText("C", Color.blue);
-    localListCanvas.addText("D", Color.blue);
-    localListCanvas.addText("E", Color.blue);
-    localListCanvas.addText("Sweet", Color.red);
-    localListCanvas.addText("F", Color.blue);
-    localListCanvas.addText("G", Color.blue);
-    localListCanvas.addText("H", Color.blue);
-    localListCanvas.addText("I", Color.blue);
-    localListCanvas.addText("J", Color.blue);
-    localListCanvas.addText("K", Color.blue);
-    localListCanvas.addText("L", Color.blue);
-    localListCanvas.addText("M", Color.blue);
-    localListCanvas.addText("N", Color.blue);
-    localListCanvas.addText("Game", Color.red);
-    localListCanvas.addText("O", Color.blue);
-    localListCanvas.addText("P", Color.blue);
-    localListCanvas.addText("Q", Color.blue);
-    localListCanvas.addText("R", Color.blue);
-    localFrame.add(localListCanvas);
-    //localFrame.pack();
-    localFrame.setSize(400, localListCanvas.getSize().height + 20);
-    localFrame.validate();
-    localFrame.setVisible( true );
-  }
-  
-  public void paint(Graphics paramGraphics)
-  {
-      super.paintComponents(paramGraphics);
-    paramGraphics.setFont(font);
-    logger.debug( "font height is {} descent is {}", fontHeight, fontDescent );
-    for (int x = 0; x < strings.size(); x++)
-    {
-      int rowNumber = x / rows;
-      int xLocation = (maxWidth + fontHeight * 1) * rowNumber + fontHeight * 1;
-      int yLocation = (x % rows + 1) * fontHeight - fontDescent;
-      CText localCText = (CText)strings.elementAt(x);
-      paramGraphics.setColor(localCText.color);
-      paramGraphics.drawString(localCText.text, xLocation, yLocation);
-    }
-  }
-  
-  public void removeText(String paramString)
-  {
-    maxWidth = 0;
-    for (int i = 0; i < strings.size(); i++)
-    {
-      CText localCText = (CText)strings.elementAt(i);
-      if (localCText.text.equals(paramString)) {
-        strings.removeElementAt(i);
-      } else if (getSize().width > maxWidth) {
-        maxWidth = getSize().width;
-      }
-    }
-    repaint();
-  }
+
+  public ListCanvas (int width, int height, int fontSize, Toolkit toolkit) {
+	this.width = width;
+	this.height = height;
+	font = new Font(Params.DEFAULT_FONT, Font.PLAIN, fontSize);
+	fm = toolkit.getFontMetrics(font);
+	fontDescent = fm.getDescent();
+	fontHeight = fm.getAscent() + 1 + fontDescent;
+	rows = height / fontHeight;
+	setBackground(Color.black);
+  }  
+  public void addText (CText text) {
+	strings.addElement(text);
+	text.setWidth(fm.stringWidth(text.text));
+	if (text.width > maxWidth)
+	  maxWidth = text.width;
+	repaint();
+  }  
+  public void addText (String text, Color colour) {
+	addText(new CText(text, colour));
+  }  
+  public void changeColour (String key, Color color) {
+	changeMultiColour(key, color);
+	repaint();
+  }  
+  public void changeMultiColour (String key, Color color) {
+	for (int i = 0; i < strings.size(); i++) {
+	  CText text = (CText)(strings.elementAt(i));
+	  if (text.text.equals(key))
+	text.color = color;
+	}
+  }  
+  public static void main (String[] args) {
+	Frame f = new Frame("Toothless Joe Ward");
+	Toolkit toolkit = Toolkit.getDefaultToolkit();
+	ListCanvas lc = new ListCanvas(400, 400, 20, toolkit);
+	lc.addText("A", Color.blue);
+	lc.addText("B", Color.blue);
+	lc.addText("C", Color.blue);
+	lc.addText("D", Color.blue);
+	lc.addText("E", Color.blue);
+	lc.addText("Sweet", Color.red);
+	lc.addText("F", Color.blue);
+	lc.addText("G", Color.blue);
+	lc.addText("H", Color.blue);
+	lc.addText("I", Color.blue);
+	lc.addText("J", Color.blue);
+	lc.addText("K", Color.blue);
+	lc.addText("L", Color.blue);
+	lc.addText("M", Color.blue);
+	lc.addText("N", Color.blue);
+	lc.addText("Game", Color.red);
+	lc.addText("O", Color.blue);
+	lc.addText("P", Color.blue);
+	lc.addText("Q", Color.blue);
+	lc.addText("R", Color.blue);
+	f.add(lc);
+	f.pack();
+	f.show();
+	f.setSize(400, lc.height + 20); 
+	f.validate();
+  }  
+  public void paint (Graphics g) {
+	g.setFont(font);
+	int n = strings.size();
+	for (int i = 0; i < n; i++) {
+	  int rowNum = i / rows;
+	  int x = (maxWidth + fontHeight * MARGIN_FACTOR) * rowNum + fontHeight * MARGIN_FACTOR;
+	  int y = ((i % rows) + 1) * fontHeight - fontDescent;
+	  CText text = (CText)(strings.elementAt(i));
+	  g.setColor(text.color);
+	  g.drawString(text.text, x, y);
+	}
+  }  
+  public void removeText (String key) {
+	maxWidth = 0;
+	for (int i = 0; i < strings.size(); i++) {
+	  CText text = (CText)(strings.elementAt(i));
+	  if (text.text.equals(key)) 
+	strings.removeElementAt(i);
+	  else if (text.width > maxWidth)
+	maxWidth = text.width;
+	}
+	repaint();
+  }  
 }

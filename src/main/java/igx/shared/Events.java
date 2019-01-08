@@ -1,355 +1,264 @@
 package igx.shared;
 
+// Events.java
+// Class Events - Handles random events
 import java.awt.Color;
 
 public class Events
 {
   public static final Color COLOUR = Color.white;
+  // Data fields
   GameInstance Game;
   boolean crazyEvent = false;
-  
-  public Events(GameInstance paramGameInstance)
+
+  // Constructor
+  public Events (GameInstance Game)
   {
-    Game = paramGameInstance;
-  }
-  
-  public Color getColor(Planet paramPlanet)
-  {
-      
-    return Params.PLAYERCOLOR[paramPlanet.owner.number];
-  }
-  
-  public Color getColor(Player paramPlayer)
-  {
-    return Params.PLAYERCOLOR[paramPlayer.number];
-  }
-  
-  private int getWorstPlanet()
-  {
-    int i = 0;
-    int j = 0;
-    for (int k = 0; k < 36; k++) {
-      if (Game.planet[k].blackHole) {
-        j++;
-      } else if (Game.planet[k].production < Game.planet[i].production) {
-        i = k;
-      } else if (Game.planet[k].production == Game.planet[i].production) {
-        if (Game.planet[k].ratio < Game.planet[i].ratio) {
-          i = k;
-        } else if ((Game.planet[k].ratio == Game.planet[i].ratio) && (Game.planet[k].ships < Game.planet[i].ships)) {
-          i = k;
-        }
-      }
-    }
-    if (j == 35) {
-      return -1;
-    }
-    return i;
-  }
-  
-  public void update()
-  {
-    Object localObject2;
-    if ((Game.turn > 100) && (Game.turn % 5 == 0))
-    {
-      int i = getWorstPlanet();
-      if (i != -1)
-      {
-        Planet localObject1 = Game.planet[i];
-        localObject1.production = 16;
-        localObject1.ratio = 0;
-        localObject1.owner = Player.NEUTRAL;
-        localObject1.planetShade = 0;
-        localObject1.ships = 0;
-        localObject1.blackHole = true;
-        Game.dirty[i] = true;
-        String[] arrayOfString2 = { "The star that planet ", new Character(localObject1.planetChar).toString(), " is orbiting goes supernova and becomes a black hole!" };
-        localObject2 = new Color[] { COLOUR, getColor((Planet)localObject1), COLOUR };
-        Game.ui.postSpecial(arrayOfString2, (Color[])localObject2);
-      }
-      return;
-    }
-    if (Game.turn == 100)
-    {
-      String[] arrayOfString1 = { "Something is not right in the Galaxy... the end is near!" };
-      Color[] localObject1 = new Color[] { COLOUR };
-      Game.ui.postSpecial(arrayOfString1, (Color[])localObject1);
-      return;
-    }
-    int j = Game.pseudo(0, 35);
-    Game.dirty[j] = true;
-    Planet localObject1 = Game.planet[j];
-    if ((localObject1.owner == Player.NEUTRAL) || (Game.pseudo(0, 99) >= 50)) {
-      return;
-    }
-    int k = Game.pseudo(0, 999);
-    Object localObject3;
-    //What should these ratios be?
-    if (k < 100)
-    {
-      int production = Math.min(localObject1.production + Game.pseudo(1, 5), 15);
-      localObject2 = new String[] { "Production on ", new Character(localObject1.planetChar).toString(), " increases to " + new Integer(production).toString() + "." };
-      localObject3 = new Color[] { COLOUR, getColor((Planet)localObject1), COLOUR };
-      Game.ui.postSpecial((String[])localObject2, (Color[])localObject3);
-    }
-    else if ( k > 100 && k < 200 )
-    {
-      int ratio = Math.min(localObject1.ratio + Game.pseudo(6, 25), 60);
-      localObject2 = new String[] { "Ratio on ", new Character(localObject1.planetChar).toString(), " increases to " + new Integer(ratio).toString() + "%." };
-      localObject3 = new Color[] { COLOUR, getColor((Planet)localObject1), COLOUR };
-      Game.ui.postSpecial((String[])localObject2, (Color[])localObject3);
-    }
-    else
-    {
-      k -= 51;
-      if (k < 0)
-      {
-        if (localObject1.production != 15)
-        {
-          localObject1.production = 15;
-          localObject2 = new String[] { "Production on ", new Character(localObject1.planetChar).toString(), " sky-rockets to " + new Integer(localObject1.production).toString() + "." };
-          localObject3 = new Color[] { COLOUR, getColor((Planet)localObject1), COLOUR };
-          Game.ui.postSpecial((String[])localObject2, (Color[])localObject3);
-        }
-      }
-      else
-      {
-        k -= 51;
-        if (k < 0)
-        {
-          if (localObject1.ratio != 60)
-          {
-            localObject1.ratio = 60;
-            localObject2 = new String[] { "Ratio on ", new Character(localObject1.planetChar).toString(), " leaps to " + new Integer(localObject1.ratio).toString() + "%." };
-            localObject3 = new Color[] { COLOUR, getColor((Planet)localObject1), COLOUR };
-            Game.ui.postSpecial((String[])localObject2, (Color[])localObject3);
-          }
-        }
-        else if (k - 141 < 0)
-        {
-          localObject1.production = Math.max(localObject1.production - Game.pseudo(1, 5), 0);
-          localObject2 = new String[] { "Production on ", new Character(localObject1.planetChar).toString(), " decreases to " + new Integer(localObject1.production).toString() + "." };
-          localObject3 = new Color[] { COLOUR, getColor((Planet)localObject1), COLOUR };
-          Game.ui.postSpecial((String[])localObject2, (Color[])localObject3);
-        }
-        else if (k - 141 < 0)
-        {
-          localObject1.ratio = Math.max(localObject1.ratio - Game.pseudo(6, 25), 1);
-          localObject2 = new String[] { "Ratio on planet ", new Character(localObject1.planetChar).toString(), " decreases to " + new Integer(localObject1.ratio).toString() + "%." };
-          localObject3 = new Color[] { COLOUR, getColor((Planet)localObject1), COLOUR };
-          Game.ui.postSpecial((String[])localObject2, (Color[])localObject3);
-        }
-        else
-        {
-          k -= 51;
-          if (k < 0)
-          {
-            if (localObject1.production != 0)
-            {
-              localObject1.production = 0;
-              localObject2 = new String[] { "Production on ", new Character(localObject1.planetChar).toString(), " plummets to " + new Integer(localObject1.production).toString() + "." };
-              localObject3 = new Color[] { COLOUR, getColor((Planet)localObject1), COLOUR };
-              Game.ui.postSpecial((String[])localObject2, (Color[])localObject3);
-            }
-          }
-          else
-          {
-            k -= 51;
-            if (k < 0)
-            {
-              if (localObject1.ratio != 1)
-              {
-                localObject1.ratio = 1;
-                localObject2 = new String[] { "Ratio on planet ", new Character(localObject1.planetChar).toString(), " drops to a shameful " + new Integer(localObject1.ratio).toString() + "%." };
-                localObject3 = new Color[] { COLOUR, getColor((Planet)localObject1), COLOUR };
-                Game.ui.postSpecial((String[])localObject2, (Color[])localObject3);
-              }
-            }
-            else
-            {
-              k -= 61;
-              int m;
-              if ((k < 0) && (Game.players > 1))
-              {
-                while ((m = Game.pseudo(0, Game.players - 1)) == localObject1.owner.number) {}
-                localObject3 = new String[] { "The people of ", new Character(localObject1.planetChar).toString(), " rebel against ", localObject1.owner.name, ".", null, "  They ally with ", Game.player[m].name, "." };
-                Color[] arrayOfColor2 = { COLOUR, getColor((Planet)localObject1), COLOUR, getColor((Planet)localObject1), COLOUR, null, COLOUR, getColor(Game.player[m]), COLOUR };
-                Game.ui.postSpecial((String[])localObject3, arrayOfColor2);
-                localObject1.owner = Game.player[m];
-              }
-              else
-              {
-                int i7;
-                if (k - 170 < 0)
-                {
-                  crazyEvent = true;
-                  i7 = localObject1.x;
-                  int i8 = localObject1.y;
-                  int i5;
-                  do
-                  {
-                    m = Game.pseudo(0, 15);
-                    i5 = Game.pseudo(0, 15);
-                  } while (Game.map[m][i5] != '.');
-                  Game.map[localObject1.x][localObject1.y] = '.';
-                  localObject1.x = m;
-                  localObject1.y = i5;
-                  Game.map[m][i5] = Planet.num2char(j);
-                  String[] arrayOfString9 = { "Planet ", new Character(localObject1.planetChar).toString(), " warps to a new location!" };
-                  Color[] arrayOfColor3 = { COLOUR, getColor((Planet)localObject1), COLOUR };
-                  Game.ui.postSpecial(arrayOfString9, arrayOfColor3);
-                  Game.ui.postPlanetMove(i7, i8, (Planet)localObject1);
-                }
-                else
-                {
-                  k--;
-                  if (k < 0)
-                  {
-                    k = Game.pseudo(0, 99);
-                    crazyEvent = true;
-                    k -= 15;
-                    if (k < 0)
-                    {
-                      Game.resolveAllConflicts = true;
-                      String[] arrayOfString3 = { "TIME WARP! All fleets suddenly arrive!" };
-                      Color[] arrayOfColor1 = { COLOUR };
-                      Game.ui.postSpecial(arrayOfString3, arrayOfColor1);
-                    }
-                    else
-                    {
-                      k -= 23;
-                      Object localObject4;
-                      if (k < 0)
-                      {
-                        for (int n = 0; n < 36; n++)
-                        {
-                          localObject1 = Game.planet[n];
-                          int i6;
-                          do
-                          {
-                            i6 = Game.pseudo(0, 15);
-                            i7 = Game.pseudo(0, 15);
-                          } while (Game.map[i6][i7] != '.');
-                          Game.map[localObject1.x][localObject1.y] = '.';
-                          localObject1.x = i6;
-                          localObject1.y = i7;
-                          Game.map[i6][i7] = Planet.num2char(n);
-                          Game.dirty[n] = true;
-                        }
-                        Game.ui.postRedrawGalaxy();
-                        String[] arrayOfString4 = { "REALITY SHIFT! All planets warp to new locations!" };
-                        localObject4 = new Color[] { COLOUR };
-                        Game.ui.postSpecial(arrayOfString4, (Color[])localObject4);
-                      }
-                      else
-                      {
-                        k -= 15;
-                        String[] arrayOfString5;
-                        if (k < 0)
-                        {
-                          for (int i1 = 0; i1 < 36; i1++)
-                          {
-                            localObject1 = Game.planet[i1];
-                            localObject1.production = (localObject1.production > 10 ? 0 : 10 - localObject1.production);
-                            Game.dirty[i1] = true;
-                          }
-                          arrayOfString5 = new String[] { "JUDGEMENT DAY! The meek shall be rewarded, the proud shall be punished..." };
-                          localObject4 = new Color[] { COLOUR };
-                          Game.ui.postSpecial(arrayOfString5, (Color[])localObject4);
-                        }
-                        else
-                        {
-                          k -= 15;
-                          if (k < 0)
-                          {
-                            Game.fleets.first = null;
-                            Game.ui.postRedrawGalaxy();
-                            arrayOfString5 = new String[] { "COSMIC HURRICANE! All ships in transit and all attacking ships are destroyed!" };
-                            localObject4 = new Color[] { COLOUR };
-                            Game.ui.postSpecial(arrayOfString5, (Color[])localObject4);
-                          }
-                          else
-                          {
-                            k -= 15;
-                            if (k < 0)
-                            {
-                              for (int i2 = 0; i2 < 36; i2++) {
-                                if (Game.planet[i2].owner != Player.NEUTRAL)
-                                {
-                                  Game.planet[i2].ships = 0;
-                                  Game.dirty[i2] = true;
-                                }
-                              }
-                              String[] arrayOfString6 = { "GALAXY-WIDE TERRORISM! All ships docked at planets are destroyed!" };
-                              localObject4 = new Color[] { COLOUR };
-                              Game.ui.postSpecial(arrayOfString6, (Color[])localObject4);
-                            }
-                            else
-                            {
-                              k -= 15;
-                              String[] arrayOfString7;
-                              if (k < 0)
-                              {
-                                for (int i3 = 0; i3 < 36; i3++) {
-                                  if (Game.planet[i3].owner != Player.NEUTRAL)
-                                  {
-                                    Game.planet[i3].production = Game.pseudo(0, 10);
-                                    Game.planet[i3].ratio = Game.pseudo(20, 49);
-                                    Game.dirty[i3] = true;
-                                  }
-                                }
-                                arrayOfString7 = new String[] { "ALTERNATE UNIVERSE! Similar, but different!" };
-                                localObject4 = new Color[] { COLOUR };
-                                Game.ui.postSpecial(arrayOfString7, (Color[])localObject4);
-                              }
-                              else
-                              {
-                                k--;
-                                if (k < 0)
-                                {
-                                  arrayOfString7 = new String[] { "Look to Baby Duck for inspiration..." };
-                                  localObject4 = new Color[] { Color.yellow };
-                                  Game.ui.postSpecial(arrayOfString7, (Color[])localObject4);
-                                }
-                                else
-                                {
-                                  k--;
-                                  if (k < 0)
-                                  {
-                                    for (int i4 = 0; i4 < 36; i4++) {
-                                      if (Game.planet[i4] != localObject1)
-                                      {
-                                        localObject4 = Game.planet[i4];
-                                        localObject1.production = 0;
-                                        localObject1.ratio = 1;
-                                        if ((localObject1.owner != Player.NEUTRAL) && (localObject1.ships > 0))
-                                        {
-                                          Game.fleets.insert(new Fleet(Game, (Planet)localObject4, (Planet)localObject1, localObject1.ships));
-                                          localObject1.ships = 0;
-                                        }
-                                        Game.dirty[i4] = true;
-                                      }
-                                    }
-                                    localObject1.production = 666;
-                                    localObject1.ratio = 1;
-                                    String[] arrayOfString8 = { "ARMAGEDDON! Let God sort 'em out at ", new Character(localObject1.planetChar).toString(), "!" };
-                                    localObject4 = new Color[] { COLOUR, getColor((Planet)localObject1), COLOUR };
-                                    Game.ui.postSpecial(arrayOfString8, (Color[])localObject4);
-                                  }
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+	this.Game = Game;
+  }  
+/**
+ * This method was created in VisualAge.
+ * @return java.awt.Color
+ * @param p igx.shared.Planet
+ */
+public Color getColor(Planet p) {
+	return Params.PLAYERCOLOR[p.owner.number];
+}
+/**
+ * This method was created in VisualAge.
+ * @return java.awt.Color
+ * @param p igx.shared.Planet
+ */
+public Color getColor(Player p) {
+	return Params.PLAYERCOLOR[p.number];
+}
+  private int getWorstPlanet () {
+	int worst = 0;
+	int numBlackHoles = 0;
+	for (int i = 0; i < Params.PLANETS; i++) {
+	  if (Game.planet[i].blackHole) {
+	numBlackHoles++;
+	continue;
+	  }
+	  if (Game.planet[i].production < Game.planet[worst].production)
+	worst = i;
+	  else if (Game.planet[i].production == Game.planet[worst].production) {
+	if (Game.planet[i].ratio < Game.planet[worst].ratio)
+	  worst = i;
+	else if ((Game.planet[i].ratio == Game.planet[worst].ratio) &&
+		 (Game.planet[i].ships < Game.planet[worst].ships))
+	  worst = i;
+	  }
+	}
+	if (numBlackHoles == Params.PLANETS - 1)
+	  return -1;
+	else
+	  return worst;
+  }  
+public void update() {
+	// First, consider black hole situations
+	if ((Game.turn > Params.BLACKHOLETURN) && (Game.turn % Params.BLACKHOLEPERIOD == 0)) {
+		int worstNum = getWorstPlanet();
+		if (worstNum != -1) {
+			Planet worst = Game.planet[worstNum];
+			worst.production = Params.SPECIALPRODMAX + 1;
+			worst.ratio = 0;
+			worst.owner = Player.NEUTRAL;
+			worst.planetShade = 0;
+			worst.ships = 0;
+			worst.blackHole = true;
+			Game.dirty[worstNum] = true;
+			String[] text = {"The star that planet ", new Character(worst.planetChar).toString(), " is orbiting goes supernova and becomes a black hole!"};
+			Color[] color = {COLOUR, getColor(worst), COLOUR};
+			Game.ui.postSpecial(text, color);
+		}
+		return;
+	} else
+		if (Game.turn == Params.BLACKHOLETURN) {
+			String[] text = {"Something is not right in the Galaxy... the end is near!"};
+			Color[] color = {COLOUR};
+			Game.ui.postSpecial(text, color);
+			return;
+		}
+	int targetNum = Game.pseudo(0, Params.PLANETS - 1);
+	Game.dirty[targetNum] = true;
+	Planet target = Game.planet[targetNum];
+	if ((target.owner == Player.NEUTRAL) || (Game.pseudo(0, 99) >= Params.EVENTCHANCE))
+		return;
+	int event = Game.pseudo(0, 999);
+	if ((event -= Params.PRODINCREASE) < 0) {
+		target.production = Math.min(target.production + Game.pseudo(Params.MINPRODUP, Params.MAXPRODUP), Params.SPECIALPRODMAX);
+		String[] text = {"Production on ", new Character(target.planetChar).toString(), " increases to " + new Integer(target.production).toString() + "."};
+		Color[] color = {COLOUR, getColor(target), COLOUR};
+		Game.ui.postSpecial(text, color);
+	} else
+		if ((event -= Params.RATIOINCREASE) < 0) {
+			target.ratio = Math.min(target.ratio + Game.pseudo(Params.MINRATIOUP, Params.MAXRATIOUP), Params.SPECIALRATIOMAX);
+			String[] text = {"Ratio on ", new Character(target.planetChar).toString(), " increases to " + new Integer(target.ratio).toString() + "%."};
+			Color[] color = {COLOUR, getColor(target), COLOUR};
+			Game.ui.postSpecial(text, color);
+		} else
+			if ((event -= Params.SPECIALPRODINCREASE) < 0) {
+				if (target.production != Params.SPECIALPRODMAX) {
+					target.production = Params.SPECIALPRODMAX;
+					String[] text = {"Production on ", new Character(target.planetChar).toString(), " sky-rockets to " + new Integer(target.production).toString() + "."};
+					Color[] color = {COLOUR, getColor(target), COLOUR};
+					Game.ui.postSpecial(text, color);
+				}
+			} else
+				if ((event -= Params.SPECIALRATIOINCREASE) < 0) {
+					if (target.ratio != Params.SPECIALRATIOMAX) {
+						target.ratio = Params.SPECIALRATIOMAX;
+						String[] text = {"Ratio on ", new Character(target.planetChar).toString(), " leaps to " + new Integer(target.ratio).toString() + "%."};
+						Color[] color = {COLOUR, getColor(target), COLOUR};
+						Game.ui.postSpecial(text, color);
+					}
+				} else
+					if ((event -= Params.PRODDECREASE) < 0) {
+						target.production = Math.max(target.production - Game.pseudo(Params.MINPRODDOWN, Params.MAXPRODDOWN), Params.SPECIALPRODMIN);
+						String[] text = {"Production on ", new Character(target.planetChar).toString(), " decreases to " + new Integer(target.production).toString() + "."};
+						Color[] color = {COLOUR, getColor(target), COLOUR};
+						Game.ui.postSpecial(text, color);
+					} else
+						if ((event -= Params.RATIODECREASE) < 0) {
+							target.ratio = Math.max(target.ratio - Game.pseudo(Params.MINRATIODOWN, Params.MAXRATIODOWN), Params.SPECIALRATIOMIN);
+							String[] text = {"Ratio on planet ", new Character(target.planetChar).toString(), " decreases to " + new Integer(target.ratio).toString() + "%."};
+							Color[] color = {COLOUR, getColor(target), COLOUR};
+							Game.ui.postSpecial(text, color);
+						} else
+							if ((event -= Params.SPECIALPRODDECREASE) < 0) {
+								if (target.production != Params.SPECIALPRODMIN) {
+									target.production = Params.SPECIALPRODMIN;
+									String[] text = {"Production on ", new Character(target.planetChar).toString(), " plummets to " + new Integer(target.production).toString() + "."};
+									Color[] color = {COLOUR, getColor(target), COLOUR};
+									Game.ui.postSpecial(text, color);
+								}
+							} else
+								if ((event -= Params.SPECIALRATIODECREASE) < 0) {
+									if (target.ratio != Params.SPECIALRATIOMIN) {
+										target.ratio = Params.SPECIALRATIOMIN;
+										String[] text = {"Ratio on planet ", new Character(target.planetChar).toString(), " drops to a shameful " + new Integer(target.ratio).toString() + "%."};
+										Color[] color = {COLOUR, getColor(target), COLOUR};
+										Game.ui.postSpecial(text, color);
+									}
+								} else
+									if (((event -= Params.REVOLT) < 0) && (Game.players > 1)) {
+										int revoltee;
+										while ((revoltee = Game.pseudo(0, Game.players - 1)) == target.owner.number);
+										String[] text = {"The people of ", new Character(target.planetChar).toString(), " rebel against ", target.owner.name, ".", null, "  They ally with ", Game.player[revoltee].name, "."};
+										Color[] color = {COLOUR, getColor(target), COLOUR, getColor(target), COLOUR, null, COLOUR, getColor(Game.player[revoltee]), COLOUR};
+										Game.ui.postSpecial(text, color);
+										target.owner = Game.player[revoltee];
+									} else
+										if ((event -= Params.RELOCATE) < 0) {
+											crazyEvent = true; // So a redraw will happen.
+											int x, y;
+											int oldX = target.x;
+											int oldY = target.y;
+											do {
+												x = Game.pseudo(0, Params.MAPX - 1);
+												y = Game.pseudo(0, Params.MAPY - 1);
+											} while (Game.map[x][y] != Params.SPACE);
+											Game.map[target.x][target.y] = Params.SPACE;
+											target.x = x;
+											target.y = y;
+											Game.map[x][y] = Planet.num2char(targetNum);
+											String[] text = {"Planet ", new Character(target.planetChar).toString(), " warps to a new location!"};
+											Color[] color = {COLOUR, getColor(target), COLOUR};
+											Game.ui.postSpecial(text, color);
+											Game.ui.postPlanetMove(oldX, oldY, target);
+										}
+										// This must be the last event
+										else
+											if ((event -= Params.CRAZY) < 0) {
+												event = Game.pseudo(0, 99);
+												crazyEvent = true;
+												if ((event -= Params.ALLFLEETSARRIVE) < 0) {
+													Game.resolveAllConflicts = true;
+													String[] text = {"TIME WARP! All fleets suddenly arrive!"};
+													Color[] color = {COLOUR};
+													Game.ui.postSpecial(text, color);
+												} else
+													if ((event -= Params.PLANETSRELOCATE) < 0) {
+														for (int i = 0; i < Params.PLANETS; i++) {
+															int x, y;
+															target = Game.planet[i];
+															do {
+																x = Game.pseudo(0, Params.MAPX - 1);
+																y = Game.pseudo(0, Params.MAPY - 1);
+															} while (Game.map[x][y] != Params.SPACE);
+															Game.map[target.x][target.y] = Params.SPACE;
+															target.x = x;
+															target.y = y;
+															Game.map[x][y] = Planet.num2char(i);
+															Game.dirty[i] = true;
+														}
+														Game.ui.postRedrawGalaxy();
+														String[] text = {"REALITY SHIFT! All planets warp to new locations!"};
+														Color[] color = {COLOUR};
+														Game.ui.postSpecial(text, color);
+													} else
+														if ((event -= Params.REVERSEPRODUCTION) < 0) {
+															for (int i = 0; i < Params.PLANETS; i++) {
+																target = Game.planet[i];
+																target.production = (target.production > Params.MAXPROD) ? Params.MINPROD : Params.MAXPROD - target.production;
+																Game.dirty[i] = true;
+															}
+															String[] text = {"JUDGEMENT DAY! The meek shall be rewarded, the proud shall be punished..."};
+															Color[] color = {COLOUR};
+															Game.ui.postSpecial(text, color);
+														} else
+															if ((event -= Params.ALLFLEETSDESTROYED) < 0) {
+																Game.fleets.first = null;
+																Game.ui.postRedrawGalaxy();
+																String[] text = {"COSMIC HURRICANE! All ships in transit and all attacking ships are destroyed!"};
+																Color[] color = {COLOUR};
+																Game.ui.postSpecial(text, color);
+															} else
+																if ((event -= Params.ALLDOCKEDDESTROYED) < 0) {
+																	for (int i = 0; i < Params.PLANETS; i++)
+																		if (Game.planet[i].owner != Player.NEUTRAL) {
+																			Game.planet[i].ships = 0;
+																			Game.dirty[i] = true;
+																		}
+																	String[] text = {"GALAXY-WIDE TERRORISM! All ships docked at planets are destroyed!"};
+																	Color[] color = {COLOUR};
+																	Game.ui.postSpecial(text, color);
+																} else
+																	if ((event -= Params.REROLLPRODUCTION) < 0) {
+																		for (int i = 0; i < Params.PLANETS; i++)
+																			if (Game.planet[i].owner != Player.NEUTRAL) {
+																				Game.planet[i].production = Game.pseudo(Params.MINPROD, Params.MAXPROD);
+																				Game.planet[i].ratio = Game.pseudo(Params.MINRATIO, Params.MAXRATIO);
+																				Game.dirty[i] = true;
+																			}
+																		String[] text = {"ALTERNATE UNIVERSE! Similar, but different!"};
+																		Color[] color = {COLOUR};
+																		Game.ui.postSpecial(text, color);
+																	} else
+																		if ((event -= Params.BABYDUCK) < 0) {
+																			String[] text = {"Look to Baby Duck for inspiration..."};
+																			Color[] color = {Color.yellow};
+																			Game.ui.postSpecial(text, color);
+																		} else
+																			if ((event -= Params.ARMAGEDDON) < 0) {
+																				for (int i = 0; i < Params.PLANETS; i++)
+																					if (Game.planet[i] != target) {
+																						Planet current = Game.planet[i];
+																						current.production = 0;
+																						current.ratio = Params.SPECIALRATIOMIN;
+																						if ((current.owner != Player.NEUTRAL) && (current.ships > 0)) {
+																							Game.fleets.insert(new Fleet(Game, current, target, current.ships));
+																							current.ships = 0;
+																						}
+																						Game.dirty[i] = true;
+																					}
+																				target.production = 666;
+																				target.ratio = Params.SPECIALRATIOMIN;
+																				String[] text = {"ARMAGEDDON! Let God sort 'em out at ", new Character(target.planetChar).toString(), "!"};
+																				Color[] color = {COLOUR, getColor(target), COLOUR};
+																				Game.ui.postSpecial(text, color);
+																			}
+											}
+}
 }

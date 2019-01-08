@@ -1,9 +1,10 @@
 package igx.client;
 
-import igx.shared.Fleet;
-import igx.shared.GameInstance;
-import igx.shared.Player;
-import java.util.Vector;
+// Dispatcher.java
+// Class Dispatcher 
+
+import java.util.*;
+import igx.shared.*;
 
 class Dispatcher
 {
@@ -13,110 +14,90 @@ class Dispatcher
   Vector fleets = new Vector();
   String name;
   
-  public Dispatcher(GameInstance paramGameInstance, Server paramServer, String paramString)
+  public Dispatcher (GameInstance Game, Server server, String name)
   {
-    Game = paramGameInstance;
-    server = paramServer;
-    name = paramString;
-  }
-  
-  public void addFleet(Fleet paramFleet)
+	this.Game = Game;
+	this.server = server;
+	this.name = name;
+  }  
+  public void addFleet (Fleet f)
   {
-    fleets.addElement(paramFleet);
-  }
-  
-  public void advance()
+	fleets.addElement(f);
+  }  
+  public void advance ()
   {
-    Game.update(fleets);
-    ui.postNextTurn();
-    fleets.removeAllElements();
-  }
-  
-  public void dispatch(char paramChar1, char paramChar2, int paramInt)
+	Game.update(fleets);
+	ui.postNextTurn();
+	fleets.removeAllElements();
+  }  
+  public void dispatch (char from, char to, int ships)
   {
-    Player localPlayer = getMe();
-    if ((localPlayer != null) && (localPlayer.isActive))
-    {
-      server.send(new Character(paramChar1).toString());
-      server.send(new Character(paramChar2).toString());
-      server.send(String.valueOf(paramInt));
-    }
-  }
-  
-  public void forumMessage(String paramString1, String paramString2)
+	// Still in this game, or watching?
+	Player p = getMe();
+	if ((p != null) && (p.isActive)) {
+		server.send(new Character(from).toString());
+		server.send(new Character(to).toString());
+		server.send(String.valueOf(ships));
+	}
+  }  
+  public void forumMessage (String sender, String text) {
+	ui.postForumMessage(sender, text);
+  }  
+  public Player getMe () {
+	return Game.getPlayer(server.name);
+  }  
+  public void message (Player sender, Player recipient, String message)
   {
-    ui.postForumMessage(paramString1, paramString2);
-  }
-  
-  public Player getMe()
+	ui.postMessage(sender, recipient, message);
+  }  
+  public void playerArrived (String name)
   {
-    return Game.getPlayer(server.name);
-  }
-  
-  public void message(Player paramPlayer1, Player paramPlayer2, String paramString)
-  {
-    ui.postMessage(paramPlayer1, paramPlayer2, paramString);
-  }
-  
-  public void playerArrived(String paramString)
-  {
-    ui.postArrival(paramString);
-  }
-  
-  public void playerLeft(String paramString)
-  {
-    for (int i = 0; i < Game.players; i++) {
-      if ((Game.player[i].name.equals(paramString)) && (Game.player[i].isActive))
-      {
-        Game.player[i].isPresent = false;
-        ui.postPlayerLeft(paramString, i);
-        return;
-      }
-    }
-    ui.postPlayerLeft(paramString, -1);
-  }
-  
-  public void playerQuit(int paramInt1, int paramInt2)
-  {
-    if (paramInt2 != 0)
-    {
-      Game.player[paramInt1].status = paramInt2;
-      ui.postPlayerQuit(Game.player[paramInt1], paramInt2);
-    }
-    else
-    {
-      Game.player[paramInt1].isActive = false;
-      if (!Game.player[paramInt1].name.equals(server.name)) {
-        ui.postPlayerQuit(Game.player[paramInt1], paramInt2);
-      }
-    }
-  }
-  
-  public void quit(int paramInt)
-  {
-    server.send("!");
-    server.send(new Integer(paramInt).toString());
-  }
-  
-  public void registerUI(ClientUI paramClientUI)
-  {
-    ui = paramClientUI;
-  }
-  
-  public void sendMessage(int paramInt, String paramString)
-  {
-    server.send("@");
-    if (paramInt == -1) {
-      paramInt = 9;
-    }
-    server.send(new Integer(paramInt).toString());
-    server.send(paramString);
-  }
-  
-  public void watcherMessage(String paramString1, Player paramPlayer, String paramString2)
-  {
-    ui.postForumMessage(paramString1, paramPlayer, paramString2);
-  }
-  
-  public void youQuit() {}
+	ui.postArrival(name);
+  }  
+public void playerLeft(String name) {
+	for (int i = 0; i < Game.players; i++)
+		if ((Game.player[i].name.equals(name)) && (Game.player[i].isActive)) {
+			Game.player[i].isPresent = false;
+			ui.postPlayerLeft(name, i);
+			return;
+		}
+	ui.postPlayerLeft(name, -1);
+}
+public void playerQuit(int quitter, int status) {
+	if (status != Params.QUIT_SIGNAL) {
+		Game.player[quitter].status = status;
+		ui.postPlayerQuit(Game.player[quitter], status);
+	} else {
+		Game.player[quitter].isActive = false;
+		if (!Game.player[quitter].name.equals(server.name))
+			ui.postPlayerQuit(Game.player[quitter], status);
+	}
+}
+public void quit(int command) {
+	server.send(Params.PLAYERQUITTING);
+	server.send(new Integer(command).toString());
+}
+  public void registerUI (ClientUI ui) {
+	this.ui = ui;
+  }  
+public void sendMessage(int receiver, String message) {
+	server.send(Params.SENDMESSAGE);
+	if (receiver == -1)
+		// Send to all
+		receiver = Params.MAXPLAYERS;
+	server.send(new Integer(receiver).toString());
+	server.send(message);
+}
+/**
+ * This method was created in VisualAge.
+ * @param sender java.lang.String
+ * @param recipient igx.shared.Player
+ * @param text java.lang.String
+ */
+public void watcherMessage(String sender, Player recipient, String text) {
+	ui.postForumMessage(sender, recipient, text);
+}
+  public void youQuit () {
+	// ui.quit();
+  }  
 }

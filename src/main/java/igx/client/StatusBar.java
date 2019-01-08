@@ -1,39 +1,28 @@
 package igx.client;
 
-import igx.shared.GameInstance;
-import igx.shared.Params;
-import igx.shared.Planet;
-import igx.shared.Player;
-import java.awt.Canvas;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Toolkit;
-import javax.swing.JPanel;
+// StatusBar.java 
 
-public class StatusBar
-  extends JPanel
+import java.awt.*;
+import igx.shared.*;
+
+public class StatusBar extends Canvas
 {
-  public static final int MODE_NORMAL = 0;
-  public static final int MODE_SELECT = 1;
-  public static final int MODE_SHIPS = 2;
-  public static final int MODE_MESSAGE = 3;
-  public static final int MODE_QUIT = 4;
-  public static final int MARGIN = 1;
-  public static final int MAX_SHIP_DIGITS = 6;
-  int fontSize;
-  int fontHeight;
-  int fontStart;
-  int spaceWidth;
-  public int width;
-  public int height;
+  // Constants
+  public final static int MODE_NORMAL     = 0;
+  public final static int MODE_SELECT     = 1;
+  public final static int MODE_SHIPS      = 2;
+  public final static int MODE_MESSAGE    = 3;
+  public final static int MODE_QUIT       = 4;
+  public final static int MARGIN          = 1;
+  public final static int MAX_SHIP_DIGITS = 6;
+
+  int fontSize, fontHeight, fontStart, spaceWidth;
+  public int width, height;
   int numPlayers;
-  int mode = 0;
+  int mode = MODE_NORMAL;
   int messageTo = -1;
   int numShips = -1;
-  int turn;
-  int segment;
+  int turn, segment;
   Planet selectedPlanet;
   Planet targetedPlanet;
   Font font;
@@ -41,388 +30,308 @@ public class StatusBar
   GameInstance game;
   int playerNum;
   String playerName;
-  
-  public StatusBar(GameInstance paramGameInstance, int paramInt1, Toolkit paramToolkit, int paramInt2, int paramInt3, String paramString)
-  {
-    game = paramGameInstance;
-    width = paramInt2;
-    playerNum = paramInt3;
-    playerName = paramString;
-    setBackground(Color.black);
-    font = new Font("SansSerif", 0, paramInt1);
-    fm = paramToolkit.getFontMetrics(font);
-    spaceWidth = fm.charWidth(' ');
-    fontHeight = (fm.getAscent() + fm.getDescent() + 2);
-    fontStart = fm.getAscent();
-    numPlayers = paramGameInstance.players;
-    height = ((numPlayers + 1 + 4) * fontHeight + 1 + 1);
-  }
-  
-  public void addShips(int paramInt)
-  {
-      String str;
-    if (numShips == -1) {
-      str = "";
-    } else {
-      str = new Integer(numShips).toString();
-    }
-    str = str + new Integer(paramInt).toString();
-    setShips(Integer.parseInt(str));
-  }
-  
-  public void clearLine(Graphics paramGraphics, int paramInt)
-  {
-    Color localColor = paramGraphics.getColor();
-    paramGraphics.setColor(Color.black);
-    paramGraphics.fillRect(0, paramInt * fontHeight + 1, width, fontHeight - 1);
-    paramGraphics.setColor(localColor);
-  }
-  
-  Graphics clearMode()
-  {
-    Graphics localGraphics = getDefaultGraphics();
-    mode = 0;
-    messageTo = -1;
-    numShips = -1;
-    selectedPlanet = (this.targetedPlanet = null);
-    clearStatus(localGraphics);
-    return localGraphics;
-  }
-  
-  public void clearStatus(Graphics paramGraphics)
-  {
-    for (int i = numPlayers + 1; i < numPlayers + 5; i++) {
-      clearLine(paramGraphics, i);
-    }
-  }
-  
-  public void drawDistanceInfo(Graphics paramGraphics)
-  {
-    CText[] arrayOfCText = new CText[5];
-    arrayOfCText[0] = new CText("ETA:", Color.lightGray);
-    arrayOfCText[1] = new CText(" " + turn, Color.white);
-    arrayOfCText[2] = new CText(":", Color.lightGray);
-    arrayOfCText[3] = new CText(new Integer(segment).toString(), Color.white);
-    arrayOfCText[4] = new CText(".", Color.lightGray);
-    drawLine(paramGraphics, arrayOfCText, numPlayers + 3);
-  }
-  
-  public void drawLine(Graphics paramGraphics, CText[] paramArrayOfCText, int paramInt)
-  {
-    int i = paramInt * fontHeight + 1 + fontStart;
-    int j = 1;
-    for (int k = 0; k < paramArrayOfCText.length; k++)
-    {
-      paramGraphics.setColor(paramArrayOfCText[k].color);
-      if ((paramArrayOfCText[k].text.length() > 0) && (paramArrayOfCText[k].text.charAt(0) == ' ')) {
-        j += spaceWidth;
-      }
-      paramGraphics.drawString(paramArrayOfCText[k].text, j, i);
-      j += fm.stringWidth(paramArrayOfCText[k].text);
-    }
-  }
-  
-  public void drawMessageInfo(Graphics paramGraphics)
-  {
-    CText[] arrayOfCText = new CText[2];
-    arrayOfCText[0] = new CText("Message to", Color.lightGray);
-    if (messageTo == -1) {
-      arrayOfCText[1] = new CText(" ", Color.lightGray);
-    } else if (messageTo == Params.NEUTRAL + 1) {
-      arrayOfCText[1] = new CText(" Forum", Color.white);
-    } else if (messageTo == Params.NEUTRAL) {
-      arrayOfCText[1] = new CText(" Game", Color.white);
-    } else {
-      arrayOfCText[1] = new CText(" " + game.player[messageTo].name, game.player[messageTo].getColor());
-    }
-    drawLine(paramGraphics, arrayOfCText, numPlayers + 1);
-    if (messageTo != -1)
-    {
-      arrayOfCText = new CText[1];
-      arrayOfCText[0] = new CText("Type message", Color.lightGray);
-      drawLine(paramGraphics, arrayOfCText, numPlayers + 2);
-      arrayOfCText = new CText[3];
-      arrayOfCText[0] = new CText("Click", Color.lightGray);
-      arrayOfCText[1] = new CText(" MESSAGE", Color.white);
-      arrayOfCText[2] = new CText(" button to send", Color.lightGray);
-      drawLine(paramGraphics, arrayOfCText, numPlayers + 3);
-    }
-  }
-  
-  public void drawPlanetInfo(Graphics paramGraphics, Planet paramPlanet, int paramInt)
-  {
-    CText[] arrayOfCText = new CText[6];
-    arrayOfCText[0] = new CText(new Character(paramPlanet.planetChar).toString(), paramPlanet.owner.getColor());
-    if (paramPlanet.owner == Player.NEUTRAL)
-    {
-      arrayOfCText[1] = new CText(" (", Color.lightGray);
-      if (paramPlanet.blackHole) {
-        arrayOfCText[2] = new CText("Black Hole", Params.NEUTRALCOLOR);
-      } else {
-        arrayOfCText[2] = new CText("Neutral", Params.NEUTRALCOLOR);
-      }
-      arrayOfCText[3] = new CText(")", Color.lightGray);
-      CText tmp141_138 = new CText("", Color.black);
-      arrayOfCText[5] = tmp141_138;
-      arrayOfCText[4] = tmp141_138;
-    }
-    else
-    {
-      arrayOfCText[1] = new CText(" (", Color.lightGray);
-      arrayOfCText[2] = new CText(new Integer(paramPlanet.ships).toString(), Color.white);
-      arrayOfCText[3] = new CText(" ships,", Color.lightGray);
-      arrayOfCText[4] = new CText(" " + new Integer(paramPlanet.ratio).toString(), Color.white);
-      arrayOfCText[5] = new CText("% ratio)", Color.lightGray);
-    }
-    drawLine(paramGraphics, arrayOfCText, paramInt);
-  }
-  
-  public void drawQuitInfo(Graphics paramGraphics)
-  {
-    CText[] arrayOfCText = new CText[3];
-    arrayOfCText[0] = new CText("Press <", Color.lightGray);
-    arrayOfCText[1] = new CText("R", Color.white);
-    arrayOfCText[2] = new CText("> for \"ready to quit\" or", Color.lightGray);
-    drawLine(paramGraphics, arrayOfCText, numPlayers + 2);
-    arrayOfCText[0] = new CText("press <", Color.lightGray);
-    arrayOfCText[1] = new CText("Y", Color.white);
-    arrayOfCText[2] = new CText("> to quit.", Color.lightGray);
-    drawLine(paramGraphics, arrayOfCText, numPlayers + 3);
-  }
-  
-  public void drawScoreInfo(Graphics paramGraphics)
-  {
-    Player[] arrayOfPlayer = new Player[numPlayers];
-    for (int i = 0; i < numPlayers; i++)
-    {
-      int j = 0;
-      for (int k = 0; k < numPlayers; k++) {
-        if (i != k) {
-          if (game.player[k].score > game.player[i].score) {
-            j++;
-          } else if ((game.player[k].score == game.player[i].score) && (k < i)) {
-            j++;
-          }
-        }
-      }
-      arrayOfPlayer[j] = game.player[i];
-    }
-    for (int i = 0; i < numPlayers; i++)
-    {
-      String str1 = "(" + (arrayOfPlayer[i].number + 1) + ") " + arrayOfPlayer[i].name;
-      paramGraphics.setColor(arrayOfPlayer[i].getColor());
-      if (!arrayOfPlayer[i].isHuman) {
-        str1 = str1 + "(robot)";
-      } else if (!arrayOfPlayer[i].isActive) {
-        str1 = str1 + "(quit)";
-      } else if (!arrayOfPlayer[i].isPresent) {
-        str1 = str1 + "(missing)";
-      } else if (arrayOfPlayer[i].status == 1) {
-        str1 = str1 + "(ready to quit)";
-      }
-      clearLine(paramGraphics, i);
-      paramGraphics.drawString(str1, 1, fontHeight * i + 1 + fontStart);
-      String str2 = new Integer(arrayOfPlayer[i].score).toString();
-      if (arrayOfPlayer[i].isActive) {
-        paramGraphics.drawString(str2, 3 * width / 4, fontHeight * i + 1 + fontStart);
-      }
-    }
-  }
-  
-  public void drawSelectInfo(Graphics paramGraphics)
-  {
-    drawPlanetInfo(paramGraphics, selectedPlanet, numPlayers + 1);
-  }
-  
-  public void drawSendInfo(Graphics paramGraphics)
-  {
-    drawPlanetInfo(paramGraphics, selectedPlanet, numPlayers + 1);
-    drawPlanetInfo(paramGraphics, targetedPlanet, numPlayers + 2);
-    drawDistanceInfo(paramGraphics);
-    if (numShips != -1) {
-      drawShipInfo(paramGraphics);
-    }
-  }
-  
-  public void drawShipInfo(Graphics paramGraphics)
-  {
-    CText[] arrayOfCText = new CText[3];
-    arrayOfCText[0] = new CText("Send", Color.lightGray);
-    arrayOfCText[1] = new CText(" " + new Integer(numShips).toString(), Color.white);
-    arrayOfCText[2] = new CText(" ships.", Color.lightGray);
-    drawLine(paramGraphics, arrayOfCText, numPlayers + 4);
-  }
-  
-  public void drawTimeInfo(Graphics paramGraphics)
-  {
-    CText[] arrayOfCText = new CText[6];
-    arrayOfCText[0] = new CText("Time", Color.lightGray);
-    arrayOfCText[1] = new CText(" " + game.turn, Color.white);
-    arrayOfCText[2] = new CText(":", Color.lightGray);
-    arrayOfCText[3] = new CText(new Integer(game.segment).toString(), Color.white);
-    arrayOfCText[4] = new CText(" You: ", Color.lightGray);
-    if ((playerNum != -1) && (game.player[playerNum].isActive)) {
-      arrayOfCText[5] = new CText(game.player[playerNum].name, Params.PLAYERCOLOR[playerNum]);
-    } else {
-      arrayOfCText[5] = new CText(playerName, Color.white);
-    }
-    drawLine(paramGraphics, arrayOfCText, numPlayers);
-    paramGraphics.setColor(Color.gray);
-    paramGraphics.drawLine(0, (numPlayers + 1) * fontHeight + 1 - 1, width, (numPlayers + 1) * fontHeight + 1 - 1);
-  }
-  
-  public Graphics getDefaultGraphics()
-  {
-    Graphics localGraphics = getGraphics();
-    localGraphics.setFont(font);
-    return localGraphics;
-  }
-  
-  public int getShips()
-  {
-    return numShips;
-  }
-  
-  public void messageMode()
-  {
-    Graphics localGraphics = clearMode();
-    mode = 3;
-    drawMessageInfo(localGraphics);
-  }
-  
-  public void messageMode(int paramInt)
-  {
-    Graphics localGraphics = clearMode();
-    messageTo = paramInt;
-    mode = 3;
-    drawMessageInfo(localGraphics);
-  }
-  
-  public void nextTurn()
-  {
-    Graphics localGraphics = getDefaultGraphics();
-    clearLine(localGraphics, numPlayers);
-    drawScoreInfo(localGraphics);
-    drawTimeInfo(localGraphics);
-    if (mode == 2)
-    {
-      planetDistance();
-      clearLine(localGraphics, numPlayers + 3);
-      drawDistanceInfo(localGraphics);
-    }
-  }
-  
-  public void normalMode()
-  {
-    clearMode();
-  }
-  
-  public void paint(Graphics paramGraphics)
-  {
-    paramGraphics.setFont(font);
-    drawScoreInfo(paramGraphics);
-    paramGraphics.setColor(Color.gray);
-    paramGraphics.drawLine(0, fontHeight * numPlayers + 1 - 1, width, fontHeight * numPlayers + 1 - 1);
-    drawTimeInfo(paramGraphics);
-    switch (mode)
-    {
-    case 1: 
-      drawSelectInfo(paramGraphics);
-      break;
-    case 2: 
-      drawSendInfo(paramGraphics);
-      break;
-    case 3: 
-      drawMessageInfo(paramGraphics);
-      break;
-    case 4: 
-      drawQuitInfo(paramGraphics);
-    }
-    paramGraphics.setColor(Color.gray);
-  }
-  
-  public void planetChanged(int paramInt)
-  {
-    Planet localPlanet = game.planet[paramInt];
-    if ((selectedPlanet != null) && (localPlanet.planetChar == selectedPlanet.planetChar)) {
-      updateSelectedPlanet();
-    } else if ((targetedPlanet != null) && (localPlanet.planetChar == targetedPlanet.planetChar)) {
-      updateTargetedPlanet();
-    }
-  }
-  
-  public void planetDistance()
-  {
-    int i = selectedPlanet.x - targetedPlanet.x;
-    int j = selectedPlanet.y - targetedPlanet.y;
-    int k = (int)(Math.sqrt(i * i + j * j) * 20.0D / 2.0D + 0.99999999D);
-    turn = (game.turn + k / 20);
-    segment = (game.segment + k % 20);
-    if (segment >= 20)
-    {
-      segment -= 20;
-      turn += 1;
-    }
-  }
-  
-  public void planetMoved(Planet paramPlanet)
-  {
-    if ((targetedPlanet != null) && 
-            ((paramPlanet.planetChar == selectedPlanet.planetChar) || 
-            (paramPlanet.planetChar == targetedPlanet.planetChar)))
-    {
-      planetDistance();
-      Graphics localGraphics = getDefaultGraphics();
-      clearLine(localGraphics, numPlayers + 3);
-      drawDistanceInfo(localGraphics);
-    }
-  }
-  
-  public void quitMode()
-  {
-    Graphics localGraphics = clearMode();
-    mode = 4;
-    drawQuitInfo(localGraphics);
-  }
-  
-  public void selectMode(Planet paramPlanet)
-  {
-    Graphics localGraphics = clearMode();
-    mode = 1;
-    selectedPlanet = paramPlanet;
-    drawSelectInfo(localGraphics);
-  }
-  
-  public void sendShipsMode(Planet paramPlanet)
-  {
-    Planet localPlanet = selectedPlanet;
-    Graphics localGraphics = clearMode();
-    mode = 2;
-    selectedPlanet = localPlanet;
-    targetedPlanet = paramPlanet;
-    planetDistance();
-    drawSendInfo(localGraphics);
-  }
-  
-  public void setShips(int paramInt)
-  {
-    Graphics localGraphics = getDefaultGraphics();
-    clearLine(localGraphics, numPlayers + 4);
-    numShips = paramInt;
-    drawShipInfo(localGraphics);
-  }
-  
-  public void updateSelectedPlanet()
-  {
-    Graphics localGraphics = getDefaultGraphics();
-    clearLine(localGraphics, numPlayers + 1);
-    drawPlanetInfo(localGraphics, selectedPlanet, numPlayers + 1);
-  }
-  
-  public void updateTargetedPlanet()
-  {
-    Graphics localGraphics = getDefaultGraphics();
-    clearLine(localGraphics, numPlayers + 2);
-    drawPlanetInfo(localGraphics, targetedPlanet, numPlayers + 2);
-  }
+  public StatusBar (GameInstance game, int fontSize, Toolkit toolkit, int width, int playerNum, String playerName) {
+	super();
+	this.game = game;
+	this.width = width;
+	this.playerNum = playerNum;
+	this.playerName = playerName;
+	setBackground(Color.black);
+	font = new Font("SansSerif", Font.PLAIN, fontSize);
+	fm = toolkit.getFontMetrics(font);
+	spaceWidth = fm.charWidth(' ');
+	fontHeight = fm.getAscent() + fm.getDescent() + 2;
+	fontStart = fm.getAscent();
+	numPlayers = game.players;
+	height = (numPlayers + 1 + 4) * fontHeight + MARGIN + 1; // Four lines of status info
+  }  
+  public void addShips (int digit) {
+	String ships;
+	if (numShips == -1)
+	  ships = "";
+	else
+	  ships = new Integer(numShips).toString();
+	ships += new Integer(digit).toString();
+	setShips(Integer.parseInt(ships));
+  }  
+  public void clearLine (Graphics g, int lineNumber) {
+	Color oldColour = g.getColor();
+	g.setColor(Color.black);
+	g.fillRect(0, lineNumber*fontHeight + MARGIN, width, fontHeight - 1);
+	g.setColor(oldColour);
+  }  
+  Graphics clearMode () {
+	Graphics g = getDefaultGraphics();
+	mode = MODE_NORMAL;
+	messageTo = -1;
+	numShips = -1;
+	selectedPlanet = targetedPlanet = null;
+	clearStatus(g);
+	return g;
+  }  
+  public void clearStatus (Graphics g) {
+	for (int i = numPlayers + 1; i < numPlayers + 5; i++)
+	  clearLine(g, i);
+  }  
+  public void drawDistanceInfo (Graphics g) {
+	CText[] text = new CText[5];
+	text[0] = new CText("ETA:", Color.lightGray);
+	text[1] = new CText(" " + turn, Color.white);
+	text[2] = new CText(":", Color.lightGray);
+	text[3] = new CText(new Integer(segment).toString(), Color.white);
+	text[4] = new CText(".", Color.lightGray);
+	drawLine(g, text, numPlayers+3);
+  }  
+  public void drawLine (Graphics g, CText[] text, int lineNumber) {
+	int y = (lineNumber) * fontHeight + MARGIN + fontStart;
+	int x = 1;
+	for (int i = 0; i < text.length; i++) {
+	  g.setColor(text[i].color);
+	  if ((text[i].text.length() > 0) && (text[i].text.charAt(0) == ' '))
+	x+= spaceWidth;
+	  g.drawString(text[i].text, x, y);
+	  x += fm.stringWidth(text[i].text);
+	}
+  }  
+  public void drawMessageInfo (Graphics g) {
+	CText[] text = new CText[2];
+	text[0] = new CText("Message to", Color.lightGray);
+	if (messageTo == -1)
+	  text[1] = new CText(" ", Color.lightGray);
+	else if (messageTo == Player.NEUTRAL.number + 1)
+		text[1] = new CText(" Forum", Color.white);
+	else if (messageTo == Player.NEUTRAL.number) 
+	  text[1] = new CText(" Game", Color.white);
+	else 
+	  text[1] = new CText(" " + game.player[messageTo].name, game.player[messageTo].getColor());
+	drawLine(g, text, numPlayers+1);
+	if (messageTo != -1) {
+	  text = new CText[1];
+	  text[0] = new CText("Type message", Color.lightGray);
+	  drawLine(g, text, numPlayers+2);
+	  text = new CText[3];
+	  text[0] = new CText("Click", Color.lightGray);
+	  text[1] = new CText(" MESSAGE", Color.white);
+	  text[2] = new CText(" button to send", Color.lightGray);
+	  drawLine(g, text, numPlayers+3);
+	}
+  }  
+  public void drawPlanetInfo (Graphics g, Planet planet, int lineNumber) {
+	CText[] text = new CText[6];
+	text[0] = new CText(new Character(planet.planetChar).toString(), planet.owner.getColor());
+	if (planet.owner == Player.NEUTRAL) {
+	  text[1] = new CText(" (", Color.lightGray);
+	  if (planet.blackHole)
+	text[2] = new CText("Black Hole", Params.NEUTRALCOLOR);
+	  else
+	text[2] = new CText("Neutral", Params.NEUTRALCOLOR);
+	  text[3] = new CText(")", Color.lightGray);
+	  text[4] = text[5] = new CText("", Color.black);
+	} else {
+	  text[1] = new CText(" (", Color.lightGray);
+	  text[2] = new CText(new Integer(planet.ships).toString(), Color.white);
+	  text[3] = new CText(" ships,", Color.lightGray);
+	  text[4] = new CText(" " + new Integer(planet.ratio).toString(), Color.white);
+	  text[5] = new CText("% ratio)", Color.lightGray);
+	}
+	drawLine(g, text, lineNumber);
+  }  
+public void drawQuitInfo(Graphics g) {
+	CText[] text = new CText[3];
+	text[0] = new CText("Press <", Color.lightGray);
+	text[1] = new CText("R", Color.white);
+	text[2] = new CText("> for \"ready to quit\" or", Color.lightGray);
+	drawLine(g, text, numPlayers + 2);
+	text[0] = new CText("press <", Color.lightGray);
+	text[1] = new CText("Y", Color.white);
+	text[2] = new CText("> to quit.", Color.lightGray);
+	drawLine(g, text, numPlayers + 3);
+}
+public void drawScoreInfo(Graphics g) {
+	// Sort these players... and makes sure it takes n x n time, too.
+	Player[] player = new Player[numPlayers];
+	for (int i = 0; i < numPlayers; i++) {
+		int rank = 0; // Number of players who are BETTER than this one
+		for (int j = 0; j < numPlayers; j++) {
+			if (i == j)
+				continue;
+			if (game.player[j].score > game.player[i].score)
+				rank++;
+			else
+				if ((game.player[j].score == game.player[i].score) && (j < i))
+					rank++;
+		}
+		player[rank] = game.player[i];
+	}
+	for (int i = 0; i < numPlayers; i++) {
+		String name = "(" + (player[i].number+1) + ") " +player[i].name;
+		g.setColor(player[i].getColor());
+		if (!player[i].isHuman)
+			name += "(robot)";
+		else if (!player[i].isActive)
+			name += "(quit)";
+		else if (!player[i].isPresent)
+			name += "(missing)";
+		else if (player[i].status == Params.READY_SIGNAL)
+			name += "(ready to quit)";
+		clearLine(g, i);
+		g.drawString(name, 1, fontHeight * i + MARGIN + fontStart);
+		String score = new Integer(player[i].score).toString();
+		if (player[i].isActive)
+			g.drawString(score, 3 * width / 4, fontHeight * i + MARGIN + fontStart);
+	}
+}
+  public void drawSelectInfo (Graphics g) {
+	drawPlanetInfo(g, selectedPlanet, numPlayers + 1);
+  }  
+  public void drawSendInfo (Graphics g) {
+	drawPlanetInfo(g, selectedPlanet, numPlayers + 1);
+	drawPlanetInfo(g, targetedPlanet, numPlayers + 2);
+	drawDistanceInfo(g);
+	if (numShips != -1)
+	  drawShipInfo(g);
+  }  
+  public void drawShipInfo (Graphics g) {
+	CText[] text = new CText[3];
+	text[0] = new CText("Send", Color.lightGray);
+	text[1] = new CText(" " + new Integer(numShips).toString(), Color.white);
+	text[2] = new CText(" ships.", Color.lightGray);
+	drawLine(g, text, numPlayers+4);
+  }  
+  public void drawTimeInfo (Graphics g) {
+	CText[] text = new CText[6];
+	text[0] = new CText("Time", Color.lightGray);
+	text[1] = new CText(" " + game.turn, Color.white);
+	text[2] = new CText(":", Color.lightGray);
+	text[3] = new CText(new Integer(game.segment).toString(), Color.white);
+	text[4] = new CText(" You: ", Color.lightGray);
+	if ((playerNum != -1) && (game.player[playerNum].isActive))
+		text[5] = new CText(game.player[playerNum].name, Params.PLAYERCOLOR[playerNum]);
+	else
+		text[5] = new CText(playerName, Color.white);
+	drawLine(g, text, numPlayers);
+	g.setColor(Color.gray);
+	g.drawLine(0, (numPlayers+1) * fontHeight + MARGIN - 1, width, (numPlayers+1) * fontHeight + MARGIN - 1);
+  }  
+  public Graphics getDefaultGraphics () {
+	Graphics g = getGraphics();
+	g.setFont(font);
+	return g;
+  }  
+  public int getShips () {
+	return numShips;
+  }  
+  // Called by keyboard interface
+  public void messageMode () {
+	Graphics g = clearMode();
+	mode = MODE_MESSAGE;
+	drawMessageInfo(g);
+  }  
+  public void messageMode (int messageTo) {
+	Graphics g = clearMode();
+	this.messageTo = messageTo;
+	mode = MODE_MESSAGE;
+	drawMessageInfo(g);
+  }  
+  public void nextTurn () {
+	Graphics g = getDefaultGraphics();
+	clearLine(g, numPlayers);
+	drawScoreInfo(g);
+	drawTimeInfo(g);
+	if (mode == MODE_SHIPS) {
+	  planetDistance();
+	  clearLine(g, numPlayers+3);
+	  drawDistanceInfo(g);
+	}
+  }  
+  public void normalMode () {
+	clearMode();
+  }  
+  public void paint (Graphics g) {
+	// Draw players
+	g.setFont(font);
+	drawScoreInfo(g);
+	g.setColor(Color.gray);
+	g.drawLine(0, fontHeight * numPlayers + MARGIN - 1, width, fontHeight * numPlayers + MARGIN - 1);
+	drawTimeInfo(g);
+	switch (mode) {
+	case MODE_SELECT:
+	  drawSelectInfo(g);
+	  break;
+	case MODE_SHIPS:
+	  drawSendInfo(g);
+	  break;
+	case MODE_MESSAGE:
+	  drawMessageInfo(g);
+	  break;
+	case MODE_QUIT:
+	  drawQuitInfo(g);
+	  break;
+	}
+	g.setColor(Color.gray);
+	// g.drawLine(0, height - 1, width, height - 1);
+  }  
+  public void planetChanged (int planetNum) {
+	Planet planet = game.planet[planetNum];
+	if ((selectedPlanet != null) && (planet.planetChar == selectedPlanet.planetChar))
+	  updateSelectedPlanet();
+	else if ((targetedPlanet != null) && (planet.planetChar == targetedPlanet.planetChar))
+	  updateTargetedPlanet();
+  }  
+  public void  planetDistance () {
+	int deltaX = selectedPlanet.x - targetedPlanet.x;
+	int deltaY = selectedPlanet.y - targetedPlanet.y;
+	int distance = (int)(Math.sqrt(deltaX*deltaX + deltaY*deltaY)*Params.SEGMENTS/Params.TURNSPEED + 0.99999999);
+	turn = game.turn + (distance / Params.SEGMENTS);
+	segment = game.segment + (distance % Params.SEGMENTS);
+	if (segment >= Params.SEGMENTS) {
+	  segment -= Params.SEGMENTS;
+	  turn++;
+	}
+  }  
+  public void planetMoved (Planet movedPlanet) {
+	if ((targetedPlanet != null) && ((movedPlanet.planetChar == selectedPlanet.planetChar) ||
+				     (movedPlanet.planetChar == targetedPlanet.planetChar))) {
+	  planetDistance();
+	  Graphics g = getDefaultGraphics();
+	  clearLine(g, numPlayers+3);
+	  drawDistanceInfo(g);
+	}
+  }  
+public void quitMode() {
+	Graphics g = clearMode();
+	mode = MODE_QUIT;
+	drawQuitInfo(g);
+}
+  public void selectMode (Planet planet) {
+	Graphics g = clearMode();
+	mode = MODE_SELECT;
+	selectedPlanet = planet;
+	drawSelectInfo(g);
+  }  
+  public void sendShipsMode (Planet planet) {
+	Planet oldSelect = selectedPlanet;
+	Graphics g = clearMode();
+	mode = MODE_SHIPS;
+	selectedPlanet = oldSelect;
+	targetedPlanet = planet;
+	planetDistance();
+	drawSendInfo(g);
+  }  
+  public void setShips (int ships) {
+	Graphics g = getDefaultGraphics();
+	clearLine(g, numPlayers+4);
+	numShips = ships;
+	drawShipInfo(g);
+  }  
+  public void updateSelectedPlanet () {
+	Graphics g = getDefaultGraphics();
+	clearLine(g, numPlayers+1);
+	drawPlanetInfo(g, selectedPlanet, numPlayers+1);
+  }  
+  public void updateTargetedPlanet () {
+	Graphics g = getDefaultGraphics();
+	clearLine(g, numPlayers+2);
+	drawPlanetInfo(g, targetedPlanet, numPlayers+2);
+  }  
 }

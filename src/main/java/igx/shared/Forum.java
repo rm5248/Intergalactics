@@ -1,334 +1,242 @@
 package igx.shared;
 
-import java.util.Random;
-import java.util.Vector;
+// Forum.java 
 
-/**
- * A forum is the main interface that people interact with.
- * 
- * A forum will have :
- * * Games that people can join / watch
- * * A list of players
- * * A pool of games
- * * A list of bots
- */
-public class Forum
-  implements MessageListener
-{
+import java.util.*;
+
+public class Forum implements MessageListener {
+  
+  // Forum states
+  // public static final int NO_GAMES = 0;
+  // public static final int NOT_JOINED = 1;
+  // public static final int WATCHING_GAME = 2;
+  // public static final int IN_PROGRESS = 3;
+  // public static final int IN_NEW_GAME = 4;
+  // public static final int CREATED_GAME = 5;
+  // public static final int CREATED_WITH_ROBOTS = 6;
+
+  // private int state = NO_GAMES;
+
   protected Vector games = new Vector();
   protected Vector players = new Vector();
   protected Vector gamePool = new Vector();
+
   public Robot[] botList;
-  
-  public Forum(Robot[] paramArrayOfRobot)
-  {
-    botList = paramArrayOfRobot;
-  }
-  
-  protected boolean abandonGame(String playerName)
-  {
-    Player localPlayer = getPlayer(playerName);
-    Game localGame = localPlayer.game;
-    if ((localGame != null) && (localPlayer != null) && (localGame.getPlayer(playerName) != null))
-    {
-      if (!localGame.inProgress) {
-        localGame.removePlayer(localPlayer);
-      }
-      gamePool.removeElement(localPlayer);
-      return true;
-    }
-    return false;
-  }
-  
+
+  public Forum (Robot[] botList) {
+	this.botList = botList;
+  }  
+  protected boolean abandonGame(String name) {
+	Player p = getPlayer(name);
+	Game g = p.game;
+	if ((g != null) && (p != null) && (g.getPlayer(name) != null)) {
+	  if (!g.inProgress)
+	g.removePlayer(p);
+	  gamePool.removeElement(p);
+	  return true;
+	} else
+	  return false;
+  }  
   /**
-   * Add a robot to the specified game.
-   * 
-   * @param paramRobot The robot to add to the game.
-   * @param gameName The name of the game to add the robot to
-   * @return true if added, false otherwise
+   * This method was created in VisualAge.
+   * @return boolean
+   * @param name java.lang.String
+   * @param gameName java.lang.String
    */
-  public boolean addCustomRobot(Robot paramRobot, String gameName)
-  {
-    Game localGame = getGame(gameName);
-    if (localGame != null)
-    {
-      Player localPlayer = paramRobot.toPlayer();
-      localPlayer.customRobot = true;
-      localPlayer.r = paramRobot;
-      if (localGame.getPlayer(localPlayer.name) == null) {
-        return localGame.addPlayer(localPlayer);
-      }
-    }
-    return false;
-  }
-  
+  public boolean addCustomRobot(Robot r, String gameName) {
+	Game g = getGame(gameName);
+	if (g != null) {
+	  Player p = r.toPlayer();
+	  p.customRobot = true;
+	  p.r = r;
+	  if (g.getPlayer(r.name) == null)
+	return g.addPlayer(p);
+	}
+	return false;
+  }  
+  protected Player addPlayer (Player p) {
+	players.addElement(p);
+	return p;
+  }  
+  protected Player addPlayer (String name) {
+	Player p = new Player(name);
+	players.addElement(p);
+	return p;
+  }  
+  protected boolean addRobot(String name, String gameName) {
+	Game g = getGame(gameName);
+	int n = botList.length;
+	Random random = new Random();
+	
+	Robot r = getRobot(name);
+	if ((r != null) && (g != null)) {
+	  Player p = r.toPlayer();
+	  if (g.getPlayer(name) == null)
+	return g.addPlayer(p);
+	}
+	return false;
+  }  
+  protected boolean createGame(String name, String gameName) {
+	if (games.size() == Params.MAX_GAMES)
+	  return false;
+	Player p = getPlayer(name);
+	if (p != null) {
+	  Game g = p.game;
+	  if (g == null) {
+	games.addElement(new Game(gameName, name));
+	return true;
+	  }
+	}
+	return false;
+  }  
+  protected void gameOver(String gameName) {
+	Game g = getGame(gameName);
+	if (g != null) {
+	  games.removeElement(g);
+	  for (int i = 0; i < g.numPlayers; i++) {
+	Player p = g.player[i];
+	if (p.isHuman && g.activePlayer[i]) {
+	  gamePool.removeElement(p);
+	  p.inGame = false;
+	  p.game = null;
+	}
+	  }
+	}
+  }  
+  public Game getGame (String name) {
+	int n = games.size();
+	for (int i = 0; i < n; i++) {
+	  Game g = (Game)(games.elementAt(i));
+	  if (g.name.equals(name))
+	return g;
+	}
+	return null;
+  }  
+  public Player getPlayer (String name) {
+	int n = players.size();
+	for (int i = 0; i < n; i++) {
+	  Player p = (Player)(players.elementAt(i));
+	  if (p.name.equals(name))
+	return p;
+	}
+	return null;
+  }  
   /**
-   * Add an already-existing player.
-   * 
-   * @param paramPlayer
-   * @return 
+   * This method was created in VisualAge.
+   * @return igx.shared.Player
+   * @param name java.lang.String
    */
-  protected Player addPlayer(Player paramPlayer)
-  {
-    players.addElement(paramPlayer);
-    return paramPlayer;
-  }
-  
-  /**
-   * Add a player based only on the username.
-   * 
-   * @param paramString
-   * @return 
-   */
-  protected Player addPlayer(String paramString)
-  {
-    Player localPlayer = new Player(paramString);
-    players.addElement(localPlayer);
-    return localPlayer;
-  }
-  
-  /**
-   * Add the robot with the spcified name to the specified game.
-   * 
-   * @param robotName
-   * @param gameName
-   * @return 
-   */
-  protected boolean addRobot(String robotName, String gameName)
-  {
-    Game localGame = getGame(gameName);
-    int i = botList.length;
-    Random localRandom = new Random();
-    Robot localRobot = getRobot(robotName);
-    if ((localRobot != null) && (localGame != null))
-    {
-      Player localPlayer = localRobot.toPlayer();
-      if (localGame.getPlayer(robotName) == null) {
-        return localGame.addPlayer(localPlayer);
-      }
-    }
-    return false;
-  }
-  
-  /**
-   * Create a game
-   * @param playerName
-   * @param gameName
-   * @return 
-   */
-  protected boolean createGame(String playerName, String gameName)
-  {
-    if (games.size() == 8) {
-      return false;
-    }
-    Player localPlayer = getPlayer(playerName);
-    if (localPlayer != null)
-    {
-      Game localGame = localPlayer.game;
-      if (localGame == null)
-      {
-        games.addElement(new Game(gameName, playerName));
-        return true;
-      }
-    }
-    return false;
-  }
-  
-  protected void gameOver(String gameName)
-  {
-    Game localGame = getGame(gameName);
-    if (localGame != null)
-    {
-      games.removeElement(localGame);
-      for (int i = 0; i < localGame.numPlayers; i++)
-      {
-        Player localPlayer = localGame.player[i];
-        if ((localPlayer.isHuman) && (localGame.activePlayer[i] != false))
-        {
-          gamePool.removeElement(localPlayer);
-          localPlayer.inGame = false;
-          localPlayer.game = null;
+  public Player getPoolPlayer (String name) {
+	int n = gamePool.size();
+	for (int i = 0; i < n; i++) {
+	  Player p = (Player)(gamePool.elementAt(i));
+	  if (p.name.equals(name))
+	return p;
+	}
+	return null;
+  }  
+  public Robot getRobot(String name) {
+	int n = botList.length;
+	for (int i = 0; i < n; i++) {
+	  if (botList[i].name.equals(name))
+	return botList[i];
+	}
+	return null;
+  }  
+  protected boolean joinGame (String name, String gameName) {
+	Game g = getGame(gameName);
+	Player p = getPlayer(name);
+	if ((g != null) && !g.inProgress && (p != null) && (g.numPlayers < Params.MAXPLAYERS) && (g.getPlayer(name) == null)) {
+	  g.addPlayer(p);
+	  return true;
+	} else
+	  return false;
+  }  
+  protected void message (String player, String text, int destination) {
+  }  
+  public void messageEvent (Message message) {
+	int type = message.getType();
+	switch (type) {
+	case Message.PLAYER_ARRIVED:
+	  addPlayer(message.getPlayerName());
+	  break;
+	case Message.PLAYER_LEFT: case Message.PLAYER_QUIT:
+	  removePlayer(message.getPlayerName());
+	  break;
+	case Message.CREATE_GAME:
+	  createGame(message.getPlayerName(), message.getGameName());
+	  joinGame(message.getPlayerName(), message.getGameName());
+	  break;
+	case Message.JOIN_GAME:
+	  joinGame(message.getPlayerName(), message.getGameName());
+	  break;
+	case Message.ABANDON_GAME:
+	  abandonGame(message.getPlayerName());
+	  break;
+	case Message.WATCH_GAME:
+	  watchGame(message.getPlayerName(), message.getGameName());
+	  break;
+	case Message.START_GAME:
+	  startGame(message.getGameName(), message.getCustomMap());
+	  break;
+	case Message.CUSTOM_MAP:
+	  customMap(message.getGameName());
+	  break;
+	case Message.ADD_ROBOT:
+	  addRobot(message.getRobotName(), message.getGameName());
+	  break;
+	case Message.REMOVE_ROBOT:
+	  removeRobot(message.getRobotName(), message.getGameName());
+	  break;
+	case Message.MESSAGE:
+	  message(message.getPlayerName(), message.getMessageText(), message.getDestination());
+	  break;
+	case Message.GAME_OVER:
+	  gameOver(message.getGameName());
+	  break;
+	}
+  }  
+  protected void removePlayer (String name) {
+	Player p = getPlayer(name);
+	if (p != null)
+	  players.removeElement(p);
+  }  
+  protected boolean removeRobot (String name, String gameName) {
+	Game g = getGame(gameName);
+	Robot r = getRobot(name);
+	if ((r != null) && (g != null)) {
+	  Player p = g.getPlayer(name);
+	  if (p != null) {
+	g.removePlayer(p);
+	return true;
+	  }
+	}
+	return false;
+  }  
+  protected void startGame(String gameName,
+                           String customMap) {
+	Game g = getGame(gameName);
+	// Add players to pool
+	int n = g.numPlayers;
+	for (int i = 0; i < n; i++)
+	  if (g.player[i].isHuman) {
+	g.player[i].status = Params.DONT_SIGNAL;
+	gamePool.addElement(g.player[i]);
+	g.setActivePlayer(g.player[i].name, true);
+	  }
+	if (g != null)
+	  g.inProgress = true;
+  }  
+  protected void customMap (String gameName) {
+     	Game g = getGame(gameName);
+        if (g != null) {
+           g.randomMap = !g.randomMap;
         }
-      }
-    }
   }
-  
-  /**
-   * Get a game with the specified name.
-   * 
-   * @param gameName
-   * @return 
-   */
-  public Game getGame(String gameName)
-  {
-    int i = games.size();
-    for (int j = 0; j < i; j++)
-    {
-      Game localGame = (Game)games.elementAt(j);
-      if (localGame.name.equals(gameName)) {
-        return localGame;
-      }
-    }
-    return null;
-  }
-  
-  /**
-   * Get a player with the specified name.
-   * 
-   * @param playerName
-   * @return 
-   */
-  public Player getPlayer(String playerName)
-  {
-    int i = players.size();
-    for (int j = 0; j < i; j++)
-    {
-      Player localPlayer = (Player)players.elementAt(j);
-      if (localPlayer.name.equals(playerName)) {
-        return localPlayer;
-      }
-    }
-    return null;
-  }
-  
-  public Player getPoolPlayer(String playerName)
-  {
-    int i = gamePool.size();
-    for (int j = 0; j < i; j++)
-    {
-      Player localPlayer = (Player)gamePool.elementAt(j);
-      if (localPlayer.name.equals(playerName)) {
-        return localPlayer;
-      }
-    }
-    return null;
-  }
-  
-  public Robot getRobot(String paramString)
-  {
-    int i = botList.length;
-    for (int j = 0; j < i; j++) {
-      if (botList[j].name.equals(paramString)) {
-        return botList[j];
-      }
-    }
-    return null;
-  }
-  
-  protected boolean joinGame(String playerName, String gameName)
-  {
-    Game localGame = getGame(gameName);
-    Player localPlayer = getPlayer(playerName);
-    if ((localGame != null) && (!localGame.inProgress) && (localPlayer != null) && (localGame.numPlayers < 9) && (localGame.getPlayer(playerName) == null))
-    {
-      localGame.addPlayer(localPlayer);
-      return true;
-    }
-    return false;
-  }
-  
-  protected void message(String playerName, String messageText, int paramInt) {}
-  
-  public void messageEvent(Message paramMessage)
-  {
-    int i = paramMessage.getType();
-    switch (i)
-    {
-    case Message.PLAYER_ARRIVED: 
-      addPlayer(paramMessage.getPlayerName());
-      break;
-    case Message.PLAYER_LEFT: 
-    case Message.PLAYER_QUIT: 
-      removePlayer(paramMessage.getPlayerName());
-      break;
-    case Message.CREATE_GAME: 
-      createGame(paramMessage.getPlayerName(), paramMessage.getGameName());
-      joinGame(paramMessage.getPlayerName(), paramMessage.getGameName());
-      break;
-    case Message.JOIN_GAME: 
-      joinGame(paramMessage.getPlayerName(), paramMessage.getGameName());
-      break;
-    case Message.ABANDON_GAME: 
-      abandonGame(paramMessage.getPlayerName());
-      break;
-    case Message.WATCH_GAME: 
-      watchGame(paramMessage.getPlayerName(), paramMessage.getGameName());
-      break;
-    case Message.START_GAME: 
-      startGame(paramMessage.getGameName(), paramMessage.getCustomMap());
-      break;
-    case Message.CUSTOM_MAP: 
-      customMap(paramMessage.getGameName());
-      break;
-    case Message.ADD_ROBOT: 
-      addRobot(paramMessage.getRobotName(), paramMessage.getGameName());
-      break;
-    case Message.REMOVE_ROBOT: 
-      removeRobot(paramMessage.getRobotName(), paramMessage.getGameName());
-      break;
-    case Message.MESSAGE: 
-      message(paramMessage.getPlayerName(), paramMessage.getMessageText(), paramMessage.getDestination());
-      break;
-    case Message.GAME_OVER: 
-      gameOver(paramMessage.getGameName());
-    }
-  }
-  
-  protected void removePlayer(String playerName)
-  {
-    Player localPlayer = getPlayer(playerName);
-    if (localPlayer != null) {
-      players.removeElement(localPlayer);
-    }
-  }
-  
-  protected boolean removeRobot(String robotName, String gameName)
-  {
-    Game localGame = getGame(gameName);
-    Robot localRobot = getRobot(robotName);
-    if ((localRobot != null) && (localGame != null))
-    {
-      Player localPlayer = localGame.getPlayer(robotName);
-      if (localPlayer != null)
-      {
-        localGame.removePlayer(localPlayer);
-        return true;
-      }
-    }
-    return false;
-  }
-  
-  protected void startGame(String gameName, String paramString2)
-  {
-    Game localGame = getGame(gameName);
-    int i = localGame.numPlayers;
-    for (int j = 0; j < i; j++) {
-      if (localGame.player[j].isHuman)
-      {
-        localGame.player[j].status = 2;
-        gamePool.addElement(localGame.player[j]);
-        localGame.setActivePlayer(localGame.player[j].name, true);
-      }
-    }
-    if (localGame != null) {
-      localGame.inProgress = true;
-    }
-  }
-  
-  protected void customMap(String gameName)
-  {
-    Game localGame = getGame(gameName);
-    if (localGame != null) {
-      localGame.randomMap = (!localGame.randomMap);
-    }
-  }
-  
-  protected void watchGame(String playerName, String gameName)
-  {
-    Player localPlayer = getPlayer(playerName);
-    Game localGame = getGame(gameName);
-    if ((localPlayer != null) && (localGame != null)) {
-      localPlayer.game = localGame;
-    }
-  }
+  protected void watchGame (String name, String gameName) {
+	Player p = getPlayer(name);
+	Game g = getGame(gameName);
+	if ((p != null) && (g != null))
+	  p.game = g;
+  }  
 }

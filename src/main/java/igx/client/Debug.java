@@ -1,8 +1,9 @@
 package igx.client;
 
-public class Debug
-{
-  public Debug() {}
-  
-  public static final void d(String paramString) {}
+// Debug.java 
+
+public class Debug {
+  public final static void d (String text) {
+	// System.out.println(text);
+  }  
 }

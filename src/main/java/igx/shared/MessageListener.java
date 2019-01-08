@@ -1,6 +1,8 @@
 package igx.shared;
 
-public abstract interface MessageListener
+// MessageListener.java 
+
+public interface MessageListener 
 {
-  public abstract void messageEvent(Message paramMessage);
+  public void messageEvent (Message message);  
 }

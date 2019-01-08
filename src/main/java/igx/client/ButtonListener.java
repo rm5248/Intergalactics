@@ -1,6 +1,10 @@
 package igx.client;
 
-public abstract interface ButtonListener
+// ButtonListener.java 
+
+import igx.shared.*;
+
+public interface ButtonListener 
 {
-  public abstract void buttonPressed(String paramString);
+  public void buttonPressed (String text);  
 }

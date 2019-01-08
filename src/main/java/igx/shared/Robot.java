@@ -1,34 +1,29 @@
 package igx.shared;
 
+// Robot.java 
+
 public class Robot
 {
-  public String botType;
+	public String botType;
   public String name;
   public Class botClass = null;
   public int ranking;
   public int skill;
   
-  public Robot(String paramString1, String paramString2, int paramInt)
-  {
-    botType = paramString1;
-    name = paramString2;
-    ranking = paramInt;
-  }
-  
-  public void setClass(Class paramClass)
-  {
-    botClass = paramClass;
-  }
-  
-  public void setSkill(int paramInt)
-  {
-    skill = paramInt;
-  }
-  
-  public Player toPlayer()
-  {
-    Player localPlayer = new Player(name);
-    //isHuman = false;
-    return localPlayer;
-  }
+  public Robot (String type, String name, int ranking) {
+	this.botType = type;
+	this.name = name;
+	this.ranking = ranking;
+  }  
+  public void setClass (Class botClass) {
+	this.botClass = botClass;
+  }  
+  public void setSkill (int skill) {
+	this.skill = skill;
+  }  
+  public Player toPlayer () {
+	Player p = new Player(name);
+	p.isHuman = false;
+	return p;
+  }  
 }

@@ -1,113 +1,113 @@
 package igx.shared;
 
+// FleetQueue.java
+// Class FleetQueue
+
 public class FleetQueue
 {
+  // The fleets are maintained in a priority queue
   public Fleet first = null;
   public GameInstance Game;
-  
-  public FleetQueue(GameInstance paramGameInstance)
+
+  public FleetQueue (GameInstance Game)
   {
-    Game = paramGameInstance;
-  }
-  
-  public void doScores()
+	this.Game = Game;
+  }  
+  public void doScores () {
+	Fleet lead = first;
+	while (lead != null) {
+	  lead.owner.addScore(lead.ships * Params.SHIP_VALUE);
+	  lead = lead.next;
+	}
+  }  
+  // INSERT - Inserts a fleet into the queue
+  public void insert (Fleet f)
   {
-    for (Fleet localFleet = first; localFleet != null; localFleet = localFleet.next) {
-      localFleet.owner.addScore(localFleet.ships * 3);
-    }
-  }
-  
-  public void insert(Fleet paramFleet)
+	Fleet lead = first;
+	Fleet follow = null;
+	if (first == null)
+	{
+	  first = f;
+	  f.next = null;
+	}
+	else
+	{
+	  while ((lead != null) && (lead.distance <= f.distance))
+	  {
+		follow = lead;
+		lead = lead.next;
+	  }
+	  if (lead == null)
+	  {
+		f.next = null;
+		if (follow != null)
+		  follow.next = f;
+		else
+		  first = f;
+	  }
+	  else
+	  {
+		f.next = lead;
+		if (follow != null)
+		  follow.next = f;
+		else
+		  first = f;
+	  }
+	}
+  }  
+  // REMOVE - Removes fleet from queue (NOTE: fleet must be present)
+  public void remove (Fleet f)
   {
-    Fleet localFleet1 = first;
-    Fleet localFleet2 = null;
-    if (first == null)
-    {
-      first = paramFleet;
-      paramFleet.next = null;
-    }
-    else
-    {
-      while ((localFleet1 != null) && (localFleet1.distance <= localFleet2.distance))
-      {
-        localFleet2 = localFleet1;
-        localFleet1 = localFleet2.next;
-      }
-      if (localFleet1 == null)
-      {
-        localFleet1.next = null;
-        if (localFleet2 != null) {
-          localFleet1.next = paramFleet;
-        } else {
-          first = paramFleet;
-        }
-      }
-      else
-      {
-        localFleet1.next = localFleet1;
-        if (localFleet2 != null) {
-          localFleet1.next = paramFleet;
-        } else {
-          first = paramFleet;
-        }
-      }
-    }
-  }
-  
-  public void remove(Fleet paramFleet)
+	Fleet lead = first;
+	Fleet follow = null;
+	while (lead != f)
+	{
+	  follow = lead;
+	  lead = lead.next;
+	}
+	if (follow == null)
+	  first = f.next;
+	else
+	  follow.next = f.next;
+  }  
+/**
+ * This method was created in VisualAge.
+ * @return java.lang.String
+ */
+public String toString() {
+	Fleet fleet = first;
+	StringBuffer s = new StringBuffer("");
+	while (fleet != null) {
+		s.append(fleet.toString());
+		fleet = fleet.next;
+		s.append("\n");
+	}
+	return s.toString();
+}
+  // UPDATE - Updates the status of the fleets. Called each segment
+  public void update ()
   {
-    Fleet localFleet1 = first;
-    Fleet localFleet2 = null;
-    while (localFleet1 != paramFleet)
-    {
-      localFleet2 = localFleet1;
-      localFleet1 = localFleet2.next;
-    }
-    if (localFleet2 == null) {
-      first = localFleet1.next;
-    } else {
-      localFleet1.next = localFleet2.next;
-    }
-  }
-  
-  public String toString()
-  {
-    Fleet localFleet = first;
-    StringBuffer localStringBuffer = new StringBuffer("");
-    while (localFleet != null)
-    {
-      localStringBuffer.append(localFleet.toString());
-      localFleet = localFleet.next;
-      localStringBuffer.append("\n");
-    }
-    return localStringBuffer.toString();
-  }
-  
-  public void update()
-  {
-    Fleet localFleet1 = first;
-    Fleet localFleet2 = null;
-    for (int i = 0; i < 36; i++) {
-      Game.planet[i].attacker = new int[9];
-    }
-    while (localFleet1 != null)
-    {
-      if (localFleet1.update())
-      {
-        if (localFleet2 == null) {
-          first = localFleet1.next;
-        } else {
-          localFleet1.next = localFleet2.next;
-        }
-      }
-      else
-      {
-        localFleet2 = localFleet1;
-        if (localFleet1.distance <= 0.0F) {
-            localFleet1.destination.attacker[localFleet1.owner.number] += localFleet1.ships;
-        }
-      }
-      localFleet1 = localFleet1.next;
-    }
-  }
+	Fleet lead = first;
+	Fleet follow = null;
+	// Initialize stats for intel
+	for (int i = 0; i<Params.PLANETS; i++)
+	  Game.planet[i].attacker = new int[Params.MAXPLAYERS];
+	while (lead != null)
+	{
+	  if (lead.update()) // Fleet has disbanded, so remove from list
+	  {
+		if (follow == null)
+		  first = lead.next;
+		else
+		  follow.next = lead.next;
+	  }
+	  else
+	  {
+		follow = lead;
+		if (lead.distance <= 0) // Count these ships for intel
+		  lead.destination.attacker[lead.owner.number] += lead.ships;
+	  }
+	  lead = lead.next;
+	}
+  }  
 }

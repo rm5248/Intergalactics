@@ -1,18 +1,12 @@
 package igx.client;
 
-import igx.shared.Game;
-import igx.shared.Player;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Toolkit;
-import java.util.Vector;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+// GameListCanvas.java 
 
-public class GameListCanvas
-  extends ForumCanvas
+import igx.shared.*;
+import java.awt.*;
+import java.util.*;
+
+public class GameListCanvas extends ForumCanvas
 {
   public static final int HEADER_ROWS = 3;
   public static final int GAME_WIDTH_RATIO = 10;
@@ -24,152 +18,120 @@ public class GameListCanvas
   public static final Color TITLE_COLOUR = Color.orange;
   public static final Color SERVER_COLOUR = Color.orange;
   public static final Color BORDER_COLOUR = Color.gray;
-  int statusColumn;
-  int gameColumn;
-  int playerColumn;
-  TextRow heading0;
-  TextRow heading1;
+  
+  int statusColumn, gameColumn, playerColumn;
+  TextRow heading0, heading1;
   Vector gameRows;
   int games = 0;
   String serverName;
   ClientForum forum;
   
-  private static final Logger logger = LogManager.getLogger();
-  
-  public GameListCanvas(ClientForum paramClientForum, String serverName, int paramWidth, int paramInt2, int fontSize, Toolkit paramToolkit)
-  {
-    super(paramWidth, computeHeight(fontSize, paramInt2 * 2 + 3, paramToolkit), fontSize, paramToolkit);
-    this.serverName = serverName;
-    forum = paramClientForum;
-    statusColumn = fontHeight;
-    gameColumn = (statusColumn + fm.stringWidth("In Progress  "));
-    logger.debug( "game column start at {}", gameColumn );
-    playerColumn = (gameColumn + 10 * fontHeight);
-    Vector localVector = new Vector();
-    String titleText = "intergalactics - " + serverName;
-    int i = fm.stringWidth(titleText);
-    localVector.addElement(new TextElement("intergalactics", TITLE_COLOUR, (paramWidth - i) / 2));
-    localVector.addElement(new TextElement(" - ", COMMA_COLOUR, -1));
-    localVector.addElement(new TextElement(serverName, SERVER_COLOUR, -1));
-    heading0 = new TextRow(localVector);
-    row[0] = heading0;
-    localVector = new Vector();
-    localVector.addElement(new TextElement("Status", HEADING_COLOUR, statusColumn));
-    localVector.addElement(new TextElement("Game", HEADING_COLOUR, gameColumn));
-    localVector.addElement(new TextElement("Players", HEADING_COLOUR, playerColumn));
-    heading1 = new TextRow(localVector);
-    heading1.underline(HEADING_UNDERLINE_COLOUR);
-    row[2] = heading1;
-    setRowListener(this);
-  }
-  
-  public void addGame(Game paramGame)
-  {
-    for (int i = games * 2 + 3 - 1; i >= 3; i--) {
-      row[(i + 2)] = row[i];
-    }
-    games += 1;
-    if (selectedRow != -1) {
-      selectedRow += 2;
-    }
-    setRow(0, paramGame);
-    row[3].setSelect(false);
-    repaint();
-  }
-  
-  public int getRowNum(Game paramGame)
-  {
-    for (int i = 3; i < games * 2 + 3; i += 2)
-    {
-      String str = ((TextElement)(row[i].elements.elementAt(1))).text;
-      if (str.equals(paramGame.name)) {
-        return i;
-      }
-    }
-    return -1;
-  }
-  
-  public void manualSelectRow(int paramInt)
-  {
-    if ((paramInt + 3) % 2 == 0) {
-      super.rowSelected(paramInt);
-    } else {
-      super.rowSelected(paramInt - 1);
-    }
-  }
-  
-  public void paint(Graphics paramGraphics)
-  {
-    super.paint(paramGraphics);
-    paramGraphics.setColor(BORDER_COLOUR);
-    Dimension size = getSize();
-    paramGraphics.drawRect(0, 0, size.width - 1, size.height);
-  }
-  
-  public void removeGame(Game paramGame)
-  {
-    int i = getRowNum(paramGame);
-    if (i == -1) {
-      return;
-    }
-    if (selectedRow >= i) {
-      selectedRow -= 2;
-    }
-    for (int j = i; j < games * 2 + 3; j++) {
-      row[j] = row[(j + 2)];
-    }
-    games -= 1;
-    repaint();
-  }
-  
-  public void rowSelected(int paramInt)
-  {
-    if ((paramInt >= 3) && (forum.gameSelected(paramInt - 3))) {
-      manualSelectRow(paramInt);
-    }
-  }
-  
-  public void setRow(int paramInt, Game paramGame)
-  {
-    int i = 0;
-    if ((row[(paramInt + 3)] != null) && (row[(paramInt + 3)].selected)) {
-      i = 1;
-    }
-    Vector localVector1 = new Vector();
-    Vector localVector2 = new Vector();
-    if (paramGame.inProgress)
-    {
-      localVector1.addElement(new TextElement("In Progress", IN_PROGRESS_GAME_COLOUR, statusColumn));
-      localVector1.addElement(new TextElement(paramGame.name, IN_PROGRESS_GAME_COLOUR, gameColumn));
-    }
-    else
-    {
-      localVector1.addElement(new TextElement("New", NEW_GAME_COLOUR, statusColumn));
-      localVector1.addElement(new TextElement(paramGame.name, NEW_GAME_COLOUR, gameColumn));
-    }
-    for (int j = 0; j < paramGame.numPlayers; j++)
-    {
-      Vector localVector3 = null;
-      if (j < 4) {
-        localVector3 = localVector1;
-      } else {
-        localVector3 = localVector2;
-      }
-      if ((j == 0) || (j == 4)) {
-        localVector3.addElement(new TextElement(paramGame.player[j].name, igx.shared.Params.PLAYERCOLOR[j], playerColumn));
-      } else {
-        localVector3.addElement(new TextElement(paramGame.player[j].name, igx.shared.Params.PLAYERCOLOR[j], -1));
-      }
-      if (j < paramGame.numPlayers - 1) {
-        localVector3.addElement(new TextElement(", ", COMMA_COLOUR, -1));
-      }
-    }
-    row[(paramInt + 3)] = new TextRow(localVector1);
-    row[(paramInt + 3 + 1)] = new TextRow(localVector2);
-    if (i != 0) {
-      row[(paramInt + 3)].setSelect(true);
-    }
-    redrawRow(paramInt + 3);
-    redrawRow(paramInt + 3 + 1);
-  }
+  public GameListCanvas (ClientForum forum, String serverName, int width, int rows, int fontSize, Toolkit toolkit) {
+	super(width, computeHeight(fontSize, rows*2 + HEADER_ROWS, toolkit), fontSize, toolkit);
+	this.serverName = serverName;
+	this.forum = forum;
+	statusColumn = fontHeight;
+	gameColumn = statusColumn + fm.stringWidth("In Progress  ");
+	playerColumn = gameColumn + GAME_WIDTH_RATIO * fontHeight;
+	Vector headingElements = new Vector();
+	// First heading row
+	// Compute center
+	String title = Params.NAME + " - " + serverName;
+	int titleWidth = fm.stringWidth(title);
+	headingElements.addElement(new TextElement(Params.NAME, TITLE_COLOUR, (width - titleWidth) / 2));
+	headingElements.addElement(new TextElement(" - ", COMMA_COLOUR, TextElement.SEQUENTIAL));
+	headingElements.addElement(new TextElement(serverName, SERVER_COLOUR, TextElement.SEQUENTIAL));
+	heading0 = new TextRow(headingElements);
+	row[0] = heading0;
+	// Second heading row
+	headingElements = new Vector();
+	headingElements.addElement(new TextElement("Status", HEADING_COLOUR, statusColumn));
+	headingElements.addElement(new TextElement("Game", HEADING_COLOUR, gameColumn));
+	headingElements.addElement(new TextElement("Players", HEADING_COLOUR, playerColumn));
+	heading1 = new TextRow(headingElements);
+	heading1.underline(HEADING_UNDERLINE_COLOUR);
+	row[2] = heading1;
+	setRowListener(this);
+  }  
+  public void addGame (Game game) {
+	// Insert row
+	for (int i = games*2 + HEADER_ROWS - 1; i >= HEADER_ROWS; i--) 
+	  row[i+2] = row[i];
+	games++;
+	if (selectedRow != -1)
+	  selectedRow += 2;
+	// Make sure first row isn't selected.
+	setRow(0, game);
+	row[HEADER_ROWS].setSelect(false);
+	repaint();
+  }  
+  public int getRowNum (Game game) {
+	for (int i = HEADER_ROWS; i < games*2 + HEADER_ROWS; i += 2) {
+	  String name = ((TextElement)row[i].elements.elementAt(1)).text;
+	  if (name.equals(game.name))
+	return i;
+	}
+	return -1;
+  }  
+  // An outside force selects a row
+  public void manualSelectRow (int rowNumber) {
+	if ((rowNumber + HEADER_ROWS) % 2 == 0)
+	  super.rowSelected(rowNumber);
+	else
+	  super.rowSelected(rowNumber-1);
+  }  
+  public void paint (Graphics g) {
+	super.paint(g);
+	g.setColor(BORDER_COLOUR);
+	g.drawRect(0, 0, width-1, height);
+  }  
+  public void removeGame (Game game) {
+	int rowNum = getRowNum(game);
+	if (rowNum == -1)
+	  return;
+	if (selectedRow >= rowNum)
+	  selectedRow -= 2;
+	for (int i = rowNum; i < games*2 + HEADER_ROWS; i++)
+	  row[i] = row[i+2];
+	games--;
+	repaint();
+  }  
+  public void rowSelected (int rowNumber) {
+	if (rowNumber >= HEADER_ROWS)
+	  if (forum.gameSelected(rowNumber - HEADER_ROWS))
+	manualSelectRow(rowNumber);
+  }  
+  public void setRow(int rowNum, Game game) {
+	boolean wasSelected = false;
+	if ((row[rowNum + HEADER_ROWS] != null) && (row[rowNum + HEADER_ROWS].selected))
+	  wasSelected = true;
+	Vector rowVector = new Vector();
+	Vector nextRowVector = new Vector();
+	if (game.inProgress) {
+	  rowVector.addElement(new TextElement("In Progress", IN_PROGRESS_GAME_COLOUR, statusColumn));
+	  rowVector.addElement(new TextElement(game.name, IN_PROGRESS_GAME_COLOUR, gameColumn));
+	} else {
+	  rowVector.addElement(new TextElement("New", NEW_GAME_COLOUR, statusColumn));
+	  rowVector.addElement(new TextElement(game.name, NEW_GAME_COLOUR, gameColumn));
+	}
+	for (int i = 0; i < game.numPlayers; i++) {
+	  Vector v = null;
+	  if (i < Params.MAXPLAYERS / 2)
+	    v = rowVector;
+	  else
+	    v = nextRowVector;
+	  if ((i == 0) || (i == Params.MAXPLAYERS / 2))
+	    v.addElement(new TextElement(game.player[i].name, Params.PLAYERCOLOR[i], playerColumn));
+	  else
+	    v.addElement(new TextElement(game.player[i].name, Params.PLAYERCOLOR[i], TextElement.SEQUENTIAL));
+	  if (i < game.numPlayers - 1)
+	    v.addElement(new TextElement(", ", COMMA_COLOUR, TextElement.SEQUENTIAL));
+	}
+	row[rowNum + HEADER_ROWS] = new TextRow(rowVector);
+	row[rowNum + HEADER_ROWS + 1] = new TextRow(nextRowVector);
+	if (wasSelected)
+	  row[rowNum + HEADER_ROWS].setSelect(true);
+	redrawRow(rowNum + HEADER_ROWS);
+	redrawRow(rowNum + HEADER_ROWS + 1);
+  }  
 }

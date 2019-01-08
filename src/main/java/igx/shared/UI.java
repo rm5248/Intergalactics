@@ -1,38 +1,42 @@
 package igx.shared;
 
+// UI.java 
+
 import java.awt.Color;
 
-public abstract interface UI
+public interface UI
 {
-  public abstract void postAttack(Fleet paramFleet, Planet paramPlanet);
-  
-  public abstract void postBlackHole(Fleet paramFleet);
-  
-  public abstract void postError(String paramString);
-  
-  public abstract void postGameEnd(int paramInt);
-  
-  public abstract void postGameStart(GameInstance paramGameInstance);
-  
-  public abstract void postInvasion(Fleet paramFleet, Planet paramPlanet);
-  
-  public abstract void postMessage(Player paramPlayer1, Player paramPlayer2, String paramString);
-  
-  public abstract void postNextTurn();
-  
-  public abstract void postPlanetMove(int paramInt1, int paramInt2, Planet paramPlanet);
-  
-  public abstract void postPlayerQuit(Player paramPlayer);
-  
-  public abstract void postRedrawGalaxy();
-  
-  public abstract void postReinforcements(int paramInt, Planet paramPlanet);
-  
-  public abstract void postRepulsion(Player paramPlayer, Planet paramPlanet);
-  
-  public abstract void postSpecial(String[] paramArrayOfString, Color[] paramArrayOfColor);
-  
-  public abstract void redrawAll();
-  
-  public abstract void redrawPlanet(int paramInt);
+  // Attack
+  public void postAttack (Fleet fleet, Planet planet);  
+  // Black hole event
+  public void postBlackHole (Fleet fleet);  
+  // Error
+  public void postError (String errorMessage);  
+  // Game end
+  public void postGameEnd (int winnerNumber);  
+  //// Post game events
+  // Game start
+  public void postGameStart (GameInstance game);  
+  // Invasion
+  public void postInvasion (Fleet fleet, Planet planet);  
+  // Players sends message
+  public void postMessage (Player sender, Player recipient, String message);  
+  // Next turn
+  public void postNextTurn ();  
+  // Planet moves
+  public void postPlanetMove (int oldX, int oldY, Planet planet);  
+  // Player quits
+  public void postPlayerQuit (Player player);  
+  // Redraw galaxy
+  public void postRedrawGalaxy ();  
+  // Reinforcements
+  public void postReinforcements (int numberOfShips, Planet planet);  
+  // Repulsion
+  public void postRepulsion (Player attacker, Planet planet);  
+  // Special Event
+  public void postSpecial (String text[], Color color[]);  
+  // Redraw all planets
+  public void redrawAll ();  
+  // Redraw a planet
+  public void redrawPlanet (int planetNum);  
 }

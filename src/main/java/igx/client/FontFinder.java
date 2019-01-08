@@ -1,27 +1,28 @@
 package igx.client;
 
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Toolkit;
+// FontFinder.java
 
-public class FontFinder
-{
+import igx.shared.*;
+import java.awt.*;
+
+public class FontFinder {
+
   public static final int INIT_SIZE = 30;
-  
-  public FontFinder() {}
-  
-  public static Font getFont(Toolkit paramToolkit, String paramString, int paramInt1, int paramInt2)
-  {
-    int i = 31;
-    Font localFont;
-    int j;
-    do
-    {
-      i--;
-      localFont = new Font(paramString, 0, i);
-      FontMetrics localFontMetrics = paramToolkit.getFontMetrics(localFont);
-      j = (localFontMetrics.getAscent() + localFontMetrics.getDescent()) * paramInt1;
-    } while ((j >= paramInt2) || (i == 0));
-    return localFont;
-  }
+
+  public static Font getFont (Toolkit toolkit, 
+			      String face, 
+			      int rows, 
+			      int height) {
+	int size = INIT_SIZE + 1;
+	Font font;
+	int thisHeight;
+	FontMetrics fm;
+	do {
+	  size--;
+	  font = new Font(face, Font.PLAIN, size);
+	  fm = toolkit.getFontMetrics(font);
+	  thisHeight = (fm.getAscent() + fm.getDescent()) * rows;
+	} while ((thisHeight >= height) || (size == 0)) ;
+	return font;
+  }  
 }

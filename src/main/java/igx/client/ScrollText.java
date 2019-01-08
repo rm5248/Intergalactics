@@ -1,137 +1,127 @@
 package igx.client;
 
-import java.awt.Canvas;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Toolkit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Vector;
-import javax.swing.JPanel;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+// ScrollText.java 
 
-public class ScrollText
-  extends JPanel
+import java.awt.*;
+import java.util.*;
+
+public class ScrollText extends Canvas
 {
+  // Constants
   public static final int MARGIN = 1;
-  int fontSize;
-  int fontHeight;
+  // Data fields
+  int fontSize, fontHeight;
   Font font;
   FontMetrics fm;
-  private List<List<CText>> lines;
-  int numLines;
-  int currentLine;
-  int lineWidth;
-  int spaceWidth;
-  int numElements;
-  int lineID;
+  Vector lines;
+  int numLines, width, currentLine, lineWidth, spaceWidth, numElements, lineID;
+  int height;
   int topMargin;
-  
-  private static final Logger logger = LogManager.getLogger();
-  
-  public ScrollText(int textSize, Toolkit paramToolkit, int width, int height)
-  {
-      logger.debug( "Scroll text size {}", textSize );
-    setSize( new Dimension( width - 1, height ) );
-    font = new Font("SansSerif", 0, textSize);
-    fm = paramToolkit.getFontMetrics(font);
-    fontHeight = (fm.getAscent() + 1);
-    spaceWidth = fm.charWidth(' ');
-    numLines = ((height - 1) / fontHeight);
-    logger.debug( "Number of lines is {}", numLines );
-    lines = new Vector(numLines + 1);
-    lines.add( new ArrayList<CText>() );
-    currentLine = (this.lineWidth = this.lineID = 0);
-      setBackground( Color.ORANGE );
-  }
-  
-  public void addText(CText paramCText)
-  {
-      logger.debug( "Adding text {}", paramCText.text );
-    if (paramCText.text == null)
-    {
-      lineWidth = 0;
-      currentLine += 1;
-      lines.add(new ArrayList<CText>());
-    }
-    else
-    {
-      String[] wordsList = paramCText.text.split( " " );
-      CText localCText = new CText("", paramCText.color);
-      for (int j = 0; j < wordsList.length; j++)
-      {
-        String str = wordsList[ j ];
-        int i = fm.stringWidth(str) + spaceWidth;
-        if (i + lineWidth < getSize().width)
-        {
-          paramCText.text += str;
-          lineWidth += i;
-        }
-        else
-        {
-            List<CText> currentLineList = lines.get( currentLine );
-//            Vector localVector1 = new Vector();
-//          localVector1 = (Vector)lines.elementAt(currentLine);
-          localCText.setWidth(fm.stringWidth(paramCText.text));
-          currentLineList.add(localCText);
-          currentLine += 1;
-          lineWidth = (i + spaceWidth);
-          //localVector1 = new Vector();
-          //lines.addElement(localVector1);
-          localCText = new CText(" " + str, paramCText.color);
-        }
-      }
-      List<CText> current = lines.get( currentLine );
-      localCText.setWidth(fm.stringWidth(paramCText.text));
-      current.add( localCText );
-    }
-    
-    while (currentLine >= numLines)
-    {
-      lines.remove( 0 );
-      currentLine -= 1;
-    }
-    
-    repaint();
-  }
-  
-//  private String[] getWords(String paramString)
-//  {
-////    Vector localVector = new Vector();
-////    int j;
-////    int i;
-////    for (i = 0; (j = paramString.indexOf(' ', i)) != -1; i = j + 1) {
-////      localVector.addElement(paramString.substring(i, j + 1));
-////    }
-////    localVector.addElement(paramString.substring(i, paramString.length()));
-////    return localVector;
-//  }
-  
-  public void newLine()
-  {
-    addText(new CText(null, null));
-  }
-  
-  public void paint(Graphics paramGraphics)
-  {
-    paramGraphics.setFont(font);
-    int yLocation = fontHeight + 1;
-    for (int m = 0; m < currentLine; m++)
-    {
-      List<CText> currentText = lines.get( m );
-      int xLocation = 1;
-      for (CText text : currentText )
-      {
-        paramGraphics.setColor(text.color);
-        paramGraphics.drawString(text.text, xLocation, yLocation);
-        xLocation += getSize().width;
-      }
-      
-      yLocation += fontHeight;
-    }
-  }
+
+  public ScrollText (int fontSize, Toolkit toolkit, int width, int height) {
+	/*    Dimension dimQ = buttonDimensions("(Q)uit");
+	Dimension dimM = buttonDimensions("Message (F1)");
+	Dimension dimS = buttonDimensions("(S)ound Off");    
+	addButton(2, 2, "Message (F1)");
+	addButton(2, 5 + dimQ.height, "(F)orum");
+	addButton(width - 2 - dimS.width, 2, "(S)ound Off");
+	addButton(width - 2 - dimS.width, 5 + dimQ.height, "(Q)uit");
+	prepareButtons();
+	topMargin = 5 + 2 * dimQ.height;
+	*/
+	this.width = width - MARGIN;
+	this.height = height;
+	font = new Font("SansSerif", Font.PLAIN, fontSize);
+	fm = toolkit.getFontMetrics(font);
+	fontHeight = fm.getAscent() + 1;
+	spaceWidth = fm.charWidth(' ');
+	numLines = (height - MARGIN) / fontHeight;
+	lines = new Vector(numLines + 1);
+	lines.addElement(new Vector());
+	currentLine = lineWidth = lineID = 0;
+  }  
+  public void addText (CText text) {
+	Vector thisLine;
+	CText currentText;
+	if (text.text == null) { // Newline
+	  lineWidth = 0;
+	  currentLine++;      
+	  lines.addElement(new Vector());
+	} else {
+	  Vector words = getWords(text.text);
+	  String word;
+	  int wordWidth;
+	  currentText = new CText("", text.color);
+	  for (int i = 0; i < words.size(); i++) {
+	word = (String)words.elementAt(i);
+	wordWidth = fm.stringWidth(word) + spaceWidth;
+	if (wordWidth + lineWidth < width) {
+	  currentText.text += word; // + " ";
+	  lineWidth += wordWidth;
+ 	} else {
+	  thisLine = (Vector)lines.elementAt(currentLine);
+	  currentText.setWidth(fm.stringWidth(currentText.text));
+	  thisLine.addElement(currentText);
+	  currentLine++;
+	  lineWidth = wordWidth + spaceWidth;
+	  thisLine = new Vector();
+	  lines.addElement(thisLine);
+	  currentText = new CText(" " + word/* + " "*/, text.color);
+	}
+	  }
+	  thisLine = (Vector)lines.elementAt(currentLine);
+	  currentText.setWidth(fm.stringWidth(currentText.text));
+	  // -- Remove trailing space
+	  // currentText.text = currentText.text.substring(0, currentText.text.length() - 1);
+	  thisLine.addElement(currentText);
+	}
+	while (currentLine >= numLines) {
+	  lines.removeElementAt(0);
+	  currentLine--;
+	}
+	repaint();
+  }  
+  public Dimension getMinimumSize () {
+	return new Dimension(width, height);
+  }  
+  public Dimension getPreferredSize () {
+	return new Dimension(width, height);
+  }  
+  public Vector getWords (String text) {
+	Vector words = new Vector();
+	int lastIndex = 0;
+	int index;
+	while ((index = text.indexOf(' ', lastIndex)) != -1) {
+	  words.addElement(text.substring(lastIndex, index+1));
+	  lastIndex = index + 1;
+	}
+	words.addElement(text.substring(lastIndex, text.length()));
+	return words;
+  }  
+  public void newLine () {
+	addText(new CText(null, null));
+  }  
+  public void paint (Graphics g) {
+	/*    super.paint(g);
+	g.setColor(Color.gray);
+	g.drawLine(0, topMargin+3, width, topMargin+3);
+	*/
+	g.setFont(font);
+	Vector currentLineOfText;
+	CText text;
+	int x, y, numPhrases;
+	y = fontHeight + MARGIN;
+	for (int i = 0; i < currentLine; i++) {
+	  currentLineOfText = (Vector)lines.elementAt(i);
+	  x = 1;
+	  numPhrases = currentLineOfText.size();
+	  for (int o = 0; o < numPhrases; o++) {
+	text = (CText)currentLineOfText.elementAt(o);
+	g.setColor(text.color);
+	g.drawString(text.text, x, y);
+	x += text.width;
+	  }
+	  y += fontHeight;
+	}
+  }  
 }

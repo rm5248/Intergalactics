@@ -1,27 +1,14 @@
 package igx.client;
 
-import igx.shared.Params;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Frame;
-import java.awt.Graphics;
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.io.IOException;
-import javax.swing.JFrame;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+// DialogCanvas.java 
 
-public class DialogCanvas
-  extends ButtonCanvas
-  implements KeyListener
+import igx.shared.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.datatransfer.*;
+import java.io.IOException;
+
+public class DialogCanvas extends ButtonCanvas implements KeyListener
 {
   public static final Color BORDER_COLOUR = Color.gray;
   public static final Color DIALOG_COLOUR = Color.lightGray;
@@ -32,339 +19,289 @@ public class DialogCanvas
   public static final String OKAY = "Okay";
   public static final String CANCEL = "Cancel";
   public static final int ROWS = 7;
-  int fontSize;
-  int fontHeight;
-  int fontDescent;
-  int cursorWidth;
-  int borderLeft;
-  int borderRight;
+
+  int fontSize, fontHeight, fontDescent, cursorWidth, borderLeft, borderRight;
   Font font;
-  String dialogText;
-  String errorText;
-  String userTextOne;
-  String userTextTwo;
-  int buttonLeft;
-  int buttonRight;
+  String dialogText, errorText, userTextOne, userTextTwo;
+  int buttonLeft, buttonRight;
   boolean dialogOn = false;
   boolean passwordMode = false;
   boolean messageMode = false;
+
+  //// Temp stuff ////
+
   int count = 0;
-  
-  private static final Logger logger = LogManager.getLogger();
-  
-  public DialogCanvas(int width, int fontSize, Toolkit paramToolkit)
-  {
-    super(fontSize, paramToolkit, width, 0);
-    if (buttonFontHeight % 2 == 1) {
-      buttonFontHeight += 1;
-    }
-    fontDescent = fm.getDescent();
-    fontHeight = (buttonFontHeight + fontDescent);
-    Dimension size = getSize();
-    setSize( size.width, fontHeight * 7 );
-    size = getSize();
-    fontSize = fontSize;
-    cursorWidth = fm.charWidth('_');
-    borderLeft = (10 * buttonSpaceWidth);
-    borderRight = (width - 10 * buttonSpaceWidth - 1);
-    font = buttonFont;
-    dialogText = "";
-    errorText = "";
-    userTextOne = "";
-    userTextTwo = "";
-    Dimension localDimension1 = buttonDimensions("Okay");
-    Dimension localDimension2 = buttonDimensions("Cancel");
-    buttonLeft = width / 2 - localDimension1.width;
-    buttonRight = width / 2 + localDimension2.width;
-    addButton(buttonLeft, size.height - localDimension1.height - fontDescent, "Okay");
-    addButton(buttonRight, size.height - localDimension2.height - fontDescent, "Cancel");
+
+  public DialogCanvas (int width, int fontSize, Toolkit toolkit) {
+	super(fontSize, toolkit, width, 0);
+	if (buttonFontHeight % 2 == 1)
+	  buttonFontHeight++;
+	fontDescent = fm.getDescent();
+	fontHeight = buttonFontHeight + fontDescent; 
+	height = fontHeight * ROWS;
+	this.fontSize = fontSize;
+	cursorWidth = fm.charWidth(CURSOR_CHAR);
+	borderLeft = BORDER_WIDTH * buttonSpaceWidth;
+	borderRight = width - BORDER_WIDTH * buttonSpaceWidth - 1;
+	font = buttonFont;
+	dialogText = "";
+	errorText = "";
+	userTextOne = "";
+	userTextTwo = "";
+	Dimension okayDimension = buttonDimensions (OKAY);
+	Dimension cancelDimension = buttonDimensions (CANCEL);
+	int buttonsWidth = okayDimension.width * 2 + cancelDimension.width;
+	buttonLeft = (width - buttonsWidth) / 2;
+	buttonRight = (width + buttonsWidth) / 2 - cancelDimension.width;
+	addButton(buttonLeft, height - okayDimension.height - fontDescent, OKAY);
+	addButton(buttonRight, height - cancelDimension.height - fontDescent, CANCEL);
+	prepareButtons();
+  }  
+  public void addChar (char c) {
+	String text;
+	int charWidth = fm.charWidth(c);
+	int whichRow = 2;
+	if (!userTextTwo.equals(""))
+	  text = userTextTwo;
+	else {
+	  if (fm.stringWidth(userTextOne + c) > (borderRight - borderLeft - 2 * cursorWidth))
+	text = userTextTwo;
+	  else { 
+	text = userTextOne;
+	whichRow = 1;
+	  }
+	}
+	if (fm.stringWidth(text + c) > (borderRight - borderLeft - 2 * cursorWidth))
+	  return;
+	else {
+	  if (whichRow == 1) {
+	userTextOne += c;
+	redrawRow(3);
+	  } else {
+	userTextTwo += c;
+	redrawRow(3);
+	redrawRow(4);
+	  }
+	}
+  }  
+  public void clearDialog () {
+	dialogOn = false;
+	passwordMode = false;
+	messageMode = false;
+	dialogText = "";
+	errorText = "";
+	userTextOne = "";
+	userTextTwo = "";
+	repaint();
+  }  
+  public void clearUserText () {
+	userTextOne = "";
+	userTextTwo = "";
+	redrawRow(3);
+	redrawRow(4);
+  }  
+  protected void drawText (Graphics g, int row, Color color, String text) {
+	g.setColor(color);
+	g.drawString(text, borderLeft + cursorWidth, (row + 1) * fontHeight - fontDescent);
+  }  
+  protected void eraseText (Graphics g, int row) {
+	g.setColor(Color.black);
+	g.fillRect(borderLeft, row * fontHeight + 1, (borderRight - borderLeft + 1), fontHeight + 1);
+  }  
+  public String getText () {
+	if (userTextTwo == null)
+	  return userTextOne;
+	else
+	  return userTextOne + userTextTwo;
+  }  
+  /*  public void buttonPressed (int buttonNum) {
+	super.buttonPressed(buttonNum);
+	count++;
+	switch (count) {
+	case 1:
+	  setErrorText("(You made a big error)");
+	  clearUserText();
+	  break;
+	case 2:
+	  setErrorText("");
+	  setDialogText("Enter your password");
+	  clearUserText();
+	  break;
+	case 3:
+	  clearUserText();
+	  setDialogText("Enter your alias");
+	  count = 0;
+	  break;
+	}
   }
-  
-  public void addChar(char paramChar)
-  {
-    int i = fm.charWidth(paramChar);
-    int j = 2;
-    String str;
-    if (!userTextTwo.equals(""))
-    {
-      str = userTextTwo;
-    }
-    else if (fm.stringWidth(userTextOne + paramChar) > borderRight - borderLeft - 2 * cursorWidth)
-    {
-      str = userTextTwo;
-    }
-    else
-    {
-      str = userTextOne;
-      j = 1;
-    }
-    if (fm.stringWidth(str + paramChar) > borderRight - borderLeft - 2 * cursorWidth) {
-      return;
-    }
-    if (j == 1)
-    {
-      userTextOne += paramChar;
-      redrawRow(3);
-    }
-    else
-    {
-      userTextTwo += paramChar;
-      redrawRow(3);
-      redrawRow(4);
-    }
-  }
-  
-  public void clearDialog()
-  {
-    dialogOn = false;
-    passwordMode = false;
-    messageMode = false;
-    dialogText = "";
-    errorText = "";
-    userTextOne = "";
-    userTextTwo = "";
-    repaint();
-  }
-  
-  public void clearUserText()
-  {
-    userTextOne = "";
-    userTextTwo = "";
-    redrawRow(3);
-    redrawRow(4);
-  }
-  
-  protected void drawText(Graphics paramGraphics, int paramInt, Color paramColor, String paramString)
-  {
-    paramGraphics.setColor(paramColor);
-    paramGraphics.drawString(paramString, borderLeft + cursorWidth, (paramInt + 1) * fontHeight - fontDescent);
-  }
-  
-  protected void eraseText(Graphics paramGraphics, int paramInt)
-  {
-    paramGraphics.setColor(Color.black);
-    paramGraphics.fillRect(borderLeft, paramInt * fontHeight + 1, borderRight - borderLeft + 1, fontHeight + 1);
-  }
-  
-  public String getText()
-  {
-    if (userTextTwo == null) {
-      return userTextOne;
-    }
-    return userTextOne + userTextTwo;
-  }
-  
-  public boolean isMessageChar(char paramChar)
-  {
-    if ((Character.isDigit(paramChar)) || (Character.isLetter(paramChar))) {
-      return true;
-    }
-    for (int i = 0; i < Params.MESSAGE_KEYS.length; i++) {
-      if (Params.MESSAGE_KEYS[i] == paramChar) {
-        return true;
-      }
-    }
-    return false;
-  }
-  
-  public void paste()
-  {
-    Toolkit localToolkit = Toolkit.getDefaultToolkit();
-    Clipboard localClipboard = localToolkit.getSystemClipboard();
-    Transferable localTransferable = localClipboard.getContents(this);
-    if (localTransferable != null) {
-      try
-      {
-        String str = (String)localTransferable.getTransferData(DataFlavor.stringFlavor);
-        if (str != null)
-        {
-          int i = str.length();
-          for (int j = 0; j < i; j++)
-          {
-            char c = str.charAt(j);
-            if (isMessageChar(c)) {
-              addChar(c);
-            }
-          }
-        }
-      }
-      catch (IOException localIOException) {}
-      catch (UnsupportedFlavorException localUnsupportedFlavorException) {}
+  */
+  public boolean isMessageChar(char key) {
+	if (Character.isDigit(key) || Character.isLetter(key))
+	  return true;
+	for (int i = 0; i < Params.MESSAGE_KEYS.length; i++)
+	  if (Params.MESSAGE_KEYS[i] == key)
+	return true;
+	return false;
+  }  
+
+  public void paste () {
+    Toolkit toolkit = Toolkit.getDefaultToolkit();
+    Clipboard clip = toolkit.getSystemClipboard();
+    Transferable trans = clip.getContents(this);
+    if (trans != null) {
+      try {
+	String data = (String)trans.getTransferData(DataFlavor.stringFlavor);
+	if (data != null) {
+	  int n = data.length();
+	  for (int i = 0; i < n; i++) {
+	    char c = data.charAt(i);
+	    if (isMessageChar(c))
+	      addChar(c);
+	  }
+	}
+      } catch (IOException e) {
+      } catch (UnsupportedFlavorException f) {}
     }
   }
-  
-  public void keyPressed(KeyEvent paramKeyEvent)
-  {
-    char c = paramKeyEvent.getKeyChar();
-    int i = paramKeyEvent.getKeyCode();
-    if (i == 8) {
+
+  public void keyPressed (KeyEvent e) {
+    char c = e.getKeyChar();
+    int code = e.getKeyCode();
+    if (code == KeyEvent.VK_BACK_SPACE)
       removeChar();
-    }
-    if ((i == 86) && (paramKeyEvent.isControlDown())) {
+    if ((code == KeyEvent.VK_V) && (e.isControlDown()))
       paste();
-    } else if (isMessageChar(c)) {
+    else if (isMessageChar(c))
       addChar(c);
-    }
-  }
-  
-  public void keyReleased(KeyEvent paramKeyEvent) {}
-  
-  public void keyTyped(KeyEvent paramKeyEvent) {}
-  
-  public static void main(String[] paramArrayOfString)
-  {
-    JFrame localFrame = new JFrame("Know Your Role");
-    Toolkit localToolkit = Toolkit.getDefaultToolkit();
-    DialogCanvas localDialogCanvas = new DialogCanvas(400, 16, localToolkit);
-    localDialogCanvas.setDialogText("Enter you alias");
-    localDialogCanvas.addKeyListener(localDialogCanvas);
-    localFrame.add(localDialogCanvas);
-    localFrame.setVisible( true );
-    localFrame.setSize(400, localDialogCanvas.getSize().height + 20);
-    localFrame.validate();
-  }
-  
-  public String makeStars(int paramInt)
-  {
-    String str = "";
-    for (int i = 0; i < paramInt; i++) {
-      str = str + "*";
-    }
-    return str;
-  }
-  
-  public void paint(Graphics paramGraphics)
-  {
-    paramGraphics.setColor(Color.black);
-    Dimension size = getSize();
-    paramGraphics.fillRect(0, 0, size.width, size.height);
-    if (messageMode)
-    {
-      paramGraphics.setFont(font);
-      paramGraphics.setColor(ERROR_COLOUR);
-      int i = fm.stringWidth(dialogText);
-      int j = (size.width - i) / 2;
-      int k = 4 * fontHeight;
-      paramGraphics.drawString(dialogText, j, k);
-    }
-    else if (dialogOn)
-    {
-      super.paint(paramGraphics);
-    }
-    paramGraphics.setFont(font);
-    paramGraphics.setColor(BORDER_COLOUR);
-    paramGraphics.drawRect(0, 0, size.width - 1, size.height - 1);
-    int i = fontHeight / 2;
-    for (int j = 0; j < 7; j++)
-    {
-      paramGraphics.drawLine(0, fontHeight * j, borderLeft - 1, fontHeight * j);
-      paramGraphics.drawLine(0, fontHeight * j + i, borderLeft - 1, fontHeight * j + i);
-      paramGraphics.drawLine(borderRight + 1, fontHeight * j, size.width, fontHeight * j);
-      paramGraphics.drawLine(borderRight + 1, fontHeight * j + i, size.width, fontHeight * j + i);
-    }
-    if (dialogOn)
-    {
-      drawText(paramGraphics, 1, DIALOG_COLOUR, dialogText);
-      drawText(paramGraphics, 2, ERROR_COLOUR, "  " + errorText);
-      if (userTextTwo.equals(""))
-      {
-        if (passwordMode) {
-          drawText(paramGraphics, 3, USER_COLOUR, makeStars(userTextOne.length()) + '_');
-        } else {
-          drawText(paramGraphics, 3, USER_COLOUR, userTextOne + '_');
-        }
-      }
-      else if (passwordMode)
-      {
-        drawText(paramGraphics, 3, USER_COLOUR, makeStars(userTextOne.length()));
-        drawText(paramGraphics, 4, USER_COLOUR, makeStars(userTextTwo.length()) + '_');
-      }
-      else
-      {
-        drawText(paramGraphics, 3, USER_COLOUR, userTextOne);
-        drawText(paramGraphics, 4, USER_COLOUR, userTextTwo + '_');
-      }
-    }
-  }
-  
-  public void redrawRow(int paramInt)
-  {
-    Graphics localGraphics = getGraphics();
-    if (localGraphics == null)
-    {
-      repaint();
-    }
-    else
-    {
-      localGraphics.setFont(font);
-      eraseText(localGraphics, paramInt);
-      switch (paramInt)
-      {
-      case 1: 
-        drawText(localGraphics, 1, DIALOG_COLOUR, dialogText);
-        break;
-      case 2: 
-        drawText(localGraphics, 2, ERROR_COLOUR, "  " + errorText);
-        break;
-      case 3: 
-        if (userTextTwo.equals(""))
-        {
-          if (passwordMode) {
-            drawText(localGraphics, 3, USER_COLOUR, makeStars(userTextOne.length()) + '_');
-          } else {
-            drawText(localGraphics, 3, USER_COLOUR, userTextOne + '_');
-          }
-        }
-        else if (passwordMode) {
-          drawText(localGraphics, 3, USER_COLOUR, makeStars(userTextOne.length()));
-        } else {
-          drawText(localGraphics, 3, USER_COLOUR, userTextOne);
-        }
-        break;
-      case 4: 
-        if (!userTextTwo.equals("")) {
-          if (passwordMode) {
-            drawText(localGraphics, 4, USER_COLOUR, makeStars(userTextTwo.length()) + '_');
-          } else {
-            drawText(localGraphics, 4, USER_COLOUR, userTextTwo + '_');
-          }
-        }
-        break;
-      }
-    }
-  }
-  
-  public void removeChar()
-  {
-    if (!userTextTwo.equals(""))
-    {
-      userTextTwo = userTextTwo.substring(0, userTextTwo.length() - 1);
-      redrawRow(4);
-    }
-    else if (!userTextOne.equals(""))
-    {
-      userTextOne = userTextOne.substring(0, userTextOne.length() - 1);
-      redrawRow(3);
-    }
-  }
-  
-  public void setDialogText(String paramString)
-  {
-    dialogOn = true;
-    dialogText = paramString;
-    repaint();
-  }
-  
-  public void setErrorText(String paramString)
-  {
-    errorText = paramString;
-    repaint();
-  }
-  
-  public void setMessageText(String paramString)
-  {
-    messageMode = true;
-    dialogText = paramString;
-    repaint();
-  }
+  }  
+  public void keyReleased (KeyEvent e) {}  
+  public void keyTyped (KeyEvent e) {}  
+  public static void main (String[] args) {
+	Frame f = new Frame("Know Your Role");
+	Toolkit toolkit = Toolkit.getDefaultToolkit();
+	DialogCanvas dc = new DialogCanvas(400, 16, toolkit);
+	dc.setDialogText("Enter you alias");
+	dc.addKeyListener(dc);
+	f.add(dc);
+	f.pack();
+	f.show();
+	f.setSize(400, dc.height + 20); 
+	f.validate();
+  }  
+/**
+ * This method was created in VisualAge.
+ * @return java.lang.String
+ * @param num int
+ */
+public String makeStars(int num) {
+	String val = "";
+	for (int i = 0; i < num; i++) 
+		val += "*";
+	return val;
+}
+public void paint(Graphics g) {
+	g.setColor(Color.black);
+	g.fillRect(0, 0, width, height);
+	if (messageMode) {
+		g.setFont(font);
+		g.setColor(ERROR_COLOUR);
+		int messageWidth = fm.stringWidth(dialogText);
+		int x = (width - messageWidth) / 2;
+		int y = (ROWS / 2 + 1) * fontHeight;
+		g.drawString(dialogText, x, y);
+	} else if (dialogOn)
+		super.paint(g);
+	// Init
+	g.setFont(font);
+	// Draw Borders
+	g.setColor(BORDER_COLOUR);
+	g.drawRect(0, 0, width - 1, height - 1);
+	int halfHeight = fontHeight / 2;
+	for (int i = 0; i < ROWS; i++) {
+		g.drawLine(0, fontHeight * i, borderLeft - 1, fontHeight * i);
+		g.drawLine(0, fontHeight * i + halfHeight, borderLeft - 1, fontHeight * i + halfHeight);
+		g.drawLine(borderRight + 1, fontHeight * i, width, fontHeight * i);
+		g.drawLine(borderRight + 1, fontHeight * i + halfHeight, width, fontHeight * i + halfHeight);
+	}
+	// Draw each line of text
+	if (dialogOn) {
+		drawText(g, 1, DIALOG_COLOUR, dialogText);
+		drawText(g, 2, ERROR_COLOUR, "  " + errorText);
+		if (userTextTwo.equals("")) {
+			if (passwordMode)
+				drawText(g, 3, USER_COLOUR, makeStars(userTextOne.length()) + CURSOR_CHAR);
+			else			
+				drawText(g, 3, USER_COLOUR, userTextOne + CURSOR_CHAR);
+		} else {
+			if (passwordMode) {
+				drawText(g, 3, USER_COLOUR, makeStars(userTextOne.length()));
+				drawText(g, 4, USER_COLOUR, makeStars(userTextTwo.length()) + CURSOR_CHAR);
+			} else {
+				drawText(g, 3, USER_COLOUR, userTextOne);
+				drawText(g, 4, USER_COLOUR, userTextTwo + CURSOR_CHAR);
+			}
+		}
+	}
+}
+public void redrawRow(int row) {
+	Graphics g = getGraphics();
+	if (g == null)
+		repaint();
+	else {
+		g.setFont(font);
+		eraseText(g, row);
+		switch (row) {
+			case 1 :
+				drawText(g, 1, DIALOG_COLOUR, dialogText);
+				break;
+			case 2 :
+				drawText(g, 2, ERROR_COLOUR, "  " + errorText);
+				break;
+			case 3 :
+				if (userTextTwo.equals("")) {
+					if (passwordMode)
+						drawText(g, 3, USER_COLOUR, makeStars(userTextOne.length()) + CURSOR_CHAR);
+					else				
+						drawText(g, 3, USER_COLOUR, userTextOne + CURSOR_CHAR);
+				} else {
+					if (passwordMode)
+						drawText(g, 3, USER_COLOUR, makeStars(userTextOne.length()));
+					else
+						drawText(g, 3, USER_COLOUR, userTextOne);
+				}
+				break;
+			case 4 :
+				if (!userTextTwo.equals("")) {
+					if (passwordMode)
+						drawText(g, 4, USER_COLOUR, makeStars(userTextTwo.length()) + CURSOR_CHAR);
+					else
+						drawText(g, 4, USER_COLOUR, userTextTwo + CURSOR_CHAR);
+				}
+				break;
+		}
+	}
+}
+  public void removeChar () {
+	if (!userTextTwo.equals("")) {
+	  userTextTwo = userTextTwo.substring(0, userTextTwo.length() - 1);
+	  redrawRow(4);
+	} else if (!userTextOne.equals("")) {
+	  userTextOne = userTextOne.substring(0, userTextOne.length() - 1);
+	  redrawRow(3);
+	}
+  }  
+  public void setDialogText (String text) {
+	dialogOn = true;
+	dialogText = text;
+	repaint();
+  }  
+  public void setErrorText (String text) {
+	errorText = text;
+	repaint();
+  }  
+  public void setMessageText (String text) {
+	messageMode = true;
+	dialogText = text;
+	repaint();
+  }  
 }

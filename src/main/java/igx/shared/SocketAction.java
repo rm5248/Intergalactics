@@ -1,76 +1,65 @@
 package igx.shared;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
+// SocketAction Class
+// SocketAction.java
 
-public class SocketAction
-  extends Thread
-{
+// Imports
+import java.net.*;
+import java.io.*;
+
+public class SocketAction extends Thread {
   private BufferedReader inStream = null;
-  protected PrintWriter outStream = null;
-  private Socket socket = null;
-  
-  public SocketAction(Socket paramSocket)
-  {
-    super("SocketAction");
-    try
-    {
-      inStream = new BufferedReader(new InputStreamReader(paramSocket.getInputStream()), 1024);
-      outStream = new PrintWriter(new BufferedOutputStream(paramSocket.getOutputStream(), 1024), true);
-      socket = paramSocket;
-    }
-    catch (IOException localIOException) {}
-  }
-  
-  public void closeConnections()
-  {
-    try
-    {
-      if (socket != null) {
-        socket.close();
-      }
-      socket = null;
-    }
-    catch (IOException localIOException) {}
-  }
-  
-  protected void finalize()
-  {
-    if (socket != null)
-    {
-      try
-      {
-        socket.close();
-      }
-      catch (IOException localIOException) {}
-      socket = null;
-    }
-  }
-  
-  public boolean isConnected()
-  {
-    return (inStream != null) && (outStream != null) && (socket != null);
-  }
-  
-  public String receive()
-    throws IOException
-  {
-    String str = "";
-    str = inStream.readLine();
-    if (str == null) {
-      throw new IOException("Connection closed.");
-    }
-    return str;
-  }
-  
-  public void run() {}
-  
-  public void send(String paramString)
-  {
-    outStream.println(paramString);
-  }
+  protected PrintWriter   outStream = null;
+  private Socket          socket = null;
+
+  public SocketAction(Socket sock) {
+	super("SocketAction");
+	try {
+	  inStream = new BufferedReader(new InputStreamReader(sock.getInputStream()), 1024);
+	  outStream = new PrintWriter(new
+		BufferedOutputStream(sock.getOutputStream(), 1024), true);
+	  socket = sock;
+	}
+	catch (IOException e) {
+	  // System.out.println("Couldn't initialize SocketAction: " + e);
+	  // System.exit(1);
+	}
+  }  
+  public void closeConnections() {
+	try {
+	  if (socket != null)
+	    socket.close();
+	  socket = null;
+	}
+	catch (IOException e) {
+	  // System.out.println("Couldn't close socket: " + e);
+	}
+  }  
+  protected void finalize () {
+	if (socket != null) {
+	  try {
+		socket.close();
+	  }
+	  catch (IOException e) {
+		// System.out.println("Couldn't close socket: " + e);
+	  }
+	  socket = null;
+	}
+  }  
+  public boolean isConnected() {
+	return ((inStream != null) && (outStream != null) &&
+	  (socket != null));
+	}
+  public String receive() throws IOException {
+	String retValue = "";
+	retValue =  inStream.readLine();
+	if (retValue == null)
+	  throw new IOException("Connection closed.");
+	return retValue;
+  }  
+  public void run() {
+  }  
+  public void send(String s) {
+	outStream.println(s);
+  }  
 }

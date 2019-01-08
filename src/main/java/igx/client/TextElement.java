@@ -1,27 +1,24 @@
 package igx.client;
 
-import java.awt.Color;
-import java.awt.FontMetrics;
+// TextElement.java 
 
-/**
- * A TextElement is a string with a color and a column to start at.
- */
+import java.util.*;
+import java.awt.*;
+
 public class TextElement
 {
   public static final int SEQUENTIAL = -1;
+
   public String text;
   public Color colour;
   public int column;
-  
-  public TextElement(String paramString, Color paramColor, int columnStart)
-  {
-    text = paramString;
-    colour = paramColor;
-    column = columnStart;
-  }
-  
-  public int getWidth(FontMetrics paramFontMetrics)
-  {
-    return paramFontMetrics.stringWidth(text);
-  }
+
+  public TextElement (String text, Color colour, int column) {
+	this.text = text;
+	this.colour = colour;
+	this.column = column;
+  }  
+  public int getWidth (FontMetrics fm) {
+	return fm.stringWidth(text);
+  }  
 }

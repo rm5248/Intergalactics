@@ -1,7 +1,9 @@
 package igx.client;
 
-import java.awt.Color;
-import java.util.Vector;
+// TextRow.java 
+
+import java.util.*;
+import java.awt.*;
 
 public class TextRow
 {
@@ -11,26 +13,19 @@ public class TextRow
   boolean selected = false;
   boolean centered = false;
   int numberOfElements;
-  
-  public TextRow(Vector paramVector)
-  {
-    elements = paramVector;
-    numberOfElements = paramVector.size();
-  }
-  
-  public void center()
-  {
-    centered = true;
-  }
-  
-  public void setSelect(boolean paramBoolean)
-  {
-    selected = paramBoolean;
-  }
-  
-  public void underline(Color paramColor)
-  {
-    underlineColour = paramColor;
-    underlined = true;
-  }
+
+  public TextRow (Vector elements) {
+	this.elements = elements;
+	numberOfElements = elements.size();
+  }  
+  public void center () {
+	centered = true;
+  }  
+  public void setSelect (boolean val) {
+	selected = val;
+  }  
+  public void underline (Color colour) {
+	underlineColour = colour;
+	underlined = true;
+  }  
 }

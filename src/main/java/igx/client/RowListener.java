@@ -1,6 +1,8 @@
 package igx.client;
 
-public abstract interface RowListener
+// RowListener.java 
+
+public interface RowListener
 {
-  public abstract void rowSelected(int paramInt);
+  public void rowSelected (int rowNumber);  
 }
