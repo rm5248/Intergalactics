@@ -7,6 +7,7 @@ import java.util.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
+import javax.swing.JPanel;
 
 public class ClientForum extends Forum implements KeyListener, ButtonListener, ActionListener
 {
@@ -70,7 +71,7 @@ public class ClientForum extends Forum implements KeyListener, ButtonListener, A
   ForumCanvas statusBar;
   ButtonCanvas buttonBar;
   ScrollText eventList;
-  Panel westContainer, eastContainer;
+  JPanel westContainer, eastContainer;
   MainPanel mainContainer;
   int width, height;
   int dialogMode = DIALOG_NONE;
@@ -89,13 +90,15 @@ public class ClientForum extends Forum implements KeyListener, ButtonListener, A
   // Initial password for confirmation of new password
   String firstPassword = null;
 
-  static class MainPanel extends Panel {
+  static class MainPanel extends JPanel {
 	Dimension d;
 
 	public MainPanel (Dimension d) {
 	  super(new BorderLayout());
 	  enableEvents(AWTEvent.KEY_EVENT_MASK);
 	  this.d = d;
+          
+          setBackground( Color.ORANGE );
 	}
 
 	public Dimension getPreferredSize () {
@@ -157,8 +160,8 @@ public class ClientForum extends Forum implements KeyListener, ButtonListener, A
 	int eventHeight = height - buttonBar.height - statusHeight;
 	eventList = new ScrollText(fontSize, toolkit, sideWidth, eventHeight);
 	// The two containers for the components
-	westContainer = new Panel(new BorderLayout());
-	eastContainer = new Panel(new BorderLayout());
+	westContainer = new JPanel(new BorderLayout());
+	eastContainer = new JPanel(new BorderLayout());
 	// Get them in there!
 	westContainer.add(gameList, BorderLayout.NORTH);
 	westContainer.add(dialog, BorderLayout.CENTER);
@@ -166,8 +169,13 @@ public class ClientForum extends Forum implements KeyListener, ButtonListener, A
 	eastContainer.add(statusBar, BorderLayout.NORTH);
 	eastContainer.add(buttonBar, BorderLayout.CENTER);
 	eastContainer.add(eventList, BorderLayout.SOUTH);
-	mainContainer.add(westContainer, BorderLayout.WEST);
-	mainContainer.add(eastContainer, BorderLayout.EAST);
+        
+        JPanel gridWest = new JPanel(new GridLayout());
+        gridWest.add( westContainer );
+        mainContainer.add(gridWest, BorderLayout.WEST );
+        mainContainer.add(eastContainer, BorderLayout.EAST );  
+//	mainContainer.add(westContainer, BorderLayout.WEST);
+//	mainContainer.add(eastContainer, BorderLayout.EAST);
 	//setDialog(ClientForum.DIALOG_ALIAS, "Enter your alias", null);
 	frontEnd.getContainer().add(mainContainer, CARD_FORUM);
 	card.show(frontEnd.getContainer(), CARD_FORUM);

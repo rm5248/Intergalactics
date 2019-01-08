@@ -6,8 +6,9 @@ import java.awt.*;
 import java.awt.image.*;
 import java.util.Vector;
 import igx.shared.*;
+import javax.swing.JPanel;
 
-public class Galaxy extends Canvas
+public class Galaxy extends JPanel
 {
     //// Constants
     // Number of message rows
@@ -280,6 +281,7 @@ public class Galaxy extends Canvas
         repaintPlanet(g, Planet.char2num(planet.planetChar));
     }
     public void paint (Graphics g) {
+        super.paint(g);
         // LOCK
         redrawMonitor.lock();
         g.setFont(font);

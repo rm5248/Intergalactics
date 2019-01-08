@@ -4,8 +4,9 @@ package igx.client;
 
 import java.awt.*;
 import java.util.*;
+import javax.swing.JPanel;
 
-public class ScrollText extends Canvas
+public class ScrollText extends JPanel
 {
   // Constants
   public static final int MARGIN = 1;
@@ -39,6 +40,7 @@ public class ScrollText extends Canvas
 	lines = new Vector(numLines + 1);
 	lines.addElement(new Vector());
 	currentLine = lineWidth = lineID = 0;
+        setBackground( Color.BLACK );
   }  
   public void addText (CText text) {
 	Vector thisLine;
@@ -102,6 +104,7 @@ public class ScrollText extends Canvas
 	addText(new CText(null, null));
   }  
   public void paint (Graphics g) {
+      super.paint( g );
 	/*    super.paint(g);
 	g.setColor(Color.gray);
 	g.drawLine(0, topMargin+3, width, topMargin+3);

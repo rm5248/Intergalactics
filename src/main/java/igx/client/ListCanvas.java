@@ -5,8 +5,10 @@ package igx.client;
 import igx.shared.*;
 import java.awt.*;
 import java.util.*;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
 
-public class ListCanvas extends Canvas
+public class ListCanvas extends JPanel
 {
   public static final int MARGIN_FACTOR = 1;
 
@@ -24,6 +26,9 @@ public class ListCanvas extends Canvas
 	fontHeight = fm.getAscent() + 1 + fontDescent;
 	rows = height / fontHeight;
 	setBackground(Color.black);
+        
+        Dimension d = new Dimension( width, height );
+        setMinimumSize(d);
   }  
   public void addText (CText text) {
 	strings.addElement(text);
@@ -47,7 +52,7 @@ public class ListCanvas extends Canvas
 	}
   }  
   public static void main (String[] args) {
-	Frame f = new Frame("Toothless Joe Ward");
+	JFrame f = new JFrame("Toothless Joe Ward");
 	Toolkit toolkit = Toolkit.getDefaultToolkit();
 	ListCanvas lc = new ListCanvas(400, 400, 20, toolkit);
 	lc.addText("A", Color.blue);
@@ -72,11 +77,12 @@ public class ListCanvas extends Canvas
 	lc.addText("R", Color.blue);
 	f.add(lc);
 	f.pack();
-	f.show();
+	f.setVisible( true );
 	f.setSize(400, lc.height + 20); 
 	f.validate();
   }  
   public void paint (Graphics g) {
+      super.paint(g);
 	g.setFont(font);
 	int n = strings.size();
 	for (int i = 0; i < n; i++) {

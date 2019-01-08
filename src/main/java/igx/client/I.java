@@ -6,8 +6,12 @@ import igx.shared.*;
 import java.awt.*;
 import java.net.*;
 import java.io.*;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
 
-public class I extends Frame implements FrontEnd
+public class I extends JFrame implements FrontEnd
 {
 
   Dimension size = null;
@@ -17,13 +21,20 @@ public class I extends Frame implements FrontEnd
   SoundManager player;
   String host;
   AuPlayer au; 
+  private JComponent container;
+  
   public I (String name) {
 	super(name);
+        setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
 	au = new AuPlayer();
 	player = new SoundManager(this);
+        container = new JPanel();
+        setLayout( new BorderLayout() );
+        add( container );
+        container.setSize( 1440, 880 );
   }  
   public Container getContainer () {
-	return this;
+	return container;
   }  
   public Dimension getDimensions () {
 	return size;
@@ -97,16 +108,18 @@ public void play(String sound) {
 	if (customSize != null)
 	  screenSize = customSize;
 	setSize(screenSize);
-	show();
+	setVisible( true );
 	size = new Dimension(screenSize.width, screenSize.height);
 	Insets i = getInsets();
 	size.width = size.width - i.left - i.right;
 	size.height = size.height - i.top - i.bottom - 20;
+        setSize( size );
+        container.setSize( size );
 	ClientForum cf = new ClientForum(this, Params.SERVER_NAME, toolkit, server);
 	server.setForum(cf);
 	Image icon = toolkit.getImage("hive.gif");
 	setIconImage(icon);
-	pack();
+	//pack();
 	cf.setToPreferredSize();
 	validate();
 	server.start();

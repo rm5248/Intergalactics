@@ -6,8 +6,10 @@ import igx.shared.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
 
-public class ForumCanvas extends Canvas implements MouseListener, RowListener
+public class ForumCanvas extends JPanel implements MouseListener, RowListener
 {
   public static final Color SELECT_COLOUR = Color.red;
   
@@ -20,6 +22,7 @@ public class ForumCanvas extends Canvas implements MouseListener, RowListener
   int selectedRow = -1;
   
   public ForumCanvas (int width, int height, int fontSize, Toolkit toolkit) {
+        setPreferredSize(new Dimension( width, height ));
 	this.width = width;
 	this.height = height;
 	this.fontSize = fontSize;
@@ -43,7 +46,7 @@ public class ForumCanvas extends Canvas implements MouseListener, RowListener
 	return rows * fontHeight;
   }  
   public static void main (String[] args) {
-	Frame f = new Frame("Rooty Poo");
+	JFrame f = new JFrame("Rooty Poo");
 	Toolkit toolkit = Toolkit.getDefaultToolkit();
 	ForumCanvas fc = new ForumCanvas(400, 400, 14, toolkit);
 	int rows = fc.rows;
@@ -90,6 +93,7 @@ public class ForumCanvas extends Canvas implements MouseListener, RowListener
   }  
   public void mouseReleased (MouseEvent e) {}  
   public void paint (Graphics g) {
+      super.paint(g);
 	for (int i = 0; i < rows; i++)
 	  if (row[i] != null)
 	paintRow(g, i);

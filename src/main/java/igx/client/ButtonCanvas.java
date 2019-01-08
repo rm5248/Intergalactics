@@ -35,6 +35,7 @@ public class ButtonCanvas extends JPanel implements MouseListener
 	buttonSpaceWidth = fm.charWidth(' ');
 	addMouseListener(this);
 	buttonHeight = buttonFontHeight + SoftButton.BUTTON_MARGIN * 2;
+        setPreferredSize( new Dimension( width, height ) );
 	// numLines = (height) / fontHeight;
 	// lines = new Vector(numLines + 1);
 	// lines.addElement(new Vector());

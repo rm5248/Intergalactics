@@ -6,8 +6,11 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import igx.shared.*;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 
-public class ClientUI extends Panel implements UI, MouseListener, MouseMotionListener, KeyListener, ActionListener, ButtonListener
+public class ClientUI extends JPanel implements UI, MouseListener, MouseMotionListener, KeyListener, ActionListener, ButtonListener
 {
   //// Constants
   // Ratio from font size to screen height
@@ -59,9 +62,9 @@ public class ClientUI extends Panel implements UI, MouseListener, MouseMotionLis
   int mode = MODE_NORMAL;
   int messageReceiver;
   // Popup Message Menu
-  PopupMenu messageMenu;
+  JPopupMenu messageMenu;
   // Quit Menu
-  PopupMenu quitMenu;
+  JPopupMenu quitMenu;
   // Message and quit button locations
   Point messagePoint, quitPoint;
   // Front End
@@ -142,40 +145,40 @@ public class ClientUI extends Panel implements UI, MouseListener, MouseMotionLis
   messageBoard.setSize(width - height - height/Galaxy.SCROLLBAR_WIDTH_RATIO, height - statusBar.height);
   sidebar.setSize(width - height - height/Galaxy.SCROLLBAR_WIDTH_RATIO, height);
   // Set up quit popup-menu
-  quitMenu = new PopupMenu();
+  quitMenu = new JPopupMenu();
   buttonBar.add(quitMenu);
-  MenuItem quitItem = new MenuItem("Don't Quit");
+  JMenuItem quitItem = new JMenuItem("Don't Quit");
   quitItem.setActionCommand("*" + Params.DONT_SIGNAL);
   quitItem.addActionListener(this);
   quitMenu.add(quitItem);
   //
   if (!watcher) {
-    quitItem = new MenuItem("Ready to Quit");
+    quitItem = new JMenuItem("Ready to Quit");
     quitItem.setActionCommand("*" + Params.READY_SIGNAL);
     quitItem.addActionListener(this);
     quitMenu.add(quitItem);
   }
   //
-  quitItem = new MenuItem("Quit");
+  quitItem = new JMenuItem("Quit");
   quitItem.setActionCommand("*" + Params.QUIT_SIGNAL);
   quitItem.addActionListener(this);
   quitMenu.add(quitItem);	// Set up message popup-menu
 	
-  messageMenu = new PopupMenu();
+  messageMenu = new JPopupMenu();
   buttonBar.add(messageMenu);
-  MenuItem allItem = new MenuItem("This Game");
+  JMenuItem allItem = new JMenuItem("This Game");
   allItem.setActionCommand("0");
   allItem.addActionListener(this);
   messageMenu.add(allItem);
   messageMenu.add("-");
-  MenuItem forumItem = new MenuItem("Forum");
+  JMenuItem forumItem = new JMenuItem("Forum");
   forumItem.setActionCommand("-1");
   forumItem.addActionListener(this);
   messageMenu.add(forumItem);
   messageMenu.add("-");
-  MenuItem playerItem;
+  JMenuItem playerItem;
   for (int i = 0; i < game.players; i++) {
-    playerItem = new MenuItem(game.player[i].name);
+    playerItem = new JMenuItem(game.player[i].name);
     playerItem.setActionCommand(new Integer(i + 1).toString());
     playerItem.addActionListener(this);
     messageMenu.add(playerItem);

@@ -7,6 +7,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.datatransfer.*;
 import java.io.IOException;
+import javax.swing.JFrame;
 
 public class DialogCanvas extends ButtonCanvas implements KeyListener
 {
@@ -56,6 +57,7 @@ public class DialogCanvas extends ButtonCanvas implements KeyListener
 	addButton(buttonLeft, height - okayDimension.height - fontDescent, OKAY);
 	addButton(buttonRight, height - cancelDimension.height - fontDescent, CANCEL);
 	prepareButtons();
+        setPreferredSize( new Dimension( width, 100 ) );
   }  
   public void addChar (char c) {
 	String text;
@@ -177,7 +179,7 @@ public class DialogCanvas extends ButtonCanvas implements KeyListener
   public void keyReleased (KeyEvent e) {}  
   public void keyTyped (KeyEvent e) {}  
   public static void main (String[] args) {
-	Frame f = new Frame("Know Your Role");
+	JFrame f = new JFrame("Know Your Role");
 	Toolkit toolkit = Toolkit.getDefaultToolkit();
 	DialogCanvas dc = new DialogCanvas(400, 16, toolkit);
 	dc.setDialogText("Enter you alias");
