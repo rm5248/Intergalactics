@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+   "-//Hibernate/Hibernate Mapping DTD//EN"
+   "http://hibernate.sourceforge.net/hibernate-mapping-2.0.dtd">
+	<hibernate-mapping>
+	<!-- igx.stats.Player root -->
+	<class name="igx.stats.Player" table="Player">
+	    <meta attribute="sessionMethod">igx.stats.web.SessionTable.getSessionTable().getSession();</meta>
+	
+		<id name="id" type="long" column="id">
+			<generator class="native"/>
+		</id>
+		<property name="name" column="name" type="string">
+		    <meta attribute="finder">findByName</meta>
+		</property>
+		<property name="robot" column="isRobot" type="boolean">
+		    <meta attribute="finder">findRobots</meta>
+		</property>
+		
+		<set name="games" inverse="true" lazy="true" table="GamePlayers">
+            <meta attribute="foreign-finder-name">findSavedGames</meta>
+            <meta attribute="foreign-finder-field">save</meta>
+			<key column="playerID"/>
+			<many-to-many class="igx.stats.Game" column="gameID"/>
+		</set>
+	</class>
+	</hibernate-mapping>

@@ -1,0 +1,56 @@
+################################################################################
+#                          I N T E R G A L A C T I C S                         #
+################################################################################
+#                              MAP FILE:  "Stripe"                             #
+#                                   4 Players                                  #
+#                               by John Watkinson                              #
+################################################################################
+# 
+# This is a sample map file for IGX. Notice that any line beginning with '#' is
+# a comment and is ignored by the IGX server.
+#
+# All players are encouraged to make their own map files and email them to
+# me at moonman@intergalactics.net. I'll add them to the server at my earliest
+# convenience. Please try to keep the above header (top 7 lines) in tact on map 
+# files that you create (although change it to reflect the new name, number of 
+# players and author). It will make the map files easier to organize.
+#
+# Here are the rules for making map files:
+#
+# o Your map file must be a 16x16 grid of characters with the exception of
+#   comment lines, which must begin with a sharp sign (#).
+# o It must contain at least two and no more than nine asterisks (*). These
+#   denote the location of the home planets. Notice that you cannot specify
+#   who gets what home planet; the home planets are randomly distributed to
+#   the players. Also, note that the map file can only be used by a game with 
+#   the same number of players as there are asterisks on the map. The only way 
+#   to support a variable number of players with one map is to submit several 
+#   copies of the file with a different number of asterisks on each.
+# o A period (.) denotes empty space.
+# o Any other character represents a neutral planet. There can be no more
+#   than 36 planets total (neutral AND home planets). If you place less than
+#   36 total planets then the remaining planets will be randomly distributed
+#   on the map. I recommend using the actual planet names for the neutral
+#   planets, as I've done here. That way it's easier to keep track of how
+#   many planets are on the map.
+# 
+# That's it! Please proof-read your maps so I don't have to! I'm looking
+# forward to seeing some sweet maps!
+#
+# Here's the map itself:
+*..............*
+................
+................
+................
+................
+................
+................
+efghijklmnopqrst
+uvwxyz1234567890
+................
+................
+................
+................
+................
+................
+*..............*

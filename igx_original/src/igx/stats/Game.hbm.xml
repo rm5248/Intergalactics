@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+   "-//Hibernate/Hibernate Mapping DTD//EN"
+   "http://hibernate.sourceforge.net/hibernate-mapping-2.0.dtd">
+	<hibernate-mapping>
+	<!-- igx.stats.Game root -->
+	<class name="igx.stats.Game" table="Game">
+		<id name="id" type="long" column="id">
+			<generator class="native"/>
+		</id>
+		<many-to-one name="winner" column="winner" class="igx.stats.Player"/>
+		<property name="numPlayers" column="numPlayers" type="int"/>
+		<many-to-one name="neutral" column="neutral" class="igx.stats.Player"/>
+		<property name="time" column="time" type="timestamp"/>
+		<property name="save" column="save" type="boolean"/>
+		
+		<set name="players" lazy="true" table="GamePlayers">
+			<key column="gameID"/>
+			<many-to-many class="igx.stats.Player" column="playerID" />
+		</set>
+		<set name="timeStates" inverse="true" lazy="true">
+			<key column="gameID"/>
+			<one-to-many class="igx.stats.TimeState"/>
+		</set>
+	</class>
+	</hibernate-mapping>

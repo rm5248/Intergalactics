@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+   "-//Hibernate/Hibernate Mapping DTD//EN"
+   "http://hibernate.sourceforge.net/hibernate-mapping-2.0.dtd">
+	<hibernate-mapping>
+	<!-- igx.stats.PlanetUpdate root -->
+	<class name="igx.stats.PlanetUpdate" table="PlanetUpdate">
+		<id name="id" type="long" column="id">
+			<generator class="native"/>
+		</id>
+		<property name="production" column="production" type="byte"/>
+		<property name="planetID" column="planetID" type="byte"/>
+		<property name="time" column="time" type="short"/>
+		<property name="ratio" column="ratio" type="byte"/>
+		<property name="ships" column="ships" type="short"/>
+		<property name="x" column="x" type="byte"/>
+		<property name="y" column="y" type="byte"/>
+
+		<many-to-one name="player" class="igx.stats.Player" column="playerID"/>
+		<many-to-one name="game" class="igx.stats.Game" column="gameID"/>
+	</class>
+	</hibernate-mapping>

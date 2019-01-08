@@ -1,0 +1,6 @@
+MoonBots
+igx.bots.MoonBot
+LucasBots
+igx.bots.StarWarsBot
+AdamsBots
+igx.bots.AdamsBot

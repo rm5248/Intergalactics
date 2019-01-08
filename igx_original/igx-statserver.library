@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<library>
+  <!--JBuilder Library Definition File-->
+  <fullname>igx-statserver</fullname>
+  <class>
+    <path>[lib/mysql-connector-java-2.0.14-bin.jar]</path>
+    <path>[lib/hsqldb.jar]</path>
+    <path>[lib/commons-logging.jar]</path>
+    <path>[lib/commons-lang.jar]</path>
+    <path>[lib/junit.jar]</path>
+    <path>[lib/jcs.jar]</path>
+    <path>[lib/log4j-core.jar]</path>
+    <path>[lib/cglib.jar]</path>
+    <path>[lib/jcommon-0.7.2.jar]</path>
+    <path>[lib/commons-pool.jar]</path>
+    <path>[lib/commons-collections.jar]</path>
+    <path>[lib/odmg.jar]</path>
+    <path>[lib/jdom.jar]</path>
+    <path>[lib/hibernate.jar]</path>
+    <path>[lib/jfreechart-0.9.6.jar]</path>
+    <path>[lib/commons-dbcp.jar]</path>
+  </class>
+</library>

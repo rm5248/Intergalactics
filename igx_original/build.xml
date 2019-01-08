@@ -1,0 +1,250 @@
+<!-- ====================================================================== -->
+<!--                     i n t e r g a l a c t i c s                        -->
+<!--                                                                        -->
+<!--                          MAIN BUILD FILE                               -->
+<!-- ====================================================================== -->
+<!DOCTYPE project PUBLIC "-//ANT//DTD project//EN"
+ "http://www.iam.unibe.ch/~scg/cgi-bin/viewcvs.cgi/~checkout~//ant.dtd?rev=3.5&content-type=text/plain&cvsroot=jpiccola">
+
+<project name="intergalactics" default="compile" basedir=".">
+
+<!-- ====================================================================== -->
+<!-- All targets should depend on 'init'.                                   -->
+<!-- ====================================================================== -->
+<target name="init"
+        description="Initializes the Ant environment.">
+ <tstamp />
+ <property name="source" value="src" />
+ <property name="conf" value="src" />
+ <property name="classes" value="web/WEB-INF/classes" />
+ <property name="jbuilder.classes" value="classes" />
+ <property name="docs" value="docs" />
+ <property name="lib" value="lib" />
+ <property name="weblib" value="web/WEB-INF/lib" />
+ <property name="users" value="users" />
+ <property name="rankings" value="rankings" />
+ <property name="db.dir" value="db" />
+ <property name="db.name" value="igx" />
+ <property name="turn.length" value="50" />
+</target>
+
+<!-- ====================================================================== -->
+<!-- Prepares for a first-time build.                                       -->
+<!-- ====================================================================== -->
+<target name="prepare" depends="init"
+        description="Prepares to build.">
+ <mkdir dir="${classes}" />
+ <mkdir dir="${docs}" />
+ <mkdir dir="${users}" />
+ <mkdir dir="${rankings}" />
+ <mkdir dir="${db.dir}" />
+
+
+ <!-- Build Classpath -->
+ <path id="classpath">
+  <fileset dir="${lib}">
+   <include name="*.jar"/>
+   <include name="*.zip"/>
+  </fileset>
+ </path>
+
+ <!-- Execute Classpath -->
+ <path id="run.classpath">
+  <path refid="classpath"/>
+  <pathelement location="${classes}"/>
+ </path>
+
+ <!-- DB Classpath -->
+ <path id="db.classpath">
+  <pathelement location="${lib}/hsqldb.jar"/>
+ </path>
+
+ <!-- Copy configuration files -->
+ <copy todir="${classes}" verbose="true">
+  <fileset dir="${conf}" includes="**/*.properties" />
+  <fileset dir="${source}" includes="**/*.properties" />
+ </copy>
+
+ <!-- Copy Hibernate map files -->
+ <copy todir="${classes}" verbose="true">
+  <fileset dir="${conf}" includes="**/*.xml" />
+  <fileset dir="${source}" includes="**/*.xml" />
+ </copy>
+
+ <!-- Copy configuration files for les builder-->
+ <copy todir="${jbuilder.classes}" verbose="true">
+  <fileset dir="${conf}" includes="**/*.properties" />
+  <fileset dir="${source}" includes="**/*.properties" />
+ </copy>
+
+ <!-- Copy Hibernate map files pour les builder -->
+ <copy todir="${jbuilder.classes}" verbose="true">
+  <fileset dir="${conf}" includes="**/*.xml" />
+  <fileset dir="${source}" includes="**/*.xml" />
+ </copy>
+</target>
+
+<!-- ====================================================================== -->
+<!-- Compiles all source in the 'src' directory.                            -->
+<!-- ====================================================================== -->
+<target name="compile" depends="prepare"
+        description="Compiles the source.">
+ <javac srcdir="${source}" destdir="${classes}">
+  <classpath refid="classpath"/>
+ </javac>
+ <copy todir="${weblib}">
+  <fileset dir="${lib}" includes="**/*.jar,**/*.zip" />
+ </copy>
+</target>
+
+<!-- ====================================================================== -->
+<!-- Generates a database schema with Hibernate.                            -->
+<!-- ====================================================================== -->
+<target name="schema" depends="prepare"
+        description="Generates the stats database schema with Hibernate.">
+ <java classname="net.sf.hibernate.tool.hbm2java.SchemaExport" fork="yes">
+ <classpath refid="run.classpath"/>
+  <arg value="--output=file.sql"/>
+  <arg value="--text"/>
+  <arg value="${classes}/igx/stats/Game.hbm.xml"/>
+  <arg value="${classes}/igx/stats/Player.hbm.xml"/>
+  <arg value="${classes}/igx/stats/Event.hbm.xml"/>
+  <arg value="${classes}/igx/stats/PlanetUpdate.hbm.xml"/>
+  <arg value="${classes}/igx/stats/TimeState.hbm.xml"/>
+  <arg value="${classes}/igx/stats/Attack.hbm.xml"/>
+ </java>
+</target>
+
+<!-- ====================================================================== -->
+<!-- Generates the java code for the stats data with Hibernate.             -->
+<!-- ====================================================================== -->
+<target name="code" depends="prepare"
+        description="Generates the stats data objects with Hibernate.">
+ <java classname="net.sf.hibernate.tool.hbm2java.CodeGenerator" fork="yes">
+  <classpath refid="run.classpath"/>
+  <arg value="--output=${source}"/>
+  <arg value="${classes}/igx/stats/Game.hbm.xml"/>
+  <arg value="${classes}/igx/stats/Player.hbm.xml"/>
+  <arg value="${classes}/igx/stats/Event.hbm.xml"/>
+  <arg value="${classes}/igx/stats/PlanetUpdate.hbm.xml"/>
+  <arg value="${classes}/igx/stats/TimeState.hbm.xml"/>
+  <arg value="${classes}/igx/stats/Attack.hbm.xml"/>
+ </java>
+</target>
+
+<target name="code2" depends="prepare"
+        description="Generates the stats data objects with Hibernate.">
+ <java classname="net.sf.hibernate.tool.hbm2java.CodeGenerator" fork="yes">
+  <classpath refid="run.classpath"/>
+  <arg value="--output=${source}"/>
+  <arg value="--config=gen.xml"/>
+  <arg value="${classes}/igx/stats/Player.hbm.xml"/>
+ </java>
+</target>
+
+<!-- ====================================================================== -->
+<!-- Starts the HSQLDB database.                                            -->
+<!-- ====================================================================== -->
+<target name="startdb" depends="prepare"
+        description="Starts the HSQLDB server process.">
+ <java classname="org.hsqldb.Server" fork="yes">
+  <classpath refid="db.classpath"/>
+  <arg line="-database ${db.dir}/${db.name}"/>
+ </java>
+</target>
+
+<!-- ====================================================================== -->
+<!-- Stops the HSQLDB database.                                             -->
+<!-- ====================================================================== -->
+<target name="stopdb" depends="prepare"
+        description="Stops the HSQLDB server process.">
+ <java classname="org.hsqldb.util.ShutdownServer" fork="yes">
+  <classpath refid="db.classpath"/>
+ </java>
+</target>
+
+<!-- ====================================================================== -->
+<!-- Runs the IGX server.                                                   -->
+<!-- ====================================================================== -->
+<target name="igxserver" depends="prepare"
+        description="Runs the IGX Server.">
+ <java classname="igx.server.Server" fork="yes">
+  <classpath refid="run.classpath"/>
+  <arg value="./" />
+  <arg value="${turn.length}"/>
+ </java>
+</target>
+
+<!-- ====================================================================== -->
+<!-- Runs the IGX client for localhost.                                     -->
+<!-- ====================================================================== -->
+<target name="igx" depends="prepare"
+        description="Runs the IGX client, and connects it localhost.">
+ <java classname="igx.client.I" fork="yes">
+  <classpath refid="run.classpath"/>
+  <arg line="-s 800 600 localhost" />
+ </java>
+</target>
+
+<!-- ====================================================================== -->
+<!-- Removes all .class files                                               -->
+<!-- ====================================================================== -->
+<target name="clean" depends="init"
+        description="Deletes all files generated by build.">
+ <delete>
+  <fileset dir="${classes}">
+   <include name="**/*.class"/>
+  </fileset>
+ </delete>
+</target>
+
+<!-- ====================================================================== -->
+<!-- Generates the client install zip-file                                  -->
+<!-- ====================================================================== -->
+<target name="zip" depends="compile"
+        description="Generates the IGX client zip install.">
+ <zip zipfile="intergalactics.zip">
+  <fileset dir="."
+           includes="*.gif,*.au,igx.bat,intergalactics.bat,igx,readme.html,classes/igx/shared/*,classes/igx/client/*" />
+ </zip>
+</target>
+
+<!-- ====================================================================== -->
+<!-- Build the WAR file for deployment                                      -->
+<!-- ====================================================================== -->
+<target name="war" depends="compile">
+<war warfile="igxstats.war" webxml="web/WEB-INF/web.xml" >
+  <fileset dir="web"/>
+  <lib dir="lib"/>
+  <classes dir="${classes}"/>
+</war>
+</target>
+
+<!-- ====================================================================== -->
+<!-- Builds Javadocs for Robot API                                          -->
+<!-- ====================================================================== -->
+<target name="robotDocs"
+        description="Generates the javadocs for the robot API.">
+ <javadoc
+    sourcepath="src"
+    destdir="${docs}"
+    author="true"
+    doctitle="Can &lt;i&gt;you&lt;/i&gt; build a 'bot?"
+    packagenames="igx.bots.*">
+ </javadoc>
+</target>
+
+<!-- ====================================================================== -->
+<!-- Generates the robot API.                                               -->
+<!-- ====================================================================== -->
+
+<target name="robots" depends="compile,robotDocs"
+        description="Generates the robot API zip file.">
+  <zip zipfile="igxRobots.zip">
+   <fileset dir="."
+    	   includes="readmeRobots.html,arena.bat,params.txt,${classes}/igx/shared/**/*,${classes}/igx/bots/**/*,${docs}/**/*,${source}/igx/bots/MoonBot.java,${source}/HelloWorldBot.java,${source}/igx/bots/AdamsBot.java,${source}/igx/bots/StringBot.java,${source}/igx/bots/TalkBot.java,${source}/igx/bots/TalkBot.java,${source}/igx/bots/EchoBot.java,${source}/igx/bots/DiploBot.java,${source}/igx/bots/LucasBot.java,${source}/igx/bots/smart/*.java"
+    />
+  </zip>
+</target>
+
+</project>

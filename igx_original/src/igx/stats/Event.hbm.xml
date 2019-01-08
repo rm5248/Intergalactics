@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+   "-//Hibernate/Hibernate Mapping DTD//EN"
+   "http://hibernate.sourceforge.net/hibernate-mapping-2.0.dtd">
+	<hibernate-mapping>
+	<!-- igx.stats.Event root -->
+	<class name="igx.stats.Event" table="Event">
+		<id name="id" type="long" column="id">
+			<generator class="native"/>
+		</id>
+		<property name="eventID" column="eventID" type="int"/>
+		<property name="message" column="message" type="string"/>
+		<property name="time" column="time" type="int"/>
+
+		<many-to-one name="game" class="igx.stats.Game" column="gameID"/>		
+	</class>
+	</hibernate-mapping>

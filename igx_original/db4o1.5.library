@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<library>
+  <!--JBuilder Library Definition File-->
+  <fullname>db4o1.5</fullname>
+  <class>
+    <path>[lib/db4o.jar]</path>
+  </class>
+</library>

@@ -1,0 +1,2 @@
+#!/bin/tcsh
+java -cp class igx.client.I $1

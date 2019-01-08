@@ -1,0 +1,11 @@
+igx.bots.MoonBot[0]
+igx.bots.AdamsBot[0]
+igx.bots.LucasBot[0]
+igx.bots.DiploBot[0]
+igx.bots.StringBot[0]
+igx.bots.smart.BorgBot[0]
+igx.bots.smart.MoonDroid[0]
+igx.bots.smart.GrudgeBot[0]
+-activity 4
+-report
+-games 20

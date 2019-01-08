@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+   "-//Hibernate/Hibernate Mapping DTD//EN"
+   "http://hibernate.sourceforge.net/hibernate-mapping-2.0.dtd">
+	<hibernate-mapping>
+	<!-- igx.stats.TimeState root -->
+	<class name="igx.stats.TimeState" table="TimeState">
+		<id name="id" type="long" column="id">
+			<generator class="native"/>
+		</id>
+		<property name="numShips" column="numShips" type="int"/>
+		<property name="time" column="time" type="short"/>
+		<property name="totalProduction" column="totalProduction" type="short"/>
+		<property name="score" column="score" type="int"/>
+		<property name="numPlanets" column="numPlanets" type="byte"/>
+
+		<many-to-one name="game" class="igx.stats.Game" column="gameID"/>
+		<many-to-one name="player" class="igx.stats.Player" column="playerID"/>
+	</class>
+	</hibernate-mapping>
