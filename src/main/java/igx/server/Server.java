@@ -20,7 +20,7 @@ class Server {
 	}
 	System.out.println("igx server is now active.");
 	MessageQueue queue = new MessageQueue("Forum Queue");
-	//ServerForum.rankingSystem = new RankingSystem(path, Params.RANKING_FILE);
+	ServerForum.rankingSystem = new RankingSystem(path, Params.RANKING_FILE);
 	ServerForum forum = new ServerForum(queue, path);
 	queue.setMessageListener(forum);
 	Daemon daemon = new Daemon(forum, path);

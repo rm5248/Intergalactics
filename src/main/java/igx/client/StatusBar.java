@@ -4,8 +4,9 @@ package igx.client;
 
 import java.awt.*;
 import igx.shared.*;
+import javax.swing.JPanel;
 
-public class StatusBar extends Canvas
+public class StatusBar extends JPanel
 {
   // Constants
   public final static int MODE_NORMAL     = 0;
@@ -44,6 +45,7 @@ public class StatusBar extends Canvas
 	fontStart = fm.getAscent();
 	numPlayers = game.players;
 	height = (numPlayers + 1 + 4) * fontHeight + MARGIN + 1; // Four lines of status info
+        setPreferredSize( new Dimension( width, height ) );
   }  
   public void addShips (int digit) {
 	String ships;
@@ -248,6 +250,7 @@ public void drawScoreInfo(Graphics g) {
 	clearMode();
   }  
   public void paint (Graphics g) {
+      super.paint( g );
 	// Draw players
 	g.setFont(font);
 	drawScoreInfo(g);

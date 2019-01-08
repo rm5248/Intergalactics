@@ -6,6 +6,7 @@ import java.awt.*;
 import java.awt.image.*;
 import java.util.Vector;
 import igx.shared.*;
+import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 public class Galaxy extends JPanel
@@ -89,6 +90,7 @@ public class Galaxy extends JPanel
             messageX[i] = messageInitialX;
         }
         setBackground(Color.black);
+        setPreferredSize( new Dimension( size + sliderWidth, size ) );
     }
 
     public void setMe (Player value) {
@@ -313,8 +315,8 @@ public class Galaxy extends JPanel
             if (messageRow[i].length() > 0)
                 g.drawString(messageRow[i], messageInitialX, messageY + messageFontHeight * i - messageFontDescent);
     }
-    /*  public static void main (String[] args) {
- Frame frame = new Frame("igx Part Deux");
+      public static void main (String[] args) {
+ JFrame frame = new JFrame("igx Part Deux");
  Toolkit toolkit = Toolkit.getDefaultToolkit();
  Dimension screenSize = toolkit.getScreenSize();
     // screenSize = new Dimension(640,480);
@@ -329,14 +331,14 @@ public class Galaxy extends JPanel
  GameInstance theGame = new GameInstance(500, 2, players);
  theGame.registerUI(ui);
  theGame.planet[4].ratio = 60;
- Galaxy galaxy = new Galaxy(theGame, screenSize.height, 10, toolkit);
+ Galaxy galaxy = new Galaxy(theGame, screenSize.height, 10, toolkit, new Monitor());
  galaxy.selectedPlanet = 0;
  galaxy.targetPlanet = 9;
  ScrollText news = new ScrollText(12, toolkit, screenSize.width - screenSize.height, screenSize.height);
  frame.add(galaxy, BorderLayout.WEST);
  frame.add(news, BorderLayout.EAST);
  frame.pack();
- frame.show();
+ frame.setVisible(true);
  frame.setSize(screenSize);
  news.setSize(screenSize.width - screenSize.height - screenSize.height / SCROLLBAR_WIDTH_RATIO, screenSize.height);
  galaxy.setSize(screenSize.height + screenSize.height / SCROLLBAR_WIDTH_RATIO, screenSize.height);
@@ -364,7 +366,7 @@ public class Galaxy extends JPanel
    } catch (InterruptedException e) {}
     // galaxy.targetPlanets(theGame.pseudo(0, 35), theGame.pseudo(0, 35));
  }
-  }*/
+      }
 
     public void plotMessageChar (Graphics g, char key, int i) {
         g.drawString(new Character(key).toString(), messageX[i], messageY + messageFontHeight * i - messageFontDescent);
