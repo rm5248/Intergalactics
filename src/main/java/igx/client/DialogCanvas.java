@@ -57,7 +57,7 @@ public class DialogCanvas extends ButtonCanvas implements KeyListener
 	addButton(buttonLeft, height - okayDimension.height - fontDescent, OKAY);
 	addButton(buttonRight, height - cancelDimension.height - fontDescent, CANCEL);
 	prepareButtons();
-        setPreferredSize( new Dimension( width, 100 ) );
+        setPreferredSize( new Dimension( width, width ) );
   }  
   public void addChar (char c) {
 	String text;

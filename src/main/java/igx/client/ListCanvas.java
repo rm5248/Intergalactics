@@ -28,7 +28,7 @@ public class ListCanvas extends JPanel
 	setBackground(Color.black);
         
         Dimension d = new Dimension( width, height );
-        setMinimumSize(d);
+        setPreferredSize(d);
   }  
   public void addText (CText text) {
 	strings.addElement(text);
