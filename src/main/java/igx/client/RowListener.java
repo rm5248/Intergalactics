@@ -1,8 +1,7 @@
 package igx.client;
 
 // RowListener.java 
+public interface RowListener {
 
-public interface RowListener
-{
-  public void rowSelected (int rowNumber);  
+    public void rowSelected(int rowNumber);
 }

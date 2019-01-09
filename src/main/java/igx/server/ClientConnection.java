@@ -13,32 +13,33 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * Represents a single client connection to the server.
- * 
+ *
  * See documentation/protocol.md for information on the protocol
  */
 class ClientConnection {
+
     private static final Logger logger = LogManager.getLogger();
     private static final String PROTOCOL_VERSION = "3.8";
-    
+
     /**
      * Represents the stage of the protocol that we are at.
      */
-    private enum ProtocolState{
+    private enum ProtocolState {
         READING_VERSION,
         READING_NAME,
         READING_PASSWORD,
         IN_LOBBY
     }
-    
+
     /**
-     * The client can add different things.  Each is prefaced by a '+'
+     * The client can add different things. Each is prefaced by a '+'
      */
-    private enum ThingToAdd{
+    private enum ThingToAdd {
         MESSAGE,
         ROBOT,
         NEW_GAME
     }
-    
+
     private ReadableByteChannel m_read;
     private WritableByteChannel m_write;
     //private ByteBuffer m_readBuffer;
@@ -52,184 +53,185 @@ class ClientConnection {
     private ThingToAdd m_thingToAdd;
     private ServerForum m_forum;
     private Player m_us;
-    
-    ClientConnection( ReadableByteChannel readable, 
+
+    ClientConnection(ReadableByteChannel readable,
             WritableByteChannel writable,
-            ServerForum f ) throws IOException {
+            ServerForum f) throws IOException {
         m_read = readable;
         m_write = writable;
         //m_readBuffer = ByteBuffer.allocate( 64 );
-        m_writeBuffer = ByteBuffer.allocate( 256 );
+        m_writeBuffer = ByteBuffer.allocate(256);
         m_isClosed = false;
-        m_scanner = new Scanner( m_read );
+        m_scanner = new Scanner(m_read);
         m_numberFailedReads = 0;
         m_adding = false;
         m_forum = f;
-        
+
         //the first state for the protocol is to read if the client accepts the version
         m_protocolState = ProtocolState.READING_VERSION;
-        
+
         //Whenever a new client connects, tell it the version
-        writeStringWithNewline( PROTOCOL_VERSION );
+        writeStringWithNewline(PROTOCOL_VERSION);
         writeBuffer();
-        logger.debug( "Done creating new connection" );
+        logger.debug("Done creating new connection");
     }
-    
-    boolean isClosed(){
+
+    boolean isClosed() {
         return m_isClosed;
     }
-    
-    public Player getPlayer(){
+
+    public Player getPlayer() {
         return m_us;
     }
-    
-    void sendMessage( Message msg ){
-        switch( msg.getType() ){
-            
+
+    void sendMessage(Message msg) {
+        switch (msg.getType()) {
+
         }
     }
-    
+
     /**
      * Read all of the data in the buffer and act on it appropriately.
      */
     void parseData() throws IOException {
-        
-        if( !m_scanner.hasNextLine() ){
+
+        if (!m_scanner.hasNextLine()) {
             m_numberFailedReads++;
-            
-            if( !m_read.isOpen() ){
-                logger.debug( "Connection is no longer open: not parsing" );
+
+            if (!m_read.isOpen()) {
+                logger.debug("Connection is no longer open: not parsing");
                 return;
             }
-            
-            if( m_numberFailedReads > 2 ){
+
+            if (m_numberFailedReads > 2) {
                 //too much data without a newline, close this connection
                 //because it's probably invalid at this point.
                 //(insecure protocol, could be an attack)
-                logger.warn( "Closing connection, too much data without a newline" );
+                logger.warn("Closing connection, too much data without a newline");
                 m_isClosed = true;
             }
-            
+
             return;
         }
-        
+
         m_numberFailedReads = 0;
 
-        while( m_scanner.hasNextLine() ){
-            if( !m_read.isOpen() ){
-                logger.debug( "Connection is no longer open: not parsing" );
+        while (m_scanner.hasNextLine()) {
+            if (!m_read.isOpen()) {
+                logger.debug("Connection is no longer open: not parsing");
                 return;
             }
-        
-            String line = m_scanner.nextLine();
-            logger.debug( "Incoming data: {}", line );
-            if( m_protocolState == ProtocolState.READING_VERSION ){
 
-                if( line.compareTo( "[" ) == 0 ){
-                    logger.debug( "Good on the protocol!" );
+            String line = m_scanner.nextLine();
+            logger.debug("Incoming data: {}", line);
+            if (m_protocolState == ProtocolState.READING_VERSION) {
+
+                if (line.compareTo("[") == 0) {
+                    logger.debug("Good on the protocol!");
                     m_protocolState = ProtocolState.READING_NAME;
-                }else{
-                    logger.debug( "bad protocol!" );
+                } else {
+                    logger.debug("bad protocol!");
                     m_isClosed = true;
                 }
-            }else if( m_protocolState == ProtocolState.READING_NAME ){
+            } else if (m_protocolState == ProtocolState.READING_NAME) {
                 m_alias = line;
-                logger.debug( "Client alias is {}", m_alias );
+                logger.debug("Client alias is {}", m_alias);
 
                 //alias read OK
                 m_protocolState = ProtocolState.READING_PASSWORD;
-                writeStringWithNewline( "}" );
+                writeStringWithNewline("}");
                 writeBuffer();
-            }else if( m_protocolState == ProtocolState.READING_PASSWORD ){
-                logger.debug( "Password is {}", line );
+            } else if (m_protocolState == ProtocolState.READING_PASSWORD) {
+                logger.debug("Password is {}", line);
 
                 //correct password
-                writeStringWithNewline( "[" );
+                writeStringWithNewline("[");
                 writeBuffer();
-                
-                m_us = m_forum.addPlayer( m_alias );
+
+                m_us = m_forum.addPlayer(m_alias);
 
                 //tell the client server information
-                writeString( "Welcome to Intergalactics, " );
-                writeString( m_alias );
-                writeStringWithNewline( "!" );
-                writeStringWithNewline( "This server is <SERVER-NAME>" );
-                writeStringWithNewline( "~" );
+                writeString("Welcome to Intergalactics, ");
+                writeString(m_alias);
+                writeStringWithNewline("!");
+                writeStringWithNewline("This server is <SERVER-NAME>");
+                writeStringWithNewline("~");
                 writeBuffer();
 
                 //tell the client any robot information
-                writeStringWithNewline( "~" );
+                writeStringWithNewline("~");
 
                 //tell the client any player information
-                writeStringWithNewline( m_alias );
-                writeStringWithNewline( "1" );
-                writeStringWithNewline( "User2" );
-                writeStringWithNewline( "1" );
-                writeStringWithNewline( "~" );
+                writeStringWithNewline(m_alias);
+                writeStringWithNewline("1");
+                writeStringWithNewline("User2");
+                writeStringWithNewline("1");
+                writeStringWithNewline("~");
 
                 //tell the client any game information
-                writeStringWithNewline( "GameName" ); //name of game
-                writeStringWithNewline( "[" ); //in progress = [, not in progress = ]
-                writeStringWithNewline( 1 + "" ); //number of users
-                writeStringWithNewline( "User2" ); //creator
-                writeStringWithNewline( "1" );
-                writeStringWithNewline( "~" );
+                writeStringWithNewline("GameName"); //name of game
+                writeStringWithNewline("["); //in progress = [, not in progress = ]
+                writeStringWithNewline(1 + ""); //number of users
+                writeStringWithNewline("User2"); //creator
+                writeStringWithNewline("1");
+                writeStringWithNewline("~");
 
-                writeStringWithNewline( "]" ); //we're not in-game?
+                writeStringWithNewline("]"); //we're not in-game?
                 writeBuffer();
 
                 m_protocolState = ProtocolState.IN_LOBBY;
-            }else if( m_protocolState == ProtocolState.IN_LOBBY ){
+            } else if (m_protocolState == ProtocolState.IN_LOBBY) {
                 //We are in the lobby.  We can do several different commands here,
                 //such as chat message, create game, etc.
-                if( line.equals( "+" ) ){
+                if (line.equals("+")) {
                     m_adding = true;
                     continue;
                 }
-                
-                if( line.equals( "@" ) ){
+
+                if (line.equals("@")) {
                     m_thingToAdd = ThingToAdd.MESSAGE;
                     continue;
-                }else if( line.equals( "+" ) ){
+                } else if (line.equals("+")) {
                     m_thingToAdd = ThingToAdd.NEW_GAME;
                     continue;
                 }
-                
-                if( m_adding ){
-                    switch( m_thingToAdd ){
+
+                if (m_adding) {
+                    switch (m_thingToAdd) {
                         case MESSAGE:
-                            logger.debug( "incoming message {}", line );
+                            logger.debug("incoming message {}", line);
                             break;
                     }
                 }
             }
-        
+
         }
     }
-    
-    private void writeString( String str ){
-        m_writeBuffer.put( str.getBytes() );
+
+    private void writeString(String str) {
+        m_writeBuffer.put(str.getBytes());
     }
-    
+
     /**
      * Put a string, followed by a newline character into our buffer
-     * @param str 
+     *
+     * @param str
      */
-    private void writeStringWithNewline( String str ){
-        m_writeBuffer.put( str.getBytes() );
-        m_writeBuffer.put( "\n".getBytes() );
+    private void writeStringWithNewline(String str) {
+        m_writeBuffer.put(str.getBytes());
+        m_writeBuffer.put("\n".getBytes());
     }
-    
+
     /**
      * Write out our buffer
      */
     private void writeBuffer() throws IOException {
         m_writeBuffer.flip();
-        while( m_writeBuffer.hasRemaining() ){
-            m_write.write( m_writeBuffer );
+        while (m_writeBuffer.hasRemaining()) {
+            m_write.write(m_writeBuffer);
         }
         m_writeBuffer.flip();
         m_writeBuffer.clear();
     }
-    
+
 }

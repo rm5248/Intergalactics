@@ -23,79 +23,80 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class IGXServer {
+
     private int m_portNum;
     private ServerSocketChannel m_serverSocket;
     private List<ClientConnection> m_clients;
-    private Map<SocketChannel,ClientConnection> m_socketToClient;
+    private Map<SocketChannel, ClientConnection> m_socketToClient;
     private ServerForum m_mainForum;
-    
+
     private static final Logger logger = LogManager.getLogger();
-    
-    IGXServer( int portnum ){
+
+    IGXServer(int portnum) {
         m_portNum = portnum;
         m_clients = new ArrayList<ClientConnection>();
-        m_socketToClient = new HashMap<SocketChannel,ClientConnection>();
-        m_mainForum = new ServerForum( null, null );
-        
-        logger.debug( "Creating new server on port {}", m_portNum );
+        m_socketToClient = new HashMap<SocketChannel, ClientConnection>();
+        m_mainForum = new ServerForum(null, null);
+
+        logger.debug("Creating new server on port {}", m_portNum);
     }
-    
+
     void run() throws IOException {
         Selector selector = Selector.open();
-        
+
         m_serverSocket = ServerSocketChannel.open();
-        m_serverSocket.socket().bind( new InetSocketAddress( Params.PORTNUM ) );
-        m_serverSocket.configureBlocking( false );
-        
-        SelectionKey serverSelectionKey = m_serverSocket.register( selector, SelectionKey.OP_ACCEPT );
-        
-        while( true ){
+        m_serverSocket.socket().bind(new InetSocketAddress(Params.PORTNUM));
+        m_serverSocket.configureBlocking(false);
+
+        SelectionKey serverSelectionKey = m_serverSocket.register(selector, SelectionKey.OP_ACCEPT);
+
+        while (true) {
             int readyChannels = selector.select();
-            
-            if( readyChannels == 0 ){
-                logger.trace( "No channels to select" );
+
+            if (readyChannels == 0) {
+                logger.trace("No channels to select");
                 continue;
             }
-            
+
             Set<SelectionKey> selectedKeys = selector.selectedKeys();
             Iterator<SelectionKey> keyIterator = selectedKeys.iterator();
-            while( keyIterator.hasNext() ){
+            while (keyIterator.hasNext()) {
                 SelectionKey key = keyIterator.next();
                 keyIterator.remove();
-                
-                if( key == serverSelectionKey ){
+
+                if (key == serverSelectionKey) {
                     //create our new client and add to our internal 
                     //list of clients
                     SocketChannel socket = m_serverSocket.accept();
-                    socket.configureBlocking( false );
-                    logger.debug( "New connection from {}", socket.getRemoteAddress() );
+                    socket.configureBlocking(false);
+                    logger.debug("New connection from {}", socket.getRemoteAddress());
                     ClientConnection client = null;
-                    
-                    try{
-                        client = new ClientConnection( socket, socket, m_mainForum );
-                    }catch( IOException ex ){
-                        logger.error( "Unable to create new client: ", ex );
+
+                    try {
+                        client = new ClientConnection(socket, socket, m_mainForum);
+                    } catch (IOException ex) {
+                        logger.error("Unable to create new client: ", ex);
                         continue;
                     }
-                    m_clients.add( client );
-                    m_socketToClient.put( socket, client ); 
-                    
+                    m_clients.add(client);
+                    m_socketToClient.put(socket, client);
+
                     //create a new selection key for this client, so that when
                     //there is data to read we will add it to the appropriate
                     //client
-                    socket.register( selector, SelectionKey.OP_READ, socket );
+                    socket.register(selector, SelectionKey.OP_READ, socket);
                     continue;
                 }
-                
-                if( key.isReadable() ){
-                    SocketChannel socket = (SocketChannel)key.attachment();
-                    ClientConnection client = m_socketToClient.get( socket );
-                    
-                    if( client == null ){
-                        logger.error( "Readable key, but no client?!" );
+
+                if (key.isReadable()) {
+                    SocketChannel socket = (SocketChannel) key.attachment();
+                    ClientConnection client = m_socketToClient.get(socket);
+
+                    if (client == null) {
+                        logger.error("Readable key, but no client?!");
                         continue;
                     }
-                    
+
 //                    if( socket.isOpen() ){
 //                        logger.debug( "isopen" );
 //                    }else{
@@ -107,27 +108,26 @@ public class IGXServer {
 //                    }else{
 //                        logger.debug( "not connected" );
 //                    }
-                    
                     client.parseData();
-                    if( client.isClosed() ){
+                    if (client.isClosed()) {
                         socket.close();
-                        logger.debug( "Client has exited" );
-                        m_socketToClient.remove( socket );
-                        m_clients.remove( client );
+                        logger.debug("Client has exited");
+                        m_socketToClient.remove(socket);
+                        m_clients.remove(client);
                         key.cancel();
                     }
                 }
             }
         }
     }
-    
-    public static void main( String[] args ){
-        IGXServer ix = new IGXServer( Params.PORTNUM );
-        
-        try{
+
+    public static void main(String[] args) {
+        IGXServer ix = new IGXServer(Params.PORTNUM);
+
+        try {
             ix.run();
-        }catch( IOException ex ){
-            logger.fatal( "Exiting due to IO exception: ", ex );
+        } catch (IOException ex) {
+            logger.fatal("Exiting due to IO exception: ", ex);
         }
     }
 }

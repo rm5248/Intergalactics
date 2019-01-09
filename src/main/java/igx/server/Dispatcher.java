@@ -1,7 +1,6 @@
 package igx.server;
 
 // Dispatcher.java
-
 import igx.shared.*;
 import java.util.*;
 import igx.bots.Bot;
@@ -12,6 +11,7 @@ import java.awt.Color;
 import java.awt.Point;
 
 public class Dispatcher implements RobotServer, UI, MessageListener {
+
     private MessageQueue serverQueue;
     private MessageQueue gameQueue;
     public String name;
@@ -41,8 +41,9 @@ public class Dispatcher implements RobotServer, UI, MessageListener {
         this.thisGame = thisGame;
         m = new Monitor();
         gameQueue = new MessageQueue("Game \"" + thisGame.name + "\" Queue");
-        for (int i = 0; i < clients.size(); i++)
+        for (int i = 0; i < clients.size(); i++) {
             ((Client) (clients.elementAt(i))).setGame(gameQueue);
+        }
         numActivePlayers = clients.size();
         name = thisGame.name;
         player = thisGame.player;
@@ -57,8 +58,9 @@ public class Dispatcher implements RobotServer, UI, MessageListener {
         numBots = robot.length;
         bot = new Bot[numBots];
         try {
-            for (int i = 0; i < numBots; i++)
+            for (int i = 0; i < numBots; i++) {
                 bot[i] = (Bot) (robot[i].botClass.newInstance());
+            }
         } catch (Exception e) {
             System.out.println("Problem instantiating bot: " + e);
         }
@@ -69,11 +71,13 @@ public class Dispatcher implements RobotServer, UI, MessageListener {
         gameState = new GameState(game, null);
         // Set up message repositories
         messages = new Vector[numBots];
-        for (int i = 0; i < numBots; i++)
+        for (int i = 0; i < numBots; i++) {
             messages[i] = new Vector();
+        }
         // Initialize robots with game
-        if (numBots > 0)
+        if (numBots > 0) {
             rm = new RobotMessenger(this, numBots);
+        }
         for (int i = 0; i < numBots; i++) {
             bot[i].initializeBot(gameState, rm, nameToNumber(robot[i].name), robot[i].skill, false);
         }
@@ -102,8 +106,9 @@ public class Dispatcher implements RobotServer, UI, MessageListener {
         // Call first robot update
         updateRobots(game);
     }
+
     // Called by the timer to advance the fleets.
-    public void advance () {
+    public void advance() {
         m.lock();
         Client.lockClients();
         if (needNewSeed) {
@@ -112,7 +117,7 @@ public class Dispatcher implements RobotServer, UI, MessageListener {
             game.setSeed(newSeed);
             needNewSeed = false;
         }
-        for (int i = 0; i<fleets.size(); i++) {
+        for (int i = 0; i < fleets.size(); i++) {
             FleetInfo fi = ((FleetInfo) fleetInfos.elementAt(i));
             send(fi.from);
             send(fi.to);
@@ -128,27 +133,32 @@ public class Dispatcher implements RobotServer, UI, MessageListener {
         m.unlock();
         if (game.turn == 300) {
             for (int i = 0; i < clients.size(); i++) {
-                Client c = (Client)clients.elementAt(i);
+                Client c = (Client) clients.elementAt(i);
                 playerQuit(c, Params.QUIT_SIGNAL);
             }
-            if (stopTimer)
+            if (stopTimer) {
                 timer.stopTimer();
+            }
         }
     }
+
     /**
      * This method was created in VisualAge.
+     *
      * @return boolean
      */
     public boolean anybodyPlaying() {
         boolean result = false;
         int readyMan = -1;
-        for (int i = 0; i < numPlayers; i++)
-            if (player[i].isHuman && thisGame.activePlayer[i] && player[i].isPresent)
-                if (player[i].status == Params.READY_SIGNAL)
+        for (int i = 0; i < numPlayers; i++) {
+            if (player[i].isHuman && thisGame.activePlayer[i] && player[i].isPresent) {
+                if (player[i].status == Params.READY_SIGNAL) {
                     readyMan = i;
-        else {
-            result = true;
-            break;
+                } else {
+                    result = true;
+                    break;
+                }
+            }
         }
         if (!result) {
             // Make the ready people bail
@@ -157,19 +167,21 @@ public class Dispatcher implements RobotServer, UI, MessageListener {
                 return true;
             }
             // Boot everybody out
-            for (int i = 0; i < numPlayers; i++)
+            for (int i = 0; i < numPlayers; i++) {
                 if (player[i].isHuman && player[i].isActive) {
-            Client c = getClient(player[i].name);
-            if (c != null) {
-                c.me.isActive = false;
-                c.me.inGame = false;
-                c.setGame(null);
-                //thisGame.gamePool.removeElement(c.me);
-            }
+                    Client c = getClient(player[i].name);
+                    if (c != null) {
+                        c.me.isActive = false;
+                        c.me.inGame = false;
+                        c.setGame(null);
+                        //thisGame.gamePool.removeElement(c.me);
+                    }
                 }
+            }
         }
         return result;
     }
+
     // Lets the watcher know what's what and who's who.
     public void briefWatcher(Client c) {
         m.lock();
@@ -200,19 +212,21 @@ public class Dispatcher implements RobotServer, UI, MessageListener {
             c.send(p.production);
             c.send(p.ratio);
             // Use gameState here, because ships could have been dispatched, unless neutral
-            if (p.owner.number != Params.NEUTRAL)
+            if (p.owner.number != Params.NEUTRAL) {
                 c.send(gameState.getPlanet(i).getShips());
-            else
+            } else {
                 c.send(p.ships);
+            }
             c.send(p.defenceRatio);
             c.send(p.prodTurns);
             c.send(p.blackHole);
-            for (int j = 0; j < numPlayers; j++)
+            for (int j = 0; j < numPlayers; j++) {
                 if (p.attacker[j] > 0) {
-            c.send(j);
-            c.send(p.attacker[j]);
+                    c.send(j);
+                    c.send(p.attacker[j]);
                 }
-                c.send(Params.ENDTRANSMISSION);
+            }
+            c.send(Params.ENDTRANSMISSION);
         }
         Fleet f = game.fleets.first;
         while (f != null) {
@@ -227,20 +241,23 @@ public class Dispatcher implements RobotServer, UI, MessageListener {
         c.send(Params.ENDTRANSMISSION);
         // Add client to list of recipients
         Client old = getClient(c.me.name);
-        if (old != c)
+        if (old != c) {
             clients.addElement(c);
+        }
         c.setGame(gameQueue);
         Client.unlockClients();
         m.unlock();
     }
-    public void dispatch (Player sender, int from, int to, int ships) {
+
+    public void dispatch(Player sender, int from, int to, int ships) {
         Planet source = game.planet[from];
         if ((source.owner == sender) && (ships > 0)) {
             if (ships > source.ships) {
-                if (source.ships > 0)
+                if (source.ships > 0) {
                     ships = source.ships;
-                else
+                } else {
                     return;
+                }
             }
             Fleet f = new Fleet(game, source, game.planet[to], ships);
             FleetInfo fi = new FleetInfo(String.valueOf(from), String.valueOf(to), String.valueOf(ships));
@@ -248,9 +265,11 @@ public class Dispatcher implements RobotServer, UI, MessageListener {
             fleetInfos.addElement(fi);
         }
     }
+
     public int doRankings(RankingSystem rankingSystem) {
-        if (game.turn < Params.MINGAMELENGTH)
+        if (game.turn < Params.MINGAMELENGTH) {
             return Params.NEUTRAL;
+        }
         String winner;
         String[] losers = new String[numPlayers - 1];
         int highestScore = -1;
@@ -261,48 +280,58 @@ public class Dispatcher implements RobotServer, UI, MessageListener {
                 highestScore = player[i].score;
                 winningPlayer = i;
             }
-            if (player[i].isHuman)
+            if (player[i].isHuman) {
                 numHumans++;
+            }
         }
         boolean againstHumans = (numHumans > 1);
         winner = player[winningPlayer].name;
-        if (!player[winningPlayer].isHuman)
+        if (!player[winningPlayer].isHuman) {
             winner += "(robot)";
+        }
         int j = 0;
         for (int i = 0; i < numPlayers; i++) {
             if (i != winningPlayer) {
                 losers[j] = player[i].name;
-                if (!player[i].isHuman)
+                if (!player[i].isHuman) {
                     losers[j] += "(robot)";
+                }
                 j++;
             }
         }
         rankingSystem.rankGame(winner, losers, againstHumans);
         return winningPlayer;
     }
-    public Client getClient (String name) {
+
+    public Client getClient(String name) {
         int n = clients.size();
         for (int i = 0; i < n; i++) {
-            Client c = (Client)(clients.elementAt(i));
-            if (c.me.name.equals(name))
+            Client c = (Client) (clients.elementAt(i));
+            if (c.me.name.equals(name)) {
                 return c;
+            }
         }
         return null;
     }
+
     // MAJOR HACK REQUIRED...
-    private igx.bots.Message[] getMessages (int botNum) {
+    private igx.bots.Message[] getMessages(int botNum) {
         Vector queue = messages[botNum];
         igx.bots.Message[] retVal = new igx.bots.Message[queue.size()];
-        for (int i = 0; i < queue.size(); i++)
-            retVal[i] = (igx.bots.Message)queue.elementAt(i);
+        for (int i = 0; i < queue.size(); i++) {
+            retVal[i] = (igx.bots.Message) queue.elementAt(i);
+        }
         // Empty queue
         messages[botNum] = new Vector();
         return retVal;
     }
-    public Player getPlayer (String name) {
-        for (int i = 0; i < numPlayers; i++)
-            if (player[i].name.equals(name))
+
+    public Player getPlayer(String name) {
+        for (int i = 0; i < numPlayers; i++) {
+            if (player[i].name.equals(name)) {
                 return player[i];
+            }
+        }
         return null;
     }
     // *************** GAME INTERFACE ***************
@@ -323,12 +352,12 @@ public class Dispatcher implements RobotServer, UI, MessageListener {
         }
         if (p != null) {
             switch (type) {
-                case Message.MESSAGE :
+                case Message.MESSAGE:
                     String text = message.getMessageText();
                     int who = message.getDestination();
                     sendMessage(p, who, text);
                     break;
-                case Message.SEND_FLEET :
+                case Message.SEND_FLEET:
                     if (gamePlayer) {
                         int from = message.getSource();
                         int to = message.getDestination();
@@ -336,52 +365,65 @@ public class Dispatcher implements RobotServer, UI, MessageListener {
                         dispatch(p, from, to, ships);
                     }
                     break;
-                case Message.PLAYER_QUIT :
+                case Message.PLAYER_QUIT:
                     playerQuit(c, message.getStatus());
                     break;
-                case Message.PLAYER_LEFT :
+                case Message.PLAYER_LEFT:
                     playerLeft(c);
                     break;
             }
         }
         m.unlock();
-        if (stopTimer)
+        if (stopTimer) {
             timer.stopTimer();
+        }
     }
-    public void messageToRobot (igx.bots.Message message, int bot) {
+
+    public void messageToRobot(igx.bots.Message message, int bot) {
         messages[bot].addElement(message);
     }
-    protected int nameToNumber (String name) {
-        for (int i = 0; i < numPlayers; i++)
-            if (player[i].name.equals(name))
+
+    protected int nameToNumber(String name) {
+        for (int i = 0; i < numPlayers; i++) {
+            if (player[i].name.equals(name)) {
                 return i;
+            }
+        }
         return -1;
     }
-    protected int numberToRobot (int num) {
-        for (int i = 0; i < numBots; i++)
-            if (bot[i].getNumber() == num)
+
+    protected int numberToRobot(int num) {
+        for (int i = 0; i < numBots; i++) {
+            if (bot[i].getNumber() == num) {
                 return i;
+            }
+        }
         return -1;
     }
+
     /**
      * This method was created in VisualAge.
+     *
      * @param c igx.server.Client
      */
     public void playerLeft(Client c) {
         Client.lockClients();
         stopTimer = !anybodyPlaying();
-        if (stopTimer)
-            // Nobody is playing, so quit this game
+        if (stopTimer) // Nobody is playing, so quit this game
+        {
             gameQueue.shutDownQueue();
+        }
         Client.unlockClients();
         // Tell server it's done
         if (stopTimer) {
             //stats.gameOver();
             serverQueue.addMessage(Message.gameOver(name));
-            for (int i = 0; i < numBots; i++)
+            for (int i = 0; i < numBots; i++) {
                 bot[i].gameEnding();
+            }
         }
     }
+
     // This is the ugliest method in the whole damn game.
     public void playerQuit(Client quitter, int status) {
         Client.lockClients();
@@ -408,81 +450,113 @@ public class Dispatcher implements RobotServer, UI, MessageListener {
             send(Params.PLAYERQUITTING);
             send(new Integer(quitter.me.number).toString());
             send(new Integer(status).toString());
-            if (status == Params.QUIT_SIGNAL)
+            if (status == Params.QUIT_SIGNAL) {
                 clients.removeElement(quitter);
+            }
             // Send to quitter as well...
             // quitter.send(Params.PLAYERQUITTING);
             // quitter.send(new Integer(quitter.me.number).toString());
             stopTimer = !anybodyPlaying();
-            if (stopTimer)
-                // Nobody is playing, so quit this game
+            if (stopTimer) // Nobody is playing, so quit this game
+            {
                 gameQueue.shutDownQueue();
+            }
             Client.unlockClients();
-            if (status == Params.QUIT_SIGNAL)
+            if (status == Params.QUIT_SIGNAL) {
                 serverQueue.addMessage(Message.abandonGame(quitter.me.name));
+            }
             // Tell server it's done
             if (stopTimer) {
                 serverQueue.addMessage(Message.gameOver(name));
-                for (int i = 0; i < numBots; i++)
+                for (int i = 0; i < numBots; i++) {
                     bot[i].gameEnding();
+                }
                 //stats.gameOver();
             }
         }
     }
+
     // Attack
-    public void postAttack (igx.shared.Fleet fleet, igx.shared.Planet planet) {
+    public void postAttack(igx.shared.Fleet fleet, igx.shared.Planet planet) {
         arrivals.addElement(new igx.bots.ArrivedFleet(fleet.ships, igx.bots.Planet.planetNumber(planet.planetChar), fleet.owner.number));
     }
+
     // Black hole event
-    public void postBlackHole (igx.shared.Fleet fleet) {}
+    public void postBlackHole(igx.shared.Fleet fleet) {
+    }
+
     // Error
-    public void postError (String errorMessage) {
+    public void postError(String errorMessage) {
         System.out.println("OUCH! Error in the game engine... report this to HiVE Software!");
     }
+
     // Game end
-    public void postGameEnd (int winnerNumber) {}
+    public void postGameEnd(int winnerNumber) {
+    }
+
     //// Post game events
     // Game start
-    public void postGameStart (GameInstance game) {}
+    public void postGameStart(GameInstance game) {
+    }
+
     // Invasion
-    public void postInvasion (igx.shared.Fleet fleet, igx.shared.Planet planet) {}
+    public void postInvasion(igx.shared.Fleet fleet, igx.shared.Planet planet) {
+    }
+
     // Players sends message
-    public void postMessage (igx.shared.Player sender, igx.shared.Player recipient, String message) {}
+    public void postMessage(igx.shared.Player sender, igx.shared.Player recipient, String message) {
+    }
+
     // Next turn
-    public void postNextTurn () {}
+    public void postNextTurn() {
+    }
+
     // Planet moves
-    public void postPlanetMove (int oldX, int oldY, igx.shared.Planet planet) {}
+    public void postPlanetMove(int oldX, int oldY, igx.shared.Planet planet) {
+    }
+
     // Player quits
-    public void postPlayerQuit (igx.shared.Player player) {
+    public void postPlayerQuit(igx.shared.Player player) {
         //stats.reportEvent(igx.stats.StatsConstants.QUIT, player.name + " quit.");
     }
+
     // Redraw galaxy
-    public void postRedrawGalaxy () {}
+    public void postRedrawGalaxy() {
+    }
+
     // Reinforcements
-    public void postReinforcements (int numberOfShips, igx.shared.Planet planet) {
+    public void postReinforcements(int numberOfShips, igx.shared.Planet planet) {
         arrivals.addElement(new igx.bots.ArrivedFleet(numberOfShips, igx.bots.Planet.planetNumber(planet.planetChar), planet.owner.number));
     }
+
     // Repulsion
-    public void postRepulsion (igx.shared.Player attacker, igx.shared.Planet planet) {}
+    public void postRepulsion(igx.shared.Player attacker, igx.shared.Planet planet) {
+    }
+
     // Special Event
-    public void postSpecial (String[] text, Color[] color) {
+    public void postSpecial(String[] text, Color[] color) {
         String message = "";
         for (int i = 0; i < text.length; i++) {
-            if (text[i] != null)
+            if (text[i] != null) {
                 message += text[i];
+            }
         }
         //stats.reportEvent(igx.stats.StatsConstants.SPECIAL, message);
     }
     // *****************  UI STUFF  *****************
 
     // Redraw all planets
-    public void redrawAll () {}
+    public void redrawAll() {
+    }
+
     // Redraw a planet
-    public void redrawPlanet (int planetNum) {}
+    public void redrawPlanet(int planetNum) {
+    }
+
     /**
      * Called when a robot is done processing.
      */
-    public void robotDone (int botNum) {
+    public void robotDone(int botNum) {
         // Who cares?
     }
     // ************** Robot Interace ****************
@@ -490,93 +564,108 @@ public class Dispatcher implements RobotServer, UI, MessageListener {
     /**
      * Called to send a fleet on behalf of a robot.
      */
-    public void robotSendFleet (int botNum, igx.bots.Fleet fleet) {
+    public void robotSendFleet(int botNum, igx.bots.Fleet fleet) {
         m.lock();
         dispatch(player[botNum], fleet.source, fleet.destination, fleet.ships);
         m.unlock();
     }
+
     /**
      * Called to send a message on behalf of a robot.
      */
-    public void robotSendMessage (int botNum, int recipient, String text) {
+    public void robotSendMessage(int botNum, int recipient, String text) {
         m.lock();
         sendMessage(player[botNum], recipient, text);
         m.unlock();
     }
+
     // SEND - Sends a string to all clients
     protected void send(String message) {
         int n = clients.size();
         Client c;
         for (int i = 0; i < n; i++) {
             c = (Client) (clients.elementAt(i));
-            if ((c != null) && (c.me.isPresent))
+            if ((c != null) && (c.me.isPresent)) {
                 c.send(message);
+            }
         }
     }
+
     public void sendMessage(Player p, int who, String text) {
         Client.lockClients();
         // bot version of message
         igx.bots.Message message = new igx.bots.Message(p.number, who, text);
-        if (who == Params.MESSAGE_TO_FORUM)
+        if (who == Params.MESSAGE_TO_FORUM) {
             serverQueue.addMessage(Message.message(p.name, text, Params.MESSAGE_TO_FORUM));
-        else
+        } else {
             if (who == Params.MESSAGE_TO_ALL) {
-        send(Params.SENDMESSAGE);
-        send(p.name);
-        send(new Integer(who).toString());
-        send(text);
-        for (int i = 0; i < numBots; i++)
-            messageToRobot(message, i);
-            } else
+                send(Params.SENDMESSAGE);
+                send(p.name);
+                send(new Integer(who).toString());
+                send(text);
+                for (int i = 0; i < numBots; i++) {
+                    messageToRobot(message, i);
+                }
+            } else {
                 if (who < numPlayers) {
-            if ((player[who].isHuman) && (player[who].isActive)) {
-                Client c = getClient(player[who].name);
-                if (c != null) {
-                    c.send(Params.SENDMESSAGE);
-                    c.send(p.name);
-                    c.send(new Integer(who).toString());
-                    c.send(text);
+                    if ((player[who].isHuman) && (player[who].isActive)) {
+                        Client c = getClient(player[who].name);
+                        if (c != null) {
+                            c.send(Params.SENDMESSAGE);
+                            c.send(p.name);
+                            c.send(new Integer(who).toString());
+                            c.send(text);
+                        }
+                    } else {
+                        if (!player[who].isHuman) {
+                            messageToRobot(message, numberToRobot(who));
+                        }
+                    }
+                    // Also send to sender
+                    if (p.isHuman) {
+                        Client c = getClient(p.name);
+                        if (c != null) {
+                            c.send(Params.SENDMESSAGE);
+                            c.send(p.name);
+                            c.send(new Integer(who).toString());
+                            c.send(text);
+                        }
+                    } //else messageToRobot(message, numberToRobot(who));
                 }
-            } else
-                if (!player[who].isHuman)
-                    messageToRobot(message, numberToRobot(who));
-            // Also send to sender
-            if (p.isHuman) {
-                Client c = getClient(p.name);
-                if (c != null) {
-                    c.send(Params.SENDMESSAGE);
-                    c.send(p.name);
-                    c.send(new Integer(who).toString());
-                    c.send(text);
-                }
-            } //else messageToRobot(message, numberToRobot(who));
-                }
-                Client.unlockClients();
+            }
+        }
+        Client.unlockClients();
     }
+
     /**
      * Replaces the client with the same name with this client.
+     *
      * @param c igx.server.Client
      */
     public void substituteClient(Client c) {
         int n = clients.size();
         for (int i = 0; i < n; i++) {
             Client cl = (Client) (clients.elementAt(i));
-            if (cl.me.name.equals(c.me.name))
+            if (cl.me.name.equals(c.me.name)) {
                 clients.setElementAt(c, i);
+            }
         }
     }
+
     protected void updateRobots(GameInstance game) {
         oldState = gameState;
         int n = arrivals.size();
         igx.bots.ArrivedFleet[] arrival = new igx.bots.ArrivedFleet[n];
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < n; i++) {
             arrival[i] = (igx.bots.ArrivedFleet) (arrivals.elementAt(i));
+        }
         gameState = new GameState(game, arrival);
         arrivals = new Vector();
         // Do stats update
         //stats.update(gameState, game);
         // Do the update for each bot
-        for (int i = 0; i < numBots; i++)
+        for (int i = 0; i < numBots; i++) {
             bot[i].updateBot(gameState, oldState, getMessages(i));
+        }
     }
 }

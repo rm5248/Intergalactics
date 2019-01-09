@@ -310,7 +310,7 @@ public class ServerForum extends Forum {
             br.close();
         } catch (IOException e) {
             System.out.println("Problem with 'bot file: " + e);
-            System.out.println( botFile.getAbsolutePath() );
+            System.out.println(botFile.getAbsolutePath());
             return new Robot[0];
         }
         int n = bots.size();
@@ -572,12 +572,10 @@ public class ServerForum extends Forum {
                 if (g.player[i].isHuman) {
                     Client c = getClient(g.player[i].name);
                     players.addElement(c);
+                } else if (!g.player[i].customRobot) {
+                    robots.addElement(getRobot(g.player[i].name));
                 } else {
-                    if (!g.player[i].customRobot) {
-                        robots.addElement(getRobot(g.player[i].name));
-                    } else {
-                        robots.addElement(g.player[i].r);
-                    }
+                    robots.addElement(g.player[i].r);
                 }
             }
             Robot[] bot = new Robot[robots.size()];

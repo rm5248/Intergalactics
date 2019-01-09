@@ -1,67 +1,71 @@
 package igx.bots;
 
 // Player.java 
-
 /**
  * Contains everything a robot needs to know about a player.
  *
  * @author John Watkinson
  */
-public class Player
-{
-  /**
-   * Player's name.
-   */
-  private String name;
+public class Player {
 
-  /**
-   * The current score of the player.
-   */
-  private int score;
+    /**
+     * Player's name.
+     */
+    private String name;
 
-  /**
-   * True if this player has quit playing.
-   */
-  private boolean quit = false;
+    /**
+     * The current score of the player.
+     */
+    private int score;
 
-  /**
-   * The number of the neutral player.
-   */
-  public final static int NEUTRAL = Constants.NEUTRAL;
+    /**
+     * True if this player has quit playing.
+     */
+    private boolean quit = false;
 
-  /**
-   * Constructor for a player.
-   */
-  public Player (String name, int score, boolean quit) {
-	this.name = name;
-	this.score = score;
-	this.quit = quit;
-  }  
-  /**
-   * Returns the player's name.
-   */
-  public String getName () {
-	return name;
-  }  
-  /**
-   * Returns the current score of the player.
-   */
-  public int getScore () {
-	return score;
-  }  
-  /**
-   * Returns true if this player has quit.
-   */
-  public boolean hasQuit () {
-	return quit;
-  }  
-  /**
-   * Returns a string representation of this Player.
-   */
-  public String toString () {
-	String s = "Name: " + name + " Score: " + score;
-	if (quit)
-	  s+= " (quit)";
-	return s;
-  }  
+    /**
+     * The number of the neutral player.
+     */
+    public final static int NEUTRAL = Constants.NEUTRAL;
+
+    /**
+     * Constructor for a player.
+     */
+    public Player(String name, int score, boolean quit) {
+        this.name = name;
+        this.score = score;
+        this.quit = quit;
+    }
+
+    /**
+     * Returns the player's name.
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Returns the current score of the player.
+     */
+    public int getScore() {
+        return score;
+    }
+
+    /**
+     * Returns true if this player has quit.
+     */
+    public boolean hasQuit() {
+        return quit;
+    }
+
+    /**
+     * Returns a string representation of this Player.
+     */
+    public String toString() {
+        String s = "Name: " + name + " Score: " + score;
+        if (quit) {
+            s += " (quit)";
+        }
+        return s;
+    }
 }

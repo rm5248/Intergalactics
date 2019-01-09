@@ -15,35 +15,33 @@ import org.apache.logging.log4j.Logger;
  * Plays audio from our resources.
  */
 public class AuPlayer {
-    
+
     private static final Logger logger = LogManager.getLogger();
-    
-    private Map<String,byte[]> audioFiles = new HashMap<>();
+
+    private Map<String, byte[]> audioFiles = new HashMap<>();
 
     public void play(String filename) {
-        if( !audioFiles.containsKey( filename ) ){
-            try{
-                byte[] audioFile = IOUtils.resourceToByteArray( "/" + filename );
-                audioFiles.put( filename, audioFile);
-            }catch( IOException ex ){
-                logger.error( ex );
+        if (!audioFiles.containsKey(filename)) {
+            try {
+                byte[] audioFile = IOUtils.resourceToByteArray("/" + filename);
+                audioFiles.put(filename, audioFile);
+            } catch (IOException ex) {
+                logger.error(ex);
             }
         }
-        
-        
-        ByteArrayInputStream bis = new ByteArrayInputStream( audioFiles.get( filename ) );
 
-        try{
+        ByteArrayInputStream bis = new ByteArrayInputStream(audioFiles.get(filename));
+
+        try {
             // Create an AudioStream object from the input stream.
             AudioStream as = new AudioStream(bis);
 
             // Use the static class member "player" from class AudioPlayer to play
             // clip.
             AudioPlayer.player.start(as);
-        }catch( IOException ex ){
-            logger.error( ex );
+        } catch (IOException ex) {
+            logger.error(ex);
         }
-        
-        
+
     }
 }
