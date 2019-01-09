@@ -18,13 +18,11 @@ public class I extends JFrame implements FrontEnd {
     Server server;
     SoundManager player;
     String host;
-    AuPlayer au;
     private JComponent container;
 
     public I(String name) {
         super(name);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        au = new AuPlayer();
         player = new SoundManager(this);
         container = new JPanel();
         setLayout(new BorderLayout());
@@ -90,7 +88,7 @@ public class I extends JFrame implements FrontEnd {
     }
 
     public void playSound(String sound) {
-        au.play(sound);
+        AuPlayer.play(sound);
     }
 
     public void preGame(String host, boolean firstTime) {

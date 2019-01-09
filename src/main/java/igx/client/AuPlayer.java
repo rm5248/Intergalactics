@@ -18,9 +18,9 @@ public class AuPlayer {
 
     private static final Logger logger = LogManager.getLogger();
 
-    private Map<String, byte[]> audioFiles = new HashMap<>();
+    private static Map<String, byte[]> audioFiles = new HashMap<>();
 
-    public void play(String filename) {
+    public static void play(String filename) {
         if (!audioFiles.containsKey(filename)) {
             try {
                 byte[] audioFile = IOUtils.resourceToByteArray("/" + filename);
