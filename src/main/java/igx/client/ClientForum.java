@@ -873,7 +873,7 @@ public class ClientForum extends Forum implements KeyListener, ButtonListener, A
         String info = server.receive();
         while (!info.equals(Params.ENDTRANSMISSION)) {
             Player p = new Player(info);
-            players.addElement(p);
+            players.add(p);
             p.isActive = server.receiveBoolean();
             info = server.receive();
         }
@@ -927,9 +927,7 @@ public class ClientForum extends Forum implements KeyListener, ButtonListener, A
             us.inGame = false;
         }
         // Add players
-        int n = players.size();
-        for (int i = 0; i < n; i++) {
-            Player p = (Player) (players.elementAt(i));
+        for( Player p : players ){
             if (p.isActive) {
                 playerList.addText(p.name, ACTIVE_PLAYER_COLOUR);
             } else {

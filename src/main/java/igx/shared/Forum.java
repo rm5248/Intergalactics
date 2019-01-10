@@ -15,12 +15,13 @@ public class Forum implements MessageListener {
     // public static final int CREATED_WITH_ROBOTS = 6;
     // private int state = NO_GAMES;
     protected Vector games = new Vector();
-    protected Vector players = new Vector();
+    protected List<Player> players;
     protected Vector gamePool = new Vector();
 
     public Robot[] botList;
 
     public Forum(Robot[] botList) {
+        players = new ArrayList<>();
         this.botList = botList;
     }
 
@@ -59,13 +60,13 @@ public class Forum implements MessageListener {
     }
 
     protected Player addPlayer(Player p) {
-        players.addElement(p);
+        players.add(p);
         return p;
     }
 
     protected Player addPlayer(String name) {
         Player p = new Player(name);
-        players.addElement(p);
+        players.add(p);
         return p;
     }
 
@@ -126,13 +127,12 @@ public class Forum implements MessageListener {
     }
 
     public Player getPlayer(String name) {
-        int n = players.size();
-        for (int i = 0; i < n; i++) {
-            Player p = (Player) (players.elementAt(i));
-            if (p.name.equals(name)) {
+        for( Player p : players ){
+            if( p.getName().equals( name ) ){
                 return p;
             }
         }
+        
         return null;
     }
 
@@ -224,7 +224,7 @@ public class Forum implements MessageListener {
     protected void removePlayer(String name) {
         Player p = getPlayer(name);
         if (p != null) {
-            players.removeElement(p);
+            players.remove(p);
         }
     }
 

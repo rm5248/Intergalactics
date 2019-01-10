@@ -13,14 +13,22 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.flywaydb.core.Flyway;
+import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
+import org.sqlite.SQLiteConfig;
 
 public class IGXServer {
 
@@ -29,14 +37,23 @@ public class IGXServer {
     private List<ClientConnection> m_clients;
     private Map<SocketChannel, ClientConnection> m_socketToClient;
     private ServerForum m_mainForum;
+    private DSLContext m_context;
+    private Connection m_sqlConnection;
 
     private static final Logger logger = LogManager.getLogger();
 
-    IGXServer(int portnum) {
-        m_portNum = portnum;
+    IGXServer( Properties props ) throws SQLException {
+        SQLiteConfig config = new SQLiteConfig();
+        config.setPragma(SQLiteConfig.Pragma.FOREIGN_KEYS, "on" );
+        m_sqlConnection = DriverManager.getConnection( props.getProperty( "db.url" ), config.toProperties() );
+        Flyway flyway = Flyway.configure().dataSource(props.getProperty( "db.url" ), null, null).load();
+        flyway.migrate();
+        
+        m_context = DSL.using( m_sqlConnection );
+        //m_portNum = portnum;
         m_clients = new ArrayList<ClientConnection>();
         m_socketToClient = new HashMap<SocketChannel, ClientConnection>();
-        m_mainForum = new ServerForum(null, null);
+        m_mainForum = new ServerForum(null, null, m_context);
 
         logger.debug("Creating new server on port {}", m_portNum);
     }
@@ -122,12 +139,20 @@ public class IGXServer {
     }
 
     public static void main(String[] args) {
-        IGXServer ix = new IGXServer(Params.PORTNUM);
+        Properties props;
+
+        props = new Properties();
+        props.setProperty( "db.url", "jdbc:sqlite:file:./igx.db" );
 
         try {
+            IGXServer ix = new IGXServer( props );
             ix.run();
         } catch (IOException ex) {
             logger.fatal("Exiting due to IO exception: ", ex);
+        } catch (SQLException ex) {
+            logger.fatal("SQL Exception: ", ex );
         }
+        
+        System.exit( 1 );
     }
 }

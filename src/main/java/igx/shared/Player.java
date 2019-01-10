@@ -59,4 +59,8 @@ public class Player implements Cloneable {
     public void resetScore() {
         score = 0;
     }
+    
+    public String getName(){
+        return name;
+    }
 }

@@ -3,10 +3,15 @@ package igx.server;
 // ServerForum.java
 import igx.shared.*;
 import igx.bots.Bot;
+import igx.generated.Tables;
+import igx.generated.tables.records.RankRecord;
+import igx.generated.tables.records.UsersRecord;
 import java.util.*;
 import java.io.*;
 import java.net.*;
 import java.awt.Point;
+import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 
 public class ServerForum extends Forum {
 
@@ -17,11 +22,86 @@ public class ServerForum extends Forum {
     public static final String BOT_FILE_NAME = "bots.txt";
     public String rootPath;
     static RankingSystem rankingSystem;
+    
+    private DSLContext m_context;
 
     public ServerForum(MessageQueue queue, String path) {
         super(generateBotList(path));
         this.rootPath = path;
         this.queue = queue;
+    }
+    
+    public ServerForum(MessageQueue queue, String path, DSLContext ctx) {
+        super(generateBotList(path));
+        this.rootPath = path;
+        this.queue = queue;
+        m_context = ctx;
+    }
+    
+    /**
+     * Checks to see if the user already exists in the database or not.
+     * 
+     * @param alias The username to check
+     * @return true if the user already exists, false otherwise
+     */
+    boolean userAlreadyExists( String alias ){
+        int exists = m_context.selectCount().from( Tables.USERS )
+                .where( Tables.USERS.USERNAME.eq( alias ) )
+                .fetchOne().value1();
+        
+        if( exists > 0 ){
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Create a new user in the system.
+     * 
+     * @param alias The username of the user
+     * @param password The password for the user
+     * @return true if we were able to create them, false if we were not.
+     */
+    boolean createNewUser( String alias, String password ){ 
+        m_context.transaction( configuration -> {
+            DSLContext ctx = DSL.using( configuration );
+            
+            UsersRecord newUser = ctx.newRecord( Tables.USERS );
+            newUser.setUsername( alias );
+            // TODO get shiro in here to encrypt the password
+            newUser.setPassword( password );
+            
+            newUser.store();
+            
+            RankRecord newRank = ctx.newRecord( Tables.RANK );
+            newRank.setUserid( newUser.getUserid() );
+            newRank.store();
+        });
+        
+        return true;
+    }
+    
+    boolean checkUserPassword( String alias, String password ){
+        String dbPassword = m_context.select( Tables.USERS.PASSWORD )
+                .from( Tables.USERS )
+                .where( Tables.USERS.USERNAME.eq( alias ) )
+                .fetchOne( Tables.USERS.PASSWORD );
+        
+        if( dbPassword == null ){
+            return false;
+        }
+        
+        //TODO get shiro in here to encrypt
+        return dbPassword.equals( password );
+    }
+    
+    String[] getBulletins(){
+        return new String[0];
+    }
+    
+    Robot[] getBots(){
+        return botList;
     }
 
     protected boolean abandonGame(String name) {
@@ -429,7 +509,7 @@ public class ServerForum extends Forum {
         m.unlock();
     }
 
-    public void registerClient(String alias, Client c) {
+    void registerClient(String alias, Client c) {
         c.setName(alias);
         m.lock();
         // See if anybody else by this name is here...
@@ -456,18 +536,15 @@ public class ServerForum extends Forum {
         // Notify other players of this client arriving
         c.me = addPlayer(alias);
         // Send list of players to client
-        int n = players.size();
-        int i;
-        Player p;
-        for (i = 0; i < n; i++) {
-            p = (Player) players.elementAt(i);
+        for( Player p : players ){
             c.send(p.name);
             c.send(getPoolPlayer(p.name) != null);
         }
         // Indicate no more players
         c.send(Params.ENDTRANSMISSION);
         // Send list of games to client
-        n = games.size();
+        int n = games.size();
+        int i;
         Game g;
         for (i = 0; i < n; i++) {
             g = (Game) games.elementAt(i);

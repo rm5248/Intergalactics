@@ -2,7 +2,9 @@ package igx.server;
 
 import igx.shared.Forum;
 import igx.shared.Message;
+import igx.shared.Params;
 import igx.shared.Player;
+import igx.shared.Robot;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
@@ -126,7 +128,7 @@ class ClientConnection {
             logger.debug("Incoming data: {}", line);
             if (m_protocolState == ProtocolState.READING_VERSION) {
 
-                if (line.compareTo("[") == 0) {
+                if (line.compareTo( Params.ACK ) == 0) {
                     logger.debug("Good on the protocol!");
                     m_protocolState = ProtocolState.READING_NAME;
                 } else {
@@ -134,32 +136,68 @@ class ClientConnection {
                     m_isClosed = true;
                 }
             } else if (m_protocolState == ProtocolState.READING_NAME) {
+                if( !isAliasValid( line ) ){
+                    writeStringWithNewline( Params.UPDATE );
+//                    m_protocolState = ProtocolState.IN_LOBBY;
+//                    m_alias = line;
+                    continue;
+                }
+                
+                if( m_forum.getRobot( line ) != null ){
+                    writeStringWithNewline( Params.ADDCOMPUTERPLAYER );
+//                    m_protocolState = ProtocolState.IN_LOBBY;
+//                    m_alias = line;
+                    continue;
+                }
                 m_alias = line;
                 logger.debug("Client alias is {}", m_alias);
 
                 //alias read OK
                 m_protocolState = ProtocolState.READING_PASSWORD;
-                writeStringWithNewline("}");
+                
+                //If this user already exists, tell them to enter their password.
+                //if this user does not exist, thell them to create a password
+                if( m_forum.userAlreadyExists(m_alias) ){
+                    writeStringWithNewline( Params.OLD_ALIAS );
+                }else{
+                    writeStringWithNewline( Params.NEW_ALIAS );
+                }
                 writeBuffer();
-            } else if (m_protocolState == ProtocolState.READING_PASSWORD) {
+            }else if (m_protocolState == ProtocolState.READING_PASSWORD) {
                 logger.debug("Password is {}", line);
+                if( !m_forum.userAlreadyExists( m_alias ) ){
+                    m_forum.createNewUser(m_alias, line);
+                }
 
-                //correct password
-                writeStringWithNewline("[");
-                writeBuffer();
+                if( m_forum.checkUserPassword( m_alias, line ) ){
+                     //correct password
+                    writeStringWithNewline( Params.ACK );
+                    writeBuffer();
+                }else{
+                    writeStringWithNewline( Params.NACK );
+                    writeBuffer();
+                    m_protocolState = ProtocolState.READING_NAME;
+                    continue;
+                }
+               
 
                 m_us = m_forum.addPlayer(m_alias);
 
-                //tell the client server information
-                writeString("Welcome to Intergalactics, ");
-                writeString(m_alias);
-                writeStringWithNewline("!");
-                writeStringWithNewline("This server is <SERVER-NAME>");
-                writeStringWithNewline("~");
+                //Send all of the bulletins
+                for( String bulletin : m_forum.getBulletins() ){
+                    writeStringWithNewline( bulletin );
+                }
+                writeStringWithNewline( Params.ENDTRANSMISSION );
                 writeBuffer();
 
                 //tell the client any robot information
-                writeStringWithNewline("~");
+                for( Robot bot : m_forum.getBots() ){
+                    writeStringWithNewline( bot.botType );
+                    writeStringWithNewline( bot.name );
+                    writeStringWithNewline( bot.ranking + "" );
+                }
+                writeStringWithNewline( Params.ENDTRANSMISSION );
+                writeBuffer();
 
                 //tell the client any player information
                 writeStringWithNewline(m_alias);
@@ -234,4 +272,21 @@ class ClientConnection {
         m_writeBuffer.clear();
     }
 
+    private boolean isAliasValid(String alias) {
+        if (alias.length() == 0) {
+            return false;
+        }
+        char[] c = alias.toCharArray();
+        for (int i = 0; i < c.length; i++) {
+            if (Character.isLetter(c[i])
+                    || Character.isDigit(c[i])
+                    || (c[i] == '_')
+                    || (c[i] == ' ')) {
+                continue;
+            } else {
+                return false;
+            }
+        }
+        return true;
+    }
 }
