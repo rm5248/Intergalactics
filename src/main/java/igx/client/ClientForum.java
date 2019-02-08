@@ -226,7 +226,7 @@ public class ClientForum extends Forum implements KeyListener, ButtonListener, A
                 post(new CText(g.name, BOLD_COLOUR));
                 post(new CText(" evaporates.", PLAIN_COLOUR));
                 newLine();
-                games.removeElement(g);
+                games.remove(g);
                 gameList.removeGame(g);
                 for (int i = 0; i < g.numPlayers; i++) {
                     g.player[i].game = null;
@@ -621,7 +621,7 @@ public class ClientForum extends Forum implements KeyListener, ButtonListener, A
             return false;
         }
         if (mode == MODE_NOT_IN_GAME) {
-            selectedGame = (Game) (games.elementAt(games.size() - 1 - rowNum));
+            selectedGame = games.get(games.size() - 1 - rowNum);
             setMode(mode);
             return true;
         }
@@ -640,13 +640,13 @@ public class ClientForum extends Forum implements KeyListener, ButtonListener, A
             return g;
         }
     }
-// Finds the game that this player is in, null if it isn't in any
 
+    /**
+     * Finds the game that this player is in, null if it isn't in any
+     */
     public Game getPlayerGame(Player p) {
-        int n = games.size();
-        for (int i = 0; i < n; i++) {
-            Game g = (Game) (games.elementAt(i));
-            if (g.getPlayer(p.name) != null) {
+        for( Game g : games ){
+             if (g.getPlayer(p.name) != null) {
                 p.game = g;
                 return g;
             }
@@ -656,9 +656,7 @@ public class ClientForum extends Forum implements KeyListener, ButtonListener, A
 // Finds the game that this player is in, null if it isn't in any
 
     public Game getPlayerGame(String name) {
-        int n = games.size();
-        for (int i = 0; i < n; i++) {
-            Game g = (Game) (games.elementAt(i));
+        for( Game g : games ){
             if (g.getPlayer(name) != null) {
                 return g;
             }
@@ -668,7 +666,7 @@ public class ClientForum extends Forum implements KeyListener, ButtonListener, A
 
     public int getRow(Game g) {
         for (int i = 0; i < games.size(); i++) {
-            Game game = (Game) (games.elementAt(i));
+            Game game = games.get(i);
             if (game == g) {
                 return (games.size() - i - 1) * 2;
             }
@@ -908,7 +906,7 @@ public class ClientForum extends Forum implements KeyListener, ButtonListener, A
             }
             g.inProgress = inProgress;
             g.numPlayers = numPlayers;
-            games.addElement(g);
+            games.add(g);
             gameList.addGame(g);
             info = server.receive();
         }
@@ -968,7 +966,7 @@ public class ClientForum extends Forum implements KeyListener, ButtonListener, A
                 setMode(MODE_NO_GAMES);
             } else {
                 gameList.manualSelectRow(GameListCanvas.HEADER_ROWS);
-                Game latestGame = (Game) (games.elementAt(games.size() - 1));
+                Game latestGame = games.get(games.size() - 1);
                 selectGame(latestGame.name);
                 setMode(MODE_NOT_IN_GAME);
             }
@@ -1021,7 +1019,7 @@ public class ClientForum extends Forum implements KeyListener, ButtonListener, A
     public void selectGame(String gameName) {
         int n = games.size();
         for (int i = 0; i < n; i++) {
-            Game g = (Game) (games.elementAt(i));
+            Game g = games.get(i);
             if (g.name.equals(gameName)) {
                 gameList.manualSelectRow((games.size() - i - 1) * 2 + GameListCanvas.HEADER_ROWS);
                 selectedGame = g;
@@ -1033,7 +1031,7 @@ public class ClientForum extends Forum implements KeyListener, ButtonListener, A
             selectedGame = null;
         } else { // Select first game
             gameList.manualSelectRow(GameListCanvas.HEADER_ROWS);
-            selectedGame = (Game) (games.elementAt(games.size() - 1));
+            selectedGame = games.get(games.size() - 1);
         }
     }
 

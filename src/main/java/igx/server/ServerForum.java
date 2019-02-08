@@ -10,13 +10,15 @@ import java.util.*;
 import java.io.*;
 import java.net.*;
 import java.awt.Point;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 
 public class ServerForum extends Forum {
 
     protected Monitor m = new Monitor();
-    private Vector clients = new Vector();
+    private List<ClientConnection> clients;
     private Vector dispatchers = new Vector();
     public MessageQueue queue;
     public static final String BOT_FILE_NAME = "bots.txt";
@@ -24,6 +26,8 @@ public class ServerForum extends Forum {
     static RankingSystem rankingSystem;
     
     private DSLContext m_context;
+    
+    private static final Logger logger = LogManager.getLogger();
 
     public ServerForum(MessageQueue queue, String path) {
         super(generateBotList(path));
@@ -36,6 +40,7 @@ public class ServerForum extends Forum {
         this.rootPath = path;
         this.queue = queue;
         m_context = ctx;
+        clients = new LinkedList<>();
     }
     
     /**
@@ -115,7 +120,7 @@ public class ServerForum extends Forum {
                     sendAll(Params.FORUM);
                     sendAll(Params.ABANDONGAME);
                     sendAll(name);
-                    Client c = getClient(name);
+                    ClientConnection c = getClient(name);
                     c.selectedGame = null;
                     Client.unlockClients();
                     if (g.creator.equals(name) && !g.inProgress) {
@@ -136,11 +141,9 @@ public class ServerForum extends Forum {
     }
 
     protected Player addPlayer(String name) {
-        Client.lockClients();
-        sendAll(Params.FORUM);
-        sendAll(Params.PLAYERARRIVED);
-        sendAll(name);
-        Client.unlockClients();
+        for( ClientConnection c : clients ){
+            c.playerArrived( name );
+        }
         // Player p = getOldPlayer(name);
         Player p = getPoolPlayer(name);
         if (p != null) {
@@ -217,16 +220,11 @@ public class ServerForum extends Forum {
                                 // Better lock it up again
                                 m.lock();
                                 if (super.addCustomRobot(r, gameName)) {
-                                    System.out.println("Added bot...");
-                                    Client.lockClients();
-                                    sendAll(Params.FORUM);
-                                    sendAll(Params.ADDCUSTOMCOMPUTERPLAYER);
-                                    sendAll(gameName);
-                                    sendAll(Params.ACK);
-                                    sendAll(botName);
-                                    Client.unlockClients();
-                                    System.out.println("Sent success");
-                                    System.out.println("Bot class: " + robotClass);
+                                    Game g = getGame( gameName );
+                                    for( ClientConnection conn : clients ){
+                                        conn.addedCustomBotToGame( r, g );
+                                    }
+                                    logger.debug( "Added bot with class {}", robotClass );
                                     return true;
                                 } else {
                                     m.unlock();
@@ -236,19 +234,20 @@ public class ServerForum extends Forum {
                         }
                     }
                 }
-                if (error != null) {
-                    m.lock();
-                    Game g = getGame(gameName);
-                    Client c = getClient(g.creator);
-                    Client.lockClients();
-                    c.send(Params.FORUM);
-                    c.send(Params.ADDCUSTOMCOMPUTERPLAYER);
-                    c.send(gameName);
-                    c.send(Params.NACK);
-                    c.send(error);
-                    Client.unlockClients();
-                    System.out.println("Custom robot didn't work: " + error);
-                }
+                //TODO is this next block needed at all?
+//                if (error != null) {
+//                    m.lock();
+//                    Game g = getGame(gameName);
+//                    ClientConnection c = getClient(g.creator);
+//                    Client.lockClients();
+//                    c.send(Params.FORUM);
+//                    c.send(Params.ADDCUSTOMCOMPUTERPLAYER);
+//                    c.send(gameName);
+//                    c.send(Params.NACK);
+//                    c.send(error);
+//                    Client.unlockClients();
+//                    System.out.println("Custom robot didn't work: " + error);
+//                }
                 return false;
             } else {
                 boolean okay = true;
@@ -269,19 +268,18 @@ public class ServerForum extends Forum {
                     }
                 }
                 if (okay && super.addRobot(name, gameName)) {
-                    Client.lockClients();
-                    sendAll(Params.FORUM);
-                    sendAll(Params.ADDCOMPUTERPLAYER);
-                    sendAll(gameName);
-                    sendAll(name);
-                    Client.unlockClients();
+                    Game g = getGame(gameName);
+                    Robot r = getRobot(name);
+                    for( ClientConnection conn : clients ){
+                        conn.addedBotToGame(r, g);
+                    }
                     return true;
                 } else {
                     return false;
                 }
             }
         } catch (Exception e) {
-            System.out.println("Troubs: " + e);
+            logger.error( e );
         }
         return false;
     }
@@ -292,18 +290,16 @@ public class ServerForum extends Forum {
     }
 
     protected boolean createGame(String name, String gameName) {
-        Client c = getClient(name);
+        ClientConnection c = getClient(name);
         Game g = getGame(gameName);
-        c.me.game = c.selectedGame;
+        c.getPlayer().game = g;
+        //TODO what is the next line for??
+        //c.me.game = c.selectedGame;
         if ((c != null) && (g == null)) {
             if (super.createGame(name, gameName)) {
-                Client.lockClients();
-                sendAll(Params.FORUM);
-                sendAll(Params.NEWGAME);
-                sendAll(gameName);
-                sendAll(name);
-                c.selectedGame = g;
-                Client.unlockClients();
+                for( ClientConnection conn : clients ){
+                    conn.gameCreated( name, g );
+                }
                 return true;
             }
         }
@@ -322,12 +318,15 @@ public class ServerForum extends Forum {
             } else {
                 winner = g.player[winNumber].name;
             }
-            String gameReport = gameName + " ends at " + d.game.turn + ":" + d.game.segment;
-            gameReport += ". Winner: " + winner;
+            String gameReport = String.format( "%s ends at %d:%d.  Winner: %s",
+                    gameName,
+                    d.game.turn,
+                    d.game.segment,
+                    winner );
             System.out.println(gameReport);
             // Get all the watchers out of there
             for (int i = 0; i < clients.size(); i++) {
-                Client c = (Client) (clients.elementAt(i));
+                Client c = (Client) (clients.get(i));
                 if (c.selectedGame == g) {
                     c.selectedGame = null;
                     c.me.game = null;
@@ -346,12 +345,9 @@ public class ServerForum extends Forum {
                     c.me.inGame = false;
                 }
             }
-            Client.lockClients();
-            sendAll(Params.FORUM);
-            sendAll(Params.GAMEENDED);
-            sendAll(gameName);
-            sendAll(winner);
-            Client.unlockClients();
+            for( ClientConnection conn : clients ){
+                conn.gameEnded(g, winner);
+            }
             dispatchers.removeElement(d);
         }
     }
@@ -418,12 +414,10 @@ public class ServerForum extends Forum {
         return robotClass;
     }
 
-    public Client getClient(String name) {
-        int n = clients.size();
-        for (int i = 0; i < n; i++) {
-            Client c = (Client) (clients.elementAt(i));
-            if (c.me.name.equals(name)) {
-                return c;
+    private ClientConnection getClient(String name) {        
+        for( ClientConnection client : clients ){
+            if( client.getName().equals( name ) ){
+                return client;
             }
         }
         return null;
@@ -459,7 +453,7 @@ public class ServerForum extends Forum {
     public Game inGame(String name) {
         int n = games.size();
         for (int i = 0; i < n; i++) {
-            Game g = (Game) (games.elementAt(i));
+            Game g = games.get(i);
             Player p = g.getPlayer(name);
             if ((p != null) && p.isActive) {
                 return g;
@@ -469,16 +463,16 @@ public class ServerForum extends Forum {
     }
 
     protected boolean joinGame(String name, String gameName) {
-        Client c = getClient(name);
-        c.me.game = c.selectedGame;
+        ClientConnection c = getClient(name);
+        //TODO need to figure out what the next line is supposed to do
+        //c.me.game = c.selectedGame;
+        Game g = getGame(gameName);
         if (super.joinGame(name, gameName)) {
-            Client.lockClients();
-            sendAll(Params.FORUM);
-            sendAll(Params.JOINGAME);
-            sendAll(gameName);
-            sendAll(name);
-            c.selectedGame = getGame(gameName);
-            Client.unlockClients();
+            for( ClientConnection conn : clients ){
+                conn.playerJoinedGame(g, name);
+            }
+            //TODO need to figure out what the next line is supposed to do
+            //c.selectedGame = getGame(gameName);
             Player p = getPlayer(name);
             p.inGame = true;
             return true;
@@ -489,13 +483,9 @@ public class ServerForum extends Forum {
 
     protected void message(String player, String text, int destination) {
         super.message(player, text, destination);
-        Client.lockClients();
-        sendAll(Params.FORUM);
-        sendAll(Params.SENDMESSAGE);
-        sendAll(player);
-        sendAll(new Integer(destination).toString());
-        sendAll(text);
-        Client.unlockClients();
+        for( ClientConnection conn : clients ){
+            conn.sendMessageToForum(player, text, destination);
+        }
     }
 
     public void messageEvent(Message message) {
@@ -509,123 +499,82 @@ public class ServerForum extends Forum {
         m.unlock();
     }
 
-    void registerClient(String alias, Client c) {
-        c.setName(alias);
+    void registerClient(String alias, ClientConnection c) throws IOException {
         m.lock();
         // See if anybody else by this name is here...
-        Client oldClient = getClient(alias);
+        ClientConnection oldClient = getClient(alias);
         // Give them the boot!
-        if (oldClient != null) {
-            Client.lockClients();
-            oldClient.send(Params.FORUM);
-            oldClient.send(Params.PLAYERQUITTING);
-            oldClient.send(alias);
-            Client.unlockClients();
-            //removePlayer(alias);
-            if (oldClient.me != null) {
-                Game g = oldClient.me.game;
-                if ((g != null) && (!g.inProgress)) {
-                    if (g.creator.equals(oldClient.me.name)) {
-                        abandonGame(alias);
-                    }
-                }
-            }
-            removePlayer(alias);
-            oldClient.serverQueue = null;
-        }
+//        if (oldClient != null) {
+//            Client.lockClients();
+//            oldClient.send(Params.FORUM);
+//            oldClient.send(Params.PLAYERQUITTING);
+//            oldClient.send(alias);
+//            Client.unlockClients();
+//            //removePlayer(alias);
+//            if (oldClient.me != null) {
+//                Game g = oldClient.me.game;
+//                if ((g != null) && (!g.inProgress)) {
+//                    if (g.creator.equals(oldClient.me.name)) {
+//                        abandonGame(alias);
+//                    }
+//                }
+//            }
+//            removePlayer(alias);
+//            oldClient.serverQueue = null;
+//        }
         // Notify other players of this client arriving
-        c.me = addPlayer(alias);
+        //c.me = addPlayer(alias);
         // Send list of players to client
-        for( Player p : players ){
-            c.send(p.name);
-            c.send(getPoolPlayer(p.name) != null);
-        }
-        // Indicate no more players
-        c.send(Params.ENDTRANSMISSION);
+        c.sendPlayerList( players );
         // Send list of games to client
-        int n = games.size();
-        int i;
-        Game g;
-        for (i = 0; i < n; i++) {
-            g = (Game) games.elementAt(i);
-            // Send game name
-            c.send(g.name);
-            // Send status (in progress or new)
-            if (g.inProgress) {
-                c.send(Params.ACK);
-            } else {
-                c.send(Params.NACK);
-            }
-            // Send number of players
-            int numPlayers = g.numPlayers;
-            c.send(numPlayers);
-            // Send players of game
-            for (int j = 0; j < numPlayers; j++) {
-                // Name
-                c.send(g.player[j].name);
-                // Active
-                c.send(g.player[j].isActive);
-            }
-        }
-        // Indicate no more games
-        c.send(Params.ENDTRANSMISSION);
-        //
-        // g = inGame(c.me.name);
-        // if (g != null) {
-        if (c.me.game != null) {
-            g = c.me.game;
-            c.selectedGame = g;
-            c.me.isPresent = true;
-            c.send(Params.ACK);
-            c.send(g.name);
-            if (g.inProgress) {
-                Dispatcher d = getDispatcher(g.name);
-                if (d != null) {
-                    d.briefWatcher(c);
-                    c.me = d.getPlayer(alias);
-                }
-                // Replace the old client with the new
-                // d.substituteClient(c);
-                // d.clients.setElementAt(c, c.me.number);
-            }
-        } else {
-            c.send(Params.NACK);
-        }
+        c.sendGameList( games );
+
+        c.nack();
+        // This block of code appears to add the client to the game if they 
+        // disconnected and then reconnected?
+//        if (c.me.game != null) {
+//            g = c.me.game;
+//            c.selectedGame = g;
+//            c.me.isPresent = true;
+//            c.send(Params.ACK);
+//            c.send(g.name);
+//            if (g.inProgress) {
+//                Dispatcher d = getDispatcher(g.name);
+//                if (d != null) {
+//                    d.briefWatcher(c);
+//                    c.me = d.getPlayer(alias);
+//                }
+//                // Replace the old client with the new
+//                // d.substituteClient(c);
+//                // d.clients.setElementAt(c, c.me.number);
+//            }
+//        } else {
+//            c.send(Params.NACK);
+//        }
         // Add client to list
-        clients.addElement(c);
+        clients.add(c);
         m.unlock();
     }
 
     protected void removePlayer(String name) {
         super.removePlayer(name);
-        Client c = getClient(name);
+        ClientConnection c = getClient(name);
         if (c != null) {
-            clients.removeElement(c);
-            Client.lockClients();
-            sendAll(Params.FORUM);
-            sendAll(Params.PLAYERQUITTING);
-            sendAll(name);
-            Client.unlockClients();
+            clients.remove(c);
+            for( ClientConnection conn : clients ){
+                conn.clientQuit( name );
+            }
         }
     }
 
     protected boolean removeRobot(String name, String gameName) {
         if (super.removeRobot(name, gameName)) {
-            Client.lockClients();
-            sendAll(Params.FORUM);
-            sendAll(Params.REMOVECOMPUTERPLAYER);
-            sendAll(gameName);
-            sendAll(name);
-            Client.unlockClients();
+            for( ClientConnection client : clients ){
+                client.robotRemovedFromGame( getRobot(name), getGame(gameName) );
+            }
             return true;
         } else {
             return false;
-        }
-    }
-
-    protected void sendAll(String message) {
-        for (int i = 0; i < clients.size(); i++) {
-            ((Client) (clients.elementAt(i))).send(message);
         }
     }
 
@@ -664,7 +613,7 @@ public class ServerForum extends Forum {
             sendAll(Params.STARTGAME);
             sendAll(g.name);
             sendAll(customMap);
-            String gameReport = "Game " + g.name + " with";
+            String gameReport =  "Game " + g.name + " with";
             for (int i = 0; i < g.numPlayers; i++) {
                 if (i > 0) {
                     gameReport += ",";

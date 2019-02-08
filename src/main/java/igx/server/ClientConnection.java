@@ -1,6 +1,7 @@
 package igx.server;
 
 import igx.shared.Forum;
+import igx.shared.Game;
 import igx.shared.Message;
 import igx.shared.Params;
 import igx.shared.Player;
@@ -9,6 +10,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.util.List;
 import java.util.Scanner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -74,7 +76,7 @@ class ClientConnection {
 
         //Whenever a new client connects, tell it the version
         writeStringWithNewline(PROTOCOL_VERSION);
-        writeBuffer();
+        flush();
         logger.debug("Done creating new connection");
     }
 
@@ -162,7 +164,7 @@ class ClientConnection {
                 }else{
                     writeStringWithNewline( Params.NEW_ALIAS );
                 }
-                writeBuffer();
+                flush();
             }else if (m_protocolState == ProtocolState.READING_PASSWORD) {
                 logger.debug("Password is {}", line);
                 if( !m_forum.userAlreadyExists( m_alias ) ){
@@ -172,10 +174,10 @@ class ClientConnection {
                 if( m_forum.checkUserPassword( m_alias, line ) ){
                      //correct password
                     writeStringWithNewline( Params.ACK );
-                    writeBuffer();
+                    flush();
                 }else{
                     writeStringWithNewline( Params.NACK );
-                    writeBuffer();
+                    flush();
                     m_protocolState = ProtocolState.READING_NAME;
                     continue;
                 }
@@ -188,7 +190,7 @@ class ClientConnection {
                     writeStringWithNewline( bulletin );
                 }
                 writeStringWithNewline( Params.ENDTRANSMISSION );
-                writeBuffer();
+                flush();
 
                 //tell the client any robot information
                 for( Robot bot : m_forum.getBots() ){
@@ -197,7 +199,7 @@ class ClientConnection {
                     writeStringWithNewline( bot.ranking + "" );
                 }
                 writeStringWithNewline( Params.ENDTRANSMISSION );
-                writeBuffer();
+                flush();
 
                 //tell the client any player information
                 writeStringWithNewline(m_alias);
@@ -215,7 +217,7 @@ class ClientConnection {
                 writeStringWithNewline("~");
 
                 writeStringWithNewline("]"); //we're not in-game?
-                writeBuffer();
+                flush();
 
                 m_protocolState = ProtocolState.IN_LOBBY;
             } else if (m_protocolState == ProtocolState.IN_LOBBY) {
@@ -246,10 +248,6 @@ class ClientConnection {
         }
     }
 
-    private void writeString(String str) {
-        m_writeBuffer.put(str.getBytes());
-    }
-
     /**
      * Put a string, followed by a newline character into our buffer
      *
@@ -263,7 +261,7 @@ class ClientConnection {
     /**
      * Write out our buffer
      */
-    private void writeBuffer() throws IOException {
+    private void flush() throws IOException {
         m_writeBuffer.flip();
         while (m_writeBuffer.hasRemaining()) {
             m_write.write(m_writeBuffer);
@@ -288,5 +286,164 @@ class ClientConnection {
             }
         }
         return true;
+    }
+    
+    public String getName(){
+        return m_alias;
+    }
+    
+    void sendPlayerList( List<Player> players ) throws IOException {
+        for( Player player : players ){
+            writeStringWithNewline( player.getName() );
+            boolean inGame = player.isInGame();
+            if( inGame ){
+                writeStringWithNewline( "1" );
+            }else{
+                writeStringWithNewline( "0" );
+            }
+        }
+        
+        // No more players to send
+        writeStringWithNewline( Params.ENDTRANSMISSION );
+        
+        flush();
+    }
+    
+    void sendGameList( List<Game> games ) throws IOException {
+        for( Game g : games ){
+            writeStringWithNewline( g.name );
+            if( g.inProgress ){
+                writeStringWithNewline( Params.ACK );
+            }else{
+                writeStringWithNewline( Params.NACK );
+            }
+            
+            writeStringWithNewline( g.numPlayers + "" );
+            
+            // Send who is in the game
+            for( Player p : g.player ){
+                writeStringWithNewline( p.name );
+                writeStringWithNewline( p.isActive ? "1" : "0" );
+            }
+        }
+        
+        // No more games to send
+        writeStringWithNewline( Params.ENDTRANSMISSION );
+        
+        flush();
+    }
+    
+    void nack() throws IOException {
+        writeStringWithNewline( Params.NACK );
+        flush();
+    }
+    
+    void robotRemovedFromGame( Robot r, Game g ) {
+        try{
+            writeStringWithNewline( Params.FORUM );
+            writeStringWithNewline( Params.REMOVECOMPUTERPLAYER );
+            writeStringWithNewline( g.name );
+            writeStringWithNewline( r.name );
+            flush();
+        }catch( IOException ex ){
+            logger.warn( ex );
+        }
+    }
+    
+    void clientQuit( String playerName ){
+        try{
+            writeStringWithNewline( Params.FORUM );
+            writeStringWithNewline( Params.PLAYERQUITTING );
+            writeStringWithNewline( playerName );
+            flush();
+        }catch( IOException ex ){
+            logger.warn( ex );
+        }
+    }
+    
+    void playerArrived( String name ){
+        try{
+            writeStringWithNewline(Params.FORUM);
+            writeStringWithNewline(Params.PLAYERARRIVED);
+            writeStringWithNewline(name);
+            flush();
+        }catch( IOException ex ){
+            logger.warn( ex );
+        }
+    }
+    
+    void addedCustomBotToGame( Robot r, Game g ){
+        try{
+            writeStringWithNewline( Params.FORUM );
+            writeStringWithNewline( Params.ADDCUSTOMCOMPUTERPLAYER );
+            writeStringWithNewline( g.name );
+            writeStringWithNewline( Params.ACK );
+            writeStringWithNewline( r.name );
+            flush();
+        }catch( IOException ex ){
+            logger.warn( ex );
+        }
+    }
+    
+    void addedBotToGame( Robot r, Game g ){
+        try{
+            writeStringWithNewline( Params.FORUM );
+            writeStringWithNewline( Params.ADDCOMPUTERPLAYER );
+            writeStringWithNewline( g.name );
+            writeStringWithNewline( r.name );
+            flush();
+        }catch( IOException ex ){
+            logger.warn( ex );
+        }
+    }
+    
+    void gameCreated( String owningPlayer, Game g ){
+        try{
+            writeStringWithNewline( Params.FORUM );
+            writeStringWithNewline( Params.NEWGAME );
+            writeStringWithNewline( g.name );
+            writeStringWithNewline( owningPlayer );
+            flush();
+        }catch( IOException ex ){
+            logger.warn( ex );
+        }
+    }
+    
+    void gameEnded( Game g, String winner ){
+        try{
+            writeStringWithNewline( Params.FORUM );
+            writeStringWithNewline( Params.GAMEENDED );
+            writeStringWithNewline( g.name );
+            writeStringWithNewline( winner );
+            flush();
+        }catch( IOException ex ){
+            logger.warn( ex );
+        }
+    }
+    
+    void playerJoinedGame( Game g, String playerName ){
+        try{
+            writeStringWithNewline( Params.FORUM );
+            writeStringWithNewline( Params.JOINGAME );
+            writeStringWithNewline( g.name );
+            writeStringWithNewline( playerName );
+            flush();
+        }catch( IOException ex ){
+            logger.warn( ex );
+        }
+    }
+    
+    void sendMessageToForum( String player, String text, int destination ){
+        //TODO is 'desnination' supposed to allow you to PM people?
+        try{
+            writeStringWithNewline( Params.FORUM );
+            writeStringWithNewline( Params.SENDMESSAGE );
+            writeStringWithNewline( player );
+            writeStringWithNewline( destination + "" );
+            writeStringWithNewline( text );
+            flush();
+        }catch( IOException ex ){
+            logger.warn( ex );
+        }
     }
 }

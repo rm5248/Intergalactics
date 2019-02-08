@@ -161,7 +161,7 @@ class Daemon extends Thread {
                 // Indicate no more robots
                 p.send(Params.ENDTRANSMISSION);
                 // Synchronized registration with server
-                server.registerClient(alias, p);
+                //server.registerClient(alias, p);
                 return true;
             }
         } catch (IOException e) {

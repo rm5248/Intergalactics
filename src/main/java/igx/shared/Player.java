@@ -23,6 +23,8 @@ public class Player implements Cloneable {
     // Custom robot stuff
     public boolean customRobot = false;
     public Robot r = null;
+    
+    private boolean m_isInGame;
 
     public static final Player NEUTRAL = new Player("Neutral", Params.NEUTRAL);
 
@@ -62,5 +64,9 @@ public class Player implements Cloneable {
     
     public String getName(){
         return name;
+    }
+    
+    public boolean isInGame(){
+        return m_isInGame;
     }
 }
